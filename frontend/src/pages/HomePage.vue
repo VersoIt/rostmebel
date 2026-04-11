@@ -316,7 +316,7 @@ onUnmounted(() => {
 
     <!-- 9. SEO Content -->
     <section class="py-24 px-4 bg-white border-t border-brand-brown/5 text-center">
-      <div class="max-w-4xl mx-auto prose prose-brand opacity-50 hover:opacity-100 transition-opacity text-center">
+      <div class="max-w-4xl mx-auto prose prose-brand text-center">
         <h2 class="font-serif text-2xl text-brand-brown mb-8 text-center uppercase tracking-widest">Кухни и мебель на заказ в Севастополе и Крыму</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-brand-brown/70 leading-relaxed text-[10px] uppercase tracking-wider text-left">
           <p>

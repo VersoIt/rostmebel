@@ -48,7 +48,7 @@ const loadProjectData = async () => {
     
     // Fetch related
     await productStore.fetchProducts({ 
-      category_id: p.category_id, 
+      project_category_id: p.project_category_id, 
       limit: 4,
       status: 'published'
     });
@@ -112,7 +112,7 @@ const formatPrice = (price: number) => {
         <h1 class="font-serif text-5xl md:text-7xl text-brand-brown mb-4">{{ product.name }}</h1>
         <div class="flex items-center gap-4">
           <span class="bg-brand-gold text-brand-brown px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-            {{ productStore.categories.find(c => c.id === product?.category_id)?.name || 'Проект' }}
+            {{ productStore.categories.find(c => c.id === product?.project_category_id)?.name || 'Проект' }}
           </span>
         </div>
       </div>
@@ -222,7 +222,7 @@ const formatPrice = (price: number) => {
             </button>
             <h2 class="font-serif text-4xl mb-4 text-brand-brown">Заявка</h2>
             <p class="text-brand-brown/60 mb-10 font-medium">Обсудим ваш будущий проект?</p>
-            <OrderForm :product-id="product.id" @success="isOrderModalOpen = false" />
+            <OrderForm :project-id="product.id" @success="isOrderModalOpen = false" />
           </div>
         </div>
       </transition>

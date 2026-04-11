@@ -19,7 +19,7 @@ const form = ref<Partial<Product>>({
   description: '',
   price: 0,
   price_old: undefined,
-  category_id: undefined,
+  project_category_id: undefined,
   status: 'draft',
   ai_tags: '',
   images: [],
@@ -114,9 +114,9 @@ const save = async () => {
     if (!payload.price_old) payload.price_old = undefined;
 
     if (props.product?.id) {
-      await api.put(`/admin/products/${props.product.id}`, payload);
+      await api.put(`/admin/projects/${props.product.id}`, payload);
     } else {
-      await api.post('/admin/products', payload);
+      await api.post('/admin/projects', payload);
     }
     emit('saved');
   } catch (err: any) {
@@ -162,7 +162,7 @@ const save = async () => {
             </div>
             <div>
               <label class="block text-sm font-semibold mb-2">Категория</label>
-              <select v-model="form.category_id" class="w-full px-4 py-3 rounded-xl border border-brand-brown/10 bg-brand-gray/30">
+              <select v-model="form.project_category_id" class="w-full px-4 py-3 rounded-xl border border-brand-brown/10 bg-brand-gray/30">
                 <option :value="undefined">Без категории</option>
                 <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>

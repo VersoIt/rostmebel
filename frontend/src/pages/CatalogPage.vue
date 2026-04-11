@@ -16,7 +16,7 @@ const fetch = async () => {
   const params: any = { status: 'published' };
   if (selectedCategory.value) {
     const cat = productStore.categories.find(c => c.slug === selectedCategory.value);
-    if (cat) params.category_id = cat.id;
+    if (cat) params.project_category_id = cat.id;
   }
   if (searchQuery.value) params.search = searchQuery.value;
   

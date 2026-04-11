@@ -31,7 +31,7 @@ func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 		Offset: 0,
 	}
 
-	if catID := r.URL.Query().Get("category_id"); catID != "" {
+	if catID := r.URL.Query().Get("project_category_id"); catID != "" {
 		id, _ := strconv.ParseInt(catID, 10, 64)
 		filter.ProjectCategoryID = &id
 	}

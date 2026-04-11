@@ -1,4 +1,4 @@
-export type ProductStatus = 'published' | 'draft' | 'archived';
+export type ProjectStatus = 'published' | 'draft' | 'archived';
 
 export interface Image {
   url: string;
@@ -7,7 +7,7 @@ export interface Image {
 
 export interface Product {
   id: number;
-  category_id?: number;
+  project_category_id?: number;
   name: string;
   slug: string;
   description: string;
@@ -16,7 +16,7 @@ export interface Product {
   images: Image[];
   specs: Record<string, string>;
   ai_tags: string;
-  status: ProductStatus;
+  status: ProjectStatus;
   views_count: number;
   orders_count: number;
   created_at: string;
@@ -35,7 +35,7 @@ export type OrderStatus = 'new' | 'processing' | 'done' | 'rejected' | 'spam';
 
 export interface Order {
   id: number;
-  product_id?: number;
+  project_id?: number;
   client_name: string;
   client_phone: string;
   client_email: string;
@@ -51,10 +51,10 @@ export interface TokenPair {
 }
 
 export interface Stats {
-  products_count: number;
+  projects_count: number;
   new_orders_today: number;
   total_orders: number;
   success_rate: number;
-  top_products: Array<{ id: number; name: string; count: number }>;
+  top_projects: Array<{ id: number; name: string; count: number }>;
   orders_by_day: Array<{ date: string; count: number }>;
 }

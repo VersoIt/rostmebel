@@ -58,7 +58,7 @@ const getChartPath = () => {
     <div v-if="stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
       <div class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm">
         <span class="text-brand-brown/40 uppercase tracking-widest text-xs font-semibold mb-2 block">Всего проектов</span>
-        <div class="text-4xl font-serif text-brand-brown">{{ stats.products_count }}</div>
+        <div class="text-4xl font-serif text-brand-brown">{{ stats.projects_count }}</div>
       </div>
       <div class="bg-brand-gold p-8 rounded-3xl shadow-xl shadow-brand-gold/20">
         <span class="text-brand-brown/60 uppercase tracking-widest text-xs font-semibold mb-2 block">Заявки сегодня</span>
@@ -99,7 +99,7 @@ const getChartPath = () => {
         </div>
         <div class="p-8 space-y-6">
           <div 
-            v-for="p in stats?.top_products" 
+            v-for="p in stats?.top_projects" 
             :key="p.id" 
             @click="openEdit(p.id)"
             class="flex items-center justify-between group cursor-pointer hover:bg-brand-gray/5 p-2 rounded-xl transition-all"

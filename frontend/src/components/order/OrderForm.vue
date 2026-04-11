@@ -4,7 +4,7 @@ import api from '@/api/client';
 import { LucideSend, LucideCheck } from 'lucide-vue-next';
 
 const props = defineProps<{
-  productId?: number;
+  projectId?: number;
 }>();
 
 const emit = defineEmits(['success']);
@@ -42,7 +42,7 @@ const handleSubmit = async () => {
   try {
     await api.post('/orders', {
       ...form.value,
-      product_id: props.productId,
+      project_id: props.projectId,
       fingerprint: btoa(navigator.userAgent), // Basic fingerprint
     });
     isSuccess.value = true;

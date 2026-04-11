@@ -1,5 +1,5 @@
 -- Categories
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE IF NOT EXISTS project_categories (
     id          BIGSERIAL PRIMARY KEY,
     name        VARCHAR(100) NOT NULL,
     slug        VARCHAR(100) NOT NULL UNIQUE,
@@ -9,34 +9,34 @@ CREATE TABLE IF NOT EXISTS categories (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Products
-CREATE TABLE IF NOT EXISTS products (
-    id              BIGSERIAL PRIMARY KEY,
-    category_id     BIGINT REFERENCES categories(id) ON DELETE SET NULL,
-    name            VARCHAR(255) NOT NULL,
-    slug            VARCHAR(255) NOT NULL UNIQUE,
-    description     TEXT,
-    price           NUMERIC(12, 2) NOT NULL,
-    price_old       NUMERIC(12, 2),
-    images          JSONB NOT NULL DEFAULT '[]', -- [{url, is_main}]
-    specs           JSONB NOT NULL DEFAULT '{}', -- {"Материал": "Дуб", "Размер": "120x60"}
-    ai_tags         TEXT,                        -- "скандинавский, дуб, светлый, спальня"
-    status          VARCHAR(20) NOT NULL DEFAULT 'draft', -- published|draft|archived
-    views_count     INT NOT NULL DEFAULT 0,
-    orders_count    INT NOT NULL DEFAULT 0,
-    search_vector   TSVECTOR,                    -- для full-text поиска
-    deleted_at      TIMESTAMPTZ,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- Projects
+CREATE TABLE IF NOT EXISTS projects (
+    id                  BIGSERIAL PRIMARY KEY,
+    project_category_id BIGINT REFERENCES project_categories(id) ON DELETE SET NULL,
+    name                VARCHAR(255) NOT NULL,
+    slug                VARCHAR(255) NOT NULL UNIQUE,
+    description         TEXT,
+    price               NUMERIC(12, 2) NOT NULL,
+    price_old           NUMERIC(12, 2),
+    images              JSONB NOT NULL DEFAULT '[]', -- [{url, is_main}]
+    specs               JSONB NOT NULL DEFAULT '{}', -- {"Материал": "Дуб", "Размер": "120x60"}
+    ai_tags             TEXT,                        -- "лофт, дуб, светлый, кухня"
+    status              VARCHAR(20) NOT NULL DEFAULT 'draft', -- published|draft|archived
+    views_count         INT NOT NULL DEFAULT 0,
+    orders_count        INT NOT NULL DEFAULT 0,
+    search_vector       TSVECTOR,
+    deleted_at          TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_products_status ON products(status) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_products_search ON products USING GIN(search_vector);
-CREATE INDEX IF NOT EXISTS idx_products_price ON products(price) WHERE deleted_at IS NULL AND status = 'published';
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_projects_category ON projects(project_category_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_projects_search ON projects USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_projects_price ON projects(price) WHERE deleted_at IS NULL AND status = 'published';
 
 -- Trigger for search vector
-CREATE OR REPLACE FUNCTION update_product_search_vector()
+CREATE OR REPLACE FUNCTION update_project_search_vector()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.search_vector := to_tsvector('russian',
@@ -48,15 +48,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_product_search_vector ON products;
-CREATE TRIGGER trg_product_search_vector
-BEFORE INSERT OR UPDATE ON products
-FOR EACH ROW EXECUTE FUNCTION update_product_search_vector();
+DROP TRIGGER IF EXISTS trg_project_search_vector ON projects;
+CREATE TRIGGER trg_project_search_vector
+BEFORE INSERT OR UPDATE ON projects
+FOR EACH ROW EXECUTE FUNCTION update_project_search_vector();
 
 -- Orders
 CREATE TABLE IF NOT EXISTS orders (
     id              BIGSERIAL PRIMARY KEY,
-    product_id      BIGINT REFERENCES products(id) ON DELETE SET NULL,
+    project_id      BIGINT REFERENCES projects(id) ON DELETE SET NULL,
     client_name     VARCHAR(100) NOT NULL,
     client_phone    VARCHAR(20) NOT NULL,
     client_email    VARCHAR(255),

@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { LucideMenu, LucideX, LucideUser, LucideHeart, LucidePhone } from 'lucide-vue-next';
 import { useFavorites } from '@/composables/useFavorites';
 
 const { favorites } = useFavorites();
+const route = useRoute();
 const isMenuOpen = ref(false);
 const isScrolled = ref(false);
+
+const isHomePage = computed(() => route.name === 'home');
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20;
@@ -18,6 +22,9 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
 });
+
+// Logic for header appearance
+const isHeaderActive = computed(() => !isHomePage.value || isScrolled.value);
 </script>
 
 <template>
@@ -26,7 +33,7 @@ onUnmounted(() => {
     <header 
       :class="[
         'fixed w-full z-[100] transition-all duration-500 border-b',
-        isScrolled 
+        isHeaderActive 
           ? 'py-4 bg-white/80 backdrop-blur-xl border-brand-brown/5 shadow-sm' 
           : 'py-8 bg-transparent border-transparent'
       ]"
@@ -35,8 +42,8 @@ onUnmounted(() => {
         <router-link to="/" class="flex items-center gap-3 group">
           <div class="w-12 h-12 bg-brand-brown text-brand-gold rounded-2xl flex items-center justify-center font-serif text-2xl group-hover:bg-brand-gold group-hover:text-brand-brown transition-all duration-500 shadow-lg">Р</div>
           <div class="flex flex-col">
-            <span :class="['font-serif text-2xl tracking-tighter uppercase font-black leading-none transition-colors', isScrolled ? 'text-brand-brown' : 'text-white']">РОСТ</span>
-            <span :class="['text-[10px] uppercase tracking-[0.3em] font-bold transition-colors', isScrolled ? 'text-brand-gold' : 'text-brand-gold']">Мебель</span>
+            <span :class="['font-serif text-2xl tracking-tighter uppercase font-black leading-none transition-colors', isHeaderActive ? 'text-brand-brown' : 'text-white']">РОСТ</span>
+            <span class="text-[10px] uppercase tracking-[0.3em] font-bold text-brand-gold">Мебель</span>
           </div>
         </router-link>
 
@@ -49,7 +56,7 @@ onUnmounted(() => {
             ]" 
             :key="link.to"
             :to="link.to" 
-            :class="['font-bold text-xs uppercase tracking-widest hover:text-brand-gold transition-colors', isScrolled ? 'text-brand-brown' : 'text-white']"
+            :class="['font-bold text-xs uppercase tracking-widest hover:text-brand-gold transition-colors', isHeaderActive ? 'text-brand-brown' : 'text-white']"
           >
             {{ link.name }}
           </router-link>
@@ -57,16 +64,16 @@ onUnmounted(() => {
 
         <!-- Icons -->
         <div class="flex items-center gap-4">
-          <a href="tel:+79787631603" :class="['hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all font-bold text-xs uppercase tracking-widest', isScrolled ? 'border-brand-brown/10 text-brand-brown hover:bg-brand-brown hover:text-white' : 'border-white/20 text-white hover:bg-white hover:text-brand-brown']">
+          <a href="tel:+79787631603" :class="['hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all font-bold text-xs uppercase tracking-widest', isHeaderActive ? 'border-brand-brown/10 text-brand-brown hover:bg-brand-brown hover:text-white' : 'border-white/20 text-white hover:bg-white hover:text-brand-brown']">
             <LucidePhone :size="14" />
             +7 (978) 763-16-03
           </a>
           <router-link to="/favorites" class="relative p-2 group">
-            <LucideHeart :class="[isScrolled ? 'text-brand-brown' : 'text-white', 'group-hover:text-brand-gold transition-colors']" :size="24" />
+            <LucideHeart :class="[isHeaderActive ? 'text-brand-brown' : 'text-white', 'group-hover:text-brand-gold transition-colors']" :size="24" />
             <span v-if="favorites.length" class="absolute -top-1 -right-1 w-5 h-5 bg-brand-gold text-brand-brown text-[10px] font-black rounded-full flex items-center justify-center shadow-md animate-bounce">{{ favorites.length }}</span>
           </router-link>
           <button @click="isMenuOpen = true" class="md:hidden p-2">
-            <LucideMenu :class="isScrolled ? 'text-brand-brown' : 'text-white'" :size="28" />
+            <LucideMenu :class="isHeaderActive ? 'text-brand-brown' : 'text-white'" :size="28" />
           </button>
         </div>
       </div>
@@ -124,9 +131,6 @@ onUnmounted(() => {
           <p class="text-brand-brown/60 max-w-sm mb-10 leading-relaxed font-medium">
             Проектирование и изготовление премиальной мебели по индивидуальным размерам в Севастополе и по всему Крыму.
           </p>
-          <div class="flex gap-4">
-            <!-- Social Icons can go here -->
-          </div>
         </div>
         
         <div>

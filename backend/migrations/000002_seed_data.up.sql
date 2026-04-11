@@ -1,22 +1,21 @@
 -- Seed Categories
-INSERT INTO categories (name, slug, icon, sort_order) VALUES
-('Диваны', 'sofas', '🛋️', 1),
-('Кровати', 'beds', '🛏️', 2),
-('Столы', 'tables', '🍽️', 3);
+INSERT INTO project_categories (name, slug, icon, sort_order) VALUES
+('Кухни', 'kitchens', 'LucideUtensils', 1),
+('Шкафы-купе', 'wardrobes', 'LucideBox', 2);
 
--- Seed Products
-INSERT INTO products (category_id, name, slug, description, price, price_old, images, specs, ai_tags, status) VALUES
-(1, 'Диван "Скандинавия"', 'sofa-scandinavia', 'Минималистичный диван в сером цвете с деревянными ножками.', 45000, 52000, 
- '[{"url": "https://images.unsplash.com/photo-1555041469-a586c61ea9bc", "is_main": true}]', 
- '{"Материал": "Ткань, Дуб", "Размер": "210х90х85"}', 
- 'скандинавский, серый, гостиная, минимализм', 'published'),
+-- Seed Projects
+INSERT INTO projects (project_category_id, name, slug, description, price, price_old, images, specs, ai_tags, status) VALUES
+(1, 'Кухня "Антрацит Лофт"', 'kitchen-anthracite-loft', 'Современная кухня с фасадами из итальянского пластика Fenix. Столешница из искусственного камня, фурнитура Blum с доводчиками.', 185000, 210000, 
+ '[{"url": "https://images.unsplash.com/photo-1556911223-05345a39365e", "is_main": true}]', 
+ '{"Материал": "Fenix NTM", "Фурнитура": "Blum", "Стиль": "Лофт"}', 
+ 'лофт, антрацит, темная кухня, премиум', 'published'),
 
-(2, 'Кровать "Берген"', 'bed-bergen', 'Просторная двуспальная кровать с мягким изголовьем.', 68000, NULL, 
- '[{"url": "https://images.unsplash.com/photo-1505693419148-ad3035ce6121", "is_main": true}]', 
- '{"Материал": "Велюр", "Размер": "180х200"}', 
- 'спальня, уют, современный, светлый', 'published'),
+(1, 'Скандинавская светлая кухня', 'scandi-white-kitchen', 'Уютная и функциональная кухня в скандинавском стиле. Фасады — матовая эмаль, интегрированные ручки.', 145000, NULL, 
+ '[{"url": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136", "is_main": true}]', 
+ '{"Материал": "МДФ Эмаль", "Фурнитура": "Hettich", "Стиль": "Скандинавский"}', 
+ 'сканди, белая кухня, светлый интерьер', 'published'),
 
-(3, 'Стол "Лофт"', 'table-loft', 'Массивный обеденный стол из цельного дуба на стальном каркасе.', 32000, 38000, 
- '[{"url": "https://images.unsplash.com/photo-1530018607912-eff2df114f11", "is_main": true}]', 
- '{"Материал": "Дуб, Сталь", "Размер": "160х80"}', 
- 'кухня, лофт, дерево, обеденный', 'published');
+(2, 'Шкаф-купе "Зеркальный минимализм"', 'wardrobe-mirror-minimal', 'Встроенный шкаф-купе во всю стену. Зеркальные полотна визуально расширяют пространство спальни.', 95000, 115000, 
+ '[{"url": "https://images.unsplash.com/photo-1595428774223-ef52624120d2", "is_main": true}]', 
+ '{"Профиль": "Aristo", "Наполнение": "Egger", "Тип": "Встроенный"}', 
+ 'шкаф, зеркало, спальня, минимализм', 'published');

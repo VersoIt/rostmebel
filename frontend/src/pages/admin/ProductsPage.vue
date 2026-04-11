@@ -66,7 +66,7 @@ const handleSaved = () => {
 };
 
 const exportProducts = () => {
-  downloadFile('/admin/products/export', 'projects.xlsx');
+  downloadFile('/admin/projects/export', 'projects.xlsx');
 };
 
 const handleImgError = (e: Event) => {
@@ -126,7 +126,7 @@ const handleImgError = (e: Event) => {
               </div>
             </td>
             <td class="px-8 py-4 text-brand-brown/60 text-sm">
-              {{ productStore.categories.find(c => c.id === p.category_id)?.name || '—' }}
+              {{ productStore.categories.find(c => c.id === p.project_category_id)?.name || '—' }}
             </td>
             <td class="px-8 py-4 font-semibold">
               {{ p.price.toLocaleString() }} ₽
