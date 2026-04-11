@@ -30,61 +30,78 @@ func NewAIUseCase(repo product.Repository, gemini *gemini.Client, redis *redis.C
 	}
 }
 
-func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Product, error) {
+func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Project, error) {
 	u.logger.Info("AI Search request", "query", query)
 
 	// Check cache
 	cacheKey := fmt.Sprintf("ai_search:%s", hashQuery(query))
 	if cached, err := u.redis.Get(ctx, cacheKey).Result(); err == nil {
-		var products []*product.Product
-		if err := json.Unmarshal([]byte(cached), &products); err == nil {
+		var projects []*product.Project
+		if err := json.Unmarshal([]byte(cached), &projects); err == nil {
 			u.logger.Info("AI Search cache hit", "query", query)
-			return products, nil
+			return projects, nil
 		}
 	}
 
-	// Get all published products
-	allProducts, _, err := u.repo.List(ctx, product.ListFilter{
-		Status: ptr(product.StatusPublished),
-		Limit:  100,
-	})
+	// 1. Fetch Candidates (RAG Lite approach)
+	candidates, err := u.repo.Search(ctx, query, 40)
 	if err != nil {
-		u.logger.Error("AI Search failed to list products", "error", err)
-		return nil, err
+		u.logger.Warn("Initial FTS search failed", "error", err)
 	}
 
-	// Simplify products for Gemini to reduce tokens and improve precision
-	type simpleProd struct {
-		ID    int64   `json:"id"`
-		Name  string  `json:"name"`
-		Price float64 `json:"price"`
-		Tags  string  `json:"tags"`
+	// 2. If FTS didn't find enough, add some popular/recent projects as context
+	if len(candidates) < 10 {
+		popular, _, _ := u.repo.List(ctx, product.ListFilter{
+			Status: ptr(product.StatusPublished),
+			Limit:  40,
+			SortBy: "views_count",
+		})
+		candidates = append(candidates, popular...)
 	}
-	simpleProducts := make([]simpleProd, len(allProducts))
-	for i, p := range allProducts {
-		simpleProducts[i] = simpleProd{
-			ID:    p.ID,
-			Name:  p.Name,
-			Price: p.Price,
-			Tags:  p.AITags,
+
+	// Remove duplicates
+	uniqueCandidates := make([]*product.Project, 0)
+	seen := make(map[int64]bool)
+	for _, c := range candidates {
+		if !seen[c.ID] {
+			seen[c.ID] = true
+			uniqueCandidates = append(uniqueCandidates, c)
 		}
 	}
 
-	productsJSON, _ := json.Marshal(simpleProducts)
+	// 3. Simplify candidates for Gemini
+	type simpleProj struct {
+		ID     int64   `json:"id"`
+		Name   string  `json:"name"`
+		Budget float64 `json:"budget"`
+		Tags   string  `json:"tags"`
+	}
+	simpleProjects := make([]simpleProj, len(uniqueCandidates))
+	for i, p := range uniqueCandidates {
+		simpleProjects[i] = simpleProj{
+			ID:     p.ID,
+			Name:   p.Name,
+			Budget: p.Budget,
+			Tags:   p.AITags,
+		}
+	}
+
+	productsJSON, _ := json.Marshal(simpleProjects)
 	
+	// 4. Gemini selects the BEST 8
 	ids, err := u.gemini.SearchProducts(ctx, query, string(productsJSON))
 	if err != nil {
-		u.logger.Warn("Gemini API error, falling back to full-text search", "error", err)
-		return u.repo.Search(ctx, query, 8)
+		u.logger.Warn("Gemini API error, using candidates as fallback", "error", err)
+		return uniqueCandidates, nil
 	}
 
-	u.logger.Info("Gemini returned product IDs", "ids", ids)
+	u.logger.Info("Gemini returned project IDs", "ids", ids)
 
 	if len(ids) == 0 {
-		return []*product.Product{}, nil
+		return []*product.Project{}, nil
 	}
 
-	var results []*product.Product
+	var results []*product.Project
 	for _, id := range ids {
 		p, err := u.repo.GetByID(ctx, id)
 		if err == nil && p != nil && p.Status == product.StatusPublished {

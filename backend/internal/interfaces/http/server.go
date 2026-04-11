@@ -36,8 +36,8 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public
-		r.Get("/products", ph.GetProducts)
-		r.Get("/products/{id}", ph.GetProduct)
+		r.Get("/projects", ph.GetProducts)
+		r.Get("/projects/{id}", ph.GetProduct)
 		r.Get("/categories", ph.GetCategories)
 		r.Post("/orders", oh.CreateOrder)
 		r.Post("/ai/search", ph.AISearch)
@@ -53,7 +53,7 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 			r.Post("/admin/auth/logout", ah.Logout)
 			r.Get("/admin/stats", ah.GetStats)
 
-			r.Route("/admin/products", func(r chi.Router) {
+			r.Route("/admin/projects", func(r chi.Router) {
 				r.Get("/", ph.GetProducts)
 				r.Post("/", ph.CreateProduct)
 				r.Get("/export", ph.ExportProducts)

@@ -23,6 +23,14 @@ const notificationStore = useNotificationStore();
 const currentPage = ref(1);
 const limit = 10;
 
+const statusMap: Record<string, string> = {
+  'new': 'Новая',
+  'processing': 'В работе',
+  'done': 'Завершена',
+  'rejected': 'Отклонена',
+  'spam': 'Спам'
+};
+
 const fetchOrders = async () => {
   try {
     const params: any = { 
@@ -45,7 +53,7 @@ watch([statusFilter, currentPage], fetchOrders);
 const updateStatus = async (id: number, status: string) => {
   try {
     await api.patch(`/admin/orders/${id}/status`, { status });
-    notificationStore.show(`Статус заявки #${id} обновлен`, 'success');
+    notificationStore.show(`Статус заявки #${id} изменен на "${statusMap[status]}"`, 'success');
     fetchOrders();
   } catch (err) {
     notificationStore.show('Ошибка при обновлении статуса', 'error');
@@ -102,14 +110,14 @@ const getStatusClass = (status: string) => {
       </button>
     </div>
 
-    <div class="flex gap-2 mb-8 bg-white p-1.5 rounded-2xl border border-brand-brown/5 w-fit shadow-sm">
+    <div class="flex gap-2 mb-8 bg-white p-1.5 rounded-2xl border border-brand-brown/5 w-fit shadow-sm overflow-x-auto max-w-full">
       <button 
         v-for="s in ['new', 'processing', 'done', 'rejected', 'all']" 
         :key="s"
         @click="statusFilter = s; currentPage = 1"
-        :class="['px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest transition-all', statusFilter === s ? 'bg-brand-brown text-white shadow-md' : 'text-brand-brown/40 hover:bg-brand-gray']"
+        :class="['px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest transition-all whitespace-nowrap', statusFilter === s ? 'bg-brand-brown text-white shadow-md' : 'text-brand-brown/40 hover:bg-brand-gray']"
       >
-        {{ s === 'all' ? 'Все' : s }}
+        {{ s === 'all' ? 'Все' : (statusMap[s] || s) }}
       </button>
     </div>
 
@@ -140,7 +148,7 @@ const getStatusClass = (status: string) => {
             <td class="px-8 py-6">
               <div :class="['inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter', getStatusClass(o.status)]">
                 <component :is="getStatusIcon(o.status)" :size="12" />
-                {{ o.status }}
+                {{ statusMap[o.status] || o.status }}
               </div>
             </td>
             <td class="px-8 py-6 text-sm text-brand-brown/40">

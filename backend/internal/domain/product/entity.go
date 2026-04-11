@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-type ProductStatus string
+type ProjectStatus string
 
 const (
-	StatusPublished ProductStatus = "published"
-	StatusDraft     ProductStatus = "draft"
-	StatusArchived  ProductStatus = "archived"
+	StatusPublished ProjectStatus = "published"
+	StatusDraft     ProjectStatus = "draft"
+	StatusArchived  ProjectStatus = "archived"
 )
 
 type Image struct {
@@ -18,23 +18,23 @@ type Image struct {
 	IsMain bool   `json:"is_main"`
 }
 
-type Product struct {
-	ID           int64             `json:"id"`
-	CategoryID   *int64            `json:"category_id"`
-	Name         string            `json:"name"`
-	Slug         string            `json:"slug"`
-	Description  string            `json:"description"`
-	Price        float64           `json:"price"`
-	PriceOld     *float64          `json:"price_old"`
-	Images       []Image           `json:"images"`
-	Specs        map[string]string `json:"specs"`
-	AITags       string            `json:"ai_tags"`
-	Status       ProductStatus     `json:"status"`
-	ViewsCount   int               `json:"views_count"`
-	OrdersCount  int               `json:"orders_count"`
-	CreatedAt    time.Time         `json:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at"`
-	DeletedAt    *time.Time        `json:"deleted_at,omitempty"`
+type Project struct {
+	ID                int64             `json:"id"`
+	ProjectCategoryID *int64            `json:"project_category_id"`
+	Name              string            `json:"name"`
+	Slug              string            `json:"slug"`
+	Description       string            `json:"description"`
+	Budget            float64           `json:"price"` // mapped to 'price' in DB for compatibility if needed, but here let's call it Budget
+	BudgetOld         *float64          `json:"price_old"`
+	Images            []Image           `json:"images"`
+	Details           map[string]string `json:"specs"` // renamed from specs
+	AITags            string            `json:"ai_tags"`
+	Status            ProjectStatus     `json:"status"`
+	ViewsCount        int               `json:"views_count"`
+	OrdersCount       int               `json:"orders_count"`
+	CreatedAt         time.Time         `json:"created_at"`
+	UpdatedAt         time.Time         `json:"updated_at"`
+	DeletedAt         *time.Time        `json:"deleted_at,omitempty"`
 }
 
 type Category struct {
@@ -48,11 +48,11 @@ type Category struct {
 }
 
 type Repository interface {
-	GetByID(ctx context.Context, id int64) (*Product, error)
-	GetBySlug(ctx context.Context, slug string) (*Product, error)
-	List(ctx context.Context, filter ListFilter) ([]*Product, int64, error)
-	Create(ctx context.Context, p *Product) error
-	Update(ctx context.Context, p *Product) error
+	GetByID(ctx context.Context, id int64) (*Project, error)
+	GetBySlug(ctx context.Context, slug string) (*Project, error)
+	List(ctx context.Context, filter ListFilter) ([]*Project, int64, error)
+	Create(ctx context.Context, p *Project) error
+	Update(ctx context.Context, p *Project) error
 	Delete(ctx context.Context, id int64) error
 	
 	ListCategories(ctx context.Context) ([]*Category, error)
@@ -62,18 +62,18 @@ type Repository interface {
 	DeleteCategory(ctx context.Context, id int64) error
 
 	IncrementViews(ctx context.Context, id int64) error
-	Search(ctx context.Context, query string, limit int) ([]*Product, error)
+	Search(ctx context.Context, query string, limit int) ([]*Project, error)
 }
 
 type ListFilter struct {
-	CategoryID *int64
-	Status     *ProductStatus
-	MinPrice   *float64
-	MaxPrice   *float64
-	Search     string
-	SortBy     string
-	SortOrder  string
-	Limit      int
-	Offset     int
-	Cursor     int64
+	ProjectCategoryID *int64
+	Status            *ProjectStatus
+	MinBudget         *float64
+	MaxBudget         *float64
+	Search            string
+	SortBy            string
+	SortOrder         string
+	Limit             int
+	Offset            int
+	Cursor            int64
 }

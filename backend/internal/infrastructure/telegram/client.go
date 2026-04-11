@@ -29,7 +29,7 @@ func (c *Client) SendOrderNotification(name, phone, product, comment string) err
 	text := fmt.Sprintf("🛋️ **Новая заявка РОСТ Мебель**\n\n"+
 		"👤 Клиент: %s\n"+
 		"📞 Телефон: %s\n"+
-		"📦 Товар: %s\n"+
+		"📦 Проект: %s\n"+
 		"💬 Комментарий: %s",
 		name, phone, product, comment)
 

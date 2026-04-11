@@ -4,55 +4,55 @@ import (
 	"github.com/rostmebel/backend/internal/domain/product"
 )
 
-type ProductResponse struct {
-	ID          int64                    `json:"id"`
-	CategoryID  *int64                   `json:"category_id"`
-	Name        string                   `json:"name"`
-	Slug        string                   `json:"slug"`
-	Description string                   `json:"description"`
-	Price       float64                  `json:"price"`
-	PriceOld    *float64                 `json:"price_old"`
-	Images      []product.Image          `json:"images"`
-	Specs       map[string]string        `json:"specs"`
-	AITags      string                   `json:"ai_tags"`
-	Status      product.ProductStatus    `json:"status"`
-	ViewsCount  int                      `json:"views_count"`
-	OrdersCount int                      `json:"orders_count"`
-	CreatedAt   string                   `json:"created_at"`
-	UpdatedAt   string                   `json:"updated_at"`
+type ProjectResponse struct {
+	ID                int64                    `json:"id"`
+	ProjectCategoryID *int64                   `json:"project_category_id"`
+	Name              string                   `json:"name"`
+	Slug              string                   `json:"slug"`
+	Description       string                   `json:"description"`
+	Budget            float64                  `json:"price"`
+	BudgetOld         *float64                 `json:"price_old"`
+	Images            []product.Image          `json:"images"`
+	Details           map[string]string        `json:"specs"`
+	AITags            string                   `json:"ai_tags"`
+	Status            product.ProjectStatus    `json:"status"`
+	ViewsCount        int                      `json:"views_count"`
+	OrdersCount       int                      `json:"orders_count"`
+	CreatedAt         string                   `json:"created_at"`
+	UpdatedAt         string                   `json:"updated_at"`
 }
 
-func FromProduct(p *product.Product) ProductResponse {
-	return ProductResponse{
-		ID:          p.ID,
-		CategoryID:  p.CategoryID,
-		Name:        p.Name,
-		Slug:        p.Slug,
-		Description: p.Description,
-		Price:       p.Price,
-		PriceOld:    p.PriceOld,
-		Images:      p.Images,
-		Specs:       p.Specs,
-		AITags:      p.AITags,
-		Status:      p.Status,
-		ViewsCount:  p.ViewsCount,
-		OrdersCount: p.OrdersCount,
-		CreatedAt:   p.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		UpdatedAt:   p.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+func FromProject(p *product.Project) ProjectResponse {
+	return ProjectResponse{
+		ID:                p.ID,
+		ProjectCategoryID: p.ProjectCategoryID,
+		Name:              p.Name,
+		Slug:              p.Slug,
+		Description:       p.Description,
+		Budget:            p.Budget,
+		BudgetOld:         p.BudgetOld,
+		Images:            p.Images,
+		Details:           p.Details,
+		AITags:            p.AITags,
+		Status:            p.Status,
+		ViewsCount:        p.ViewsCount,
+		OrdersCount:       p.OrdersCount,
+		CreatedAt:         p.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:         p.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }
 
-type CreateProductRequest struct {
-	CategoryID  *int64                `json:"category_id"`
-	Name        string                `json:"name" validate:"required"`
-	Slug        string                `json:"slug" validate:"required"`
-	Description string                `json:"description"`
-	Price       float64               `json:"price" validate:"required"`
-	PriceOld    *float64              `json:"price_old"`
-	Images      []product.Image       `json:"images"`
-	Specs       map[string]string     `json:"specs"`
-	AITags      string                `json:"ai_tags"`
-	Status      product.ProductStatus `json:"status"`
+type CreateProjectRequest struct {
+	ProjectCategoryID *int64                `json:"project_category_id"`
+	Name              string                `json:"name" validate:"required"`
+	Slug              string                `json:"slug" validate:"required"`
+	Description       string                `json:"description"`
+	Budget            float64               `json:"price" validate:"required"`
+	BudgetOld         *float64              `json:"price_old"`
+	Images            []product.Image       `json:"images"`
+	Details           map[string]string     `json:"specs"`
+	AITags            string                `json:"ai_tags"`
+	Status            product.ProjectStatus `json:"status"`
 }
 
 type CategoryResponse struct {

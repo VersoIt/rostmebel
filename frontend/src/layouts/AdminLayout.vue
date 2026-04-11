@@ -12,7 +12,7 @@ const authStore = useAuthStore();
 
 const menuItems = [
   { name: 'Дашборд', icon: LucideLayoutDashboard, to: '/admin' },
-  { name: 'Товары', icon: LucidePackage, to: '/admin/products' },
+  { name: 'Проекты', icon: LucidePackage, to: '/admin/products' },
   { name: 'Заявки', icon: LucideClipboardList, to: '/admin/orders' },
 ];
 </script>
@@ -31,9 +31,9 @@ const menuItems = [
           v-for="item in menuItems" 
           :key="item.name"
           :to="item.to"
-          class="admin-sidebar-link flex items-center gap-4 px-6 py-4 rounded-xl transition-all hover:bg-white/5 group"
-          active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20 !pointer-events-none"
-          exact-active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20 !pointer-events-none"
+          class="admin-sidebar-link flex items-center gap-4 px-6 py-4 rounded-xl transition-all hover:bg-white/5 group cursor-pointer"
+          active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20"
+          exact-active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20"
         >
           <component :is="item.icon" :size="20" class="group-hover:scale-110 transition-transform" />
           {{ item.name }}

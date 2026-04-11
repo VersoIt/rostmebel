@@ -57,7 +57,7 @@ const getChartPath = () => {
     
     <div v-if="stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
       <div class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm">
-        <span class="text-brand-brown/40 uppercase tracking-widest text-xs font-semibold mb-2 block">Всего товаров</span>
+        <span class="text-brand-brown/40 uppercase tracking-widest text-xs font-semibold mb-2 block">Всего проектов</span>
         <div class="text-4xl font-serif text-brand-brown">{{ stats.products_count }}</div>
       </div>
       <div class="bg-brand-gold p-8 rounded-3xl shadow-xl shadow-brand-gold/20">
@@ -76,7 +76,7 @@ const getChartPath = () => {
 
     <!-- Chart -->
     <div v-if="stats?.orders_by_day && stats.orders_by_day.length > 0" class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm mb-12">
-      <h3 class="font-serif text-xl mb-8">Активность заказов (30 дней)</h3>
+      <h3 class="font-serif text-xl mb-8">Активность заявок (30 дней)</h3>
       <div class="h-48 w-full">
         <svg viewBox="0 0 1000 200" class="w-full h-full preserve-aspect-ratio-none">
           <path 
@@ -95,7 +95,7 @@ const getChartPath = () => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
       <div class="bg-white rounded-3xl border border-brand-brown/5 shadow-sm overflow-hidden">
         <div class="p-8 border-b border-brand-brown/5 bg-brand-gray/20">
-          <h3 class="font-serif text-xl">Популярные товары</h3>
+          <h3 class="font-serif text-xl">Популярные проекты</h3>
         </div>
         <div class="p-8 space-y-6">
           <div 
@@ -119,7 +119,7 @@ const getChartPath = () => {
           <div class="grid grid-cols-2 gap-4">
             <router-link to="/admin/products" class="bg-brand-brown text-white p-6 rounded-2xl hover:bg-brand-gold transition-all text-left group">
               <LucidePackage class="mb-4 group-hover:scale-110 transition-transform" />
-              <span class="font-medium">Управление товарами</span>
+              <span class="font-medium">Управление проектами</span>
             </router-link>
             <router-link to="/admin/orders" class="bg-brand-gray p-6 rounded-2xl hover:bg-brand-brown hover:text-white transition-all text-left group">
               <LucideClipboardList class="mb-4 group-hover:scale-110 transition-transform text-brand-gold" />

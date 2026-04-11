@@ -56,7 +56,7 @@ const selectCategory = (id: string) => {
   <div class="bg-brand-gray/30 min-h-screen pt-32 pb-24 px-4">
     <div class="max-w-7xl mx-auto">
       <header class="mb-12">
-        <h1 class="font-serif text-5xl text-brand-brown mb-6">Каталог мебели</h1>
+        <h1 class="font-serif text-5xl text-brand-brown mb-6">Наши проекты</h1>
         
         <div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
           <button 
@@ -66,7 +66,7 @@ const selectCategory = (id: string) => {
               !selectedCategory ? 'bg-brand-brown border-brand-brown text-white shadow-lg' : 'bg-white border-transparent text-brand-brown hover:bg-brand-brown/5'
             ]"
           >
-            Все товары
+            Все проекты
           </button>
           <button 
             v-for="cat in productStore.categories" 

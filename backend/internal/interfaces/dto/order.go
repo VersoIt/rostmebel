@@ -5,7 +5,7 @@ import (
 )
 
 type CreateOrderRequest struct {
-	ProductID   *int64  `json:"product_id"`
+	ProjectID   *int64  `json:"project_id"`
 	ClientName  string  `json:"client_name" validate:"required"`
 	ClientPhone string  `json:"client_phone" validate:"required"`
 	ClientEmail string  `json:"client_email"`
@@ -16,7 +16,7 @@ type CreateOrderRequest struct {
 
 type OrderResponse struct {
 	ID          int64             `json:"id"`
-	ProductID   *int64            `json:"product_id"`
+	ProjectID   *int64            `json:"project_id"`
 	ClientName  string            `json:"client_name"`
 	ClientPhone string            `json:"client_phone"`
 	ClientEmail string            `json:"client_email"`
@@ -29,7 +29,7 @@ type OrderResponse struct {
 func FromOrder(o *order.Order) OrderResponse {
 	return OrderResponse{
 		ID:          o.ID,
-		ProductID:   o.ProductID,
+		ProjectID:   o.ProjectID,
 		ClientName:  o.ClientName,
 		ClientPhone: o.ClientPhone,
 		ClientEmail: o.ClientEmail,

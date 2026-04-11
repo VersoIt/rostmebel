@@ -20,20 +20,20 @@ func NewOrderRepo(pool *pgxpool.Pool) *OrderRepo {
 }
 
 func (r *OrderRepo) Create(ctx context.Context, o *order.Order) error {
-	query := `INSERT INTO orders (product_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint) 
+	query := `INSERT INTO orders (project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, created_at, updated_at`
 	
 	return r.pool.QueryRow(ctx, query, 
-		o.ProductID, o.ClientName, o.ClientPhone, o.ClientEmail, o.Comment, o.Status, o.IPAddress.String(), o.UserAgent, o.Fingerprint,
+		o.ProjectID, o.ClientName, o.ClientPhone, o.ClientEmail, o.Comment, o.Status, o.IPAddress.String(), o.UserAgent, o.Fingerprint,
 	).Scan(&o.ID, &o.CreatedAt, &o.UpdatedAt)
 }
 
 func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error) {
-	query := `SELECT id, product_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders WHERE id = $1`
+	query := `SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders WHERE id = $1`
 	var o order.Order
 	var ip string
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&o.ID, &o.ProductID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt,
+		&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -68,7 +68,7 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 		offset = f.Offset
 	}
 
-	query := fmt.Sprintf("SELECT id, product_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d", where, len(args)+1, len(args)+2)
+	query := fmt.Sprintf("SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d", where, len(args)+1, len(args)+2)
 	args = append(args, limit, offset)
 
 	rows, err := r.pool.Query(ctx, query, args...)
@@ -81,7 +81,7 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 	for rows.Next() {
 		var o order.Order
 		var ip string
-		if err := rows.Scan(&o.ID, &o.ProductID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt); err != nil {
+		if err := rows.Scan(&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
 		o.IPAddress = net.ParseIP(ip)
@@ -125,7 +125,7 @@ func (r *OrderRepo) MarkAsSpam(ctx context.Context, id int64) error {
 }
 
 func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
-	query := `SELECT id, product_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders ORDER BY created_at DESC`
+	query := `SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders ORDER BY created_at DESC`
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
 	for rows.Next() {
 		var o order.Order
 		var ip string
-		if err := rows.Scan(&o.ID, &o.ProductID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt); err != nil {
+		if err := rows.Scan(&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt); err != nil {
 			return nil, err
 		}
 		o.IPAddress = net.ParseIP(ip)

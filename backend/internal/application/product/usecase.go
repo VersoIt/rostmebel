@@ -14,27 +14,27 @@ func NewUseCase(repo product.Repository) *UseCase {
 	return &UseCase{repo: repo}
 }
 
-func (u *UseCase) GetProduct(ctx context.Context, id int64) (*product.Product, error) {
+func (u *UseCase) GetProject(ctx context.Context, id int64) (*product.Project, error) {
 	return u.repo.GetByID(ctx, id)
 }
 
-func (u *UseCase) GetProductBySlug(ctx context.Context, slug string) (*product.Product, error) {
+func (u *UseCase) GetProjectBySlug(ctx context.Context, slug string) (*product.Project, error) {
 	return u.repo.GetBySlug(ctx, slug)
 }
 
-func (u *UseCase) ListProducts(ctx context.Context, f product.ListFilter) ([]*product.Product, int64, error) {
+func (u *UseCase) ListProjects(ctx context.Context, f product.ListFilter) ([]*product.Project, int64, error) {
 	return u.repo.List(ctx, f)
 }
 
-func (u *UseCase) CreateProduct(ctx context.Context, p *product.Product) error {
+func (u *UseCase) CreateProject(ctx context.Context, p *product.Project) error {
 	return u.repo.Create(ctx, p)
 }
 
-func (u *UseCase) UpdateProduct(ctx context.Context, p *product.Product) error {
+func (u *UseCase) UpdateProject(ctx context.Context, p *product.Project) error {
 	return u.repo.Update(ctx, p)
 }
 
-func (u *UseCase) DeleteProduct(ctx context.Context, id int64) error {
+func (u *UseCase) DeleteProject(ctx context.Context, id int64) error {
 	return u.repo.Delete(ctx, id)
 }
 
@@ -58,6 +58,6 @@ func (u *UseCase) IncrementViews(ctx context.Context, id int64) error {
 	return u.repo.IncrementViews(ctx, id)
 }
 
-func (u *UseCase) Search(ctx context.Context, query string, limit int) ([]*product.Product, error) {
+func (u *UseCase) Search(ctx context.Context, query string, limit int) ([]*product.Project, error) {
 	return u.repo.Search(ctx, query, limit)
 }

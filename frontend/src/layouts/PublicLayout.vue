@@ -36,7 +36,7 @@ onUnmounted(() => {
 
         <div class="hidden md:flex items-center gap-10">
           <router-link to="/" class="font-medium hover:text-brand-gold transition-colors">Главная</router-link>
-          <router-link to="/catalog" class="font-medium hover:text-brand-gold transition-colors">Каталог</router-link>
+          <router-link to="/catalog" class="font-medium hover:text-brand-gold transition-colors">Проекты</router-link>
           <router-link to="/contact" class="font-medium hover:text-brand-gold transition-colors">Контакты</router-link>
         </div>
 
@@ -64,7 +64,7 @@ onUnmounted(() => {
         <div v-if="isMenuOpen" class="md:hidden absolute top-full left-0 right-0 bg-white border-t border-brand-brown/5 p-6 shadow-xl">
           <div class="flex flex-col gap-6 text-center">
             <router-link to="/" @click="isMenuOpen = false" class="text-xl font-medium">Главная</router-link>
-            <router-link to="/catalog" @click="isMenuOpen = false" class="text-xl font-medium">Каталог</router-link>
+            <router-link to="/catalog" @click="isMenuOpen = false" class="text-xl font-medium">Проекты</router-link>
             <router-link to="/contact" @click="isMenuOpen = false" class="text-xl font-medium">Контакты</router-link>
           </div>
         </div>
@@ -92,7 +92,7 @@ onUnmounted(() => {
           <h4 class="font-serif text-lg mb-6 uppercase tracking-widest text-brand-brown/40">Разделы</h4>
           <ul class="space-y-4">
             <li><router-link to="/" class="hover:text-brand-gold transition-colors">Главная</router-link></li>
-            <li><router-link to="/catalog" class="hover:text-brand-gold transition-colors">Каталог</router-link></li>
+            <li><router-link to="/catalog" class="hover:text-brand-gold transition-colors">Проекты</router-link></li>
             <li><router-link to="/contact" class="hover:text-brand-gold transition-colors">Контакты</router-link></li>
           </ul>
         </div>
@@ -100,7 +100,7 @@ onUnmounted(() => {
           <h4 class="font-serif text-lg mb-6 uppercase tracking-widest text-brand-brown/40">Контакты</h4>
           <ul class="space-y-4 text-brand-brown/80">
             <li>+7 (978) 763-16-03</li>
-            <li>info@rostmebel.ru</li>
+            <li>rost.salon2003@mail.ru</li>
           </ul>
         </div>
       </div>

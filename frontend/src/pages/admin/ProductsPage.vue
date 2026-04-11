@@ -50,7 +50,7 @@ const openEdit = (p: Product) => {
 };
 
 const deleteProduct = async (id: number) => {
-  if (confirm('Вы уверены, что хотите удалить этот товар?')) {
+  if (confirm('Вы уверены, что хотите удалить этот проект?')) {
     try {
       await api.delete(`/admin/products/${id}`);
       fetch();
@@ -66,7 +66,7 @@ const handleSaved = () => {
 };
 
 const exportProducts = () => {
-  downloadFile('/admin/products/export', 'products.xlsx');
+  downloadFile('/admin/products/export', 'projects.xlsx');
 };
 
 const handleImgError = (e: Event) => {
@@ -77,7 +77,7 @@ const handleImgError = (e: Event) => {
 <template>
   <div>
     <div class="flex items-center justify-between mb-12">
-      <h1 class="font-serif text-4xl text-brand-brown">Управление товарами</h1>
+      <h1 class="font-serif text-4xl text-brand-brown">Управление проектами</h1>
       <div class="flex gap-4">
         <button @click="exportProducts" class="bg-brand-gray text-brand-brown px-6 py-3 rounded-xl font-medium hover:bg-brand-brown hover:text-white transition-all flex items-center gap-2">
           <LucideDownload :size="20" />
@@ -85,7 +85,7 @@ const handleImgError = (e: Event) => {
         </button>
         <button @click="openCreate" class="bg-brand-brown text-white px-6 py-3 rounded-xl font-medium hover:bg-brand-gold transition-all flex items-center gap-2 shadow-lg">
           <LucidePlus :size="20" />
-          Добавить товар
+          Добавить проект
         </button>
       </div>
     </div>
@@ -106,9 +106,9 @@ const handleImgError = (e: Event) => {
       <table class="w-full text-left">
         <thead>
           <tr class="bg-brand-gray/20 text-brand-brown/40 text-xs uppercase tracking-widest">
-            <th class="px-8 py-4 font-semibold">Товар</th>
+            <th class="px-8 py-4 font-semibold">Проект</th>
             <th class="px-8 py-4 font-semibold">Категория</th>
-            <th class="px-8 py-4 font-semibold">Цена</th>
+            <th class="px-8 py-4 font-semibold">Бюджет</th>
             <th class="px-8 py-4 font-semibold">Статус</th>
             <th class="px-8 py-4 font-semibold text-right">Действия</th>
           </tr>
@@ -155,7 +155,7 @@ const handleImgError = (e: Event) => {
 
       <!-- Pagination -->
       <div class="p-6 bg-brand-gray/10 flex items-center justify-between">
-        <span class="text-sm text-brand-brown/40">Показано {{ productStore.products.length }} из {{ productStore.total }} товаров</span>
+        <span class="text-sm text-brand-brown/40">Показано {{ productStore.products.length }} из {{ productStore.total }} проектов</span>
         <div class="flex gap-2">
           <button 
             @click="currentPage--" 

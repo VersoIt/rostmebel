@@ -18,7 +18,7 @@ const (
 
 type Order struct {
 	ID          int64       `json:"id"`
-	ProductID   *int64      `json:"product_id"`
+	ProjectID   *int64      `json:"project_id"`
 	ClientName  string      `json:"client_name"`
 	ClientPhone string      `json:"client_phone"`
 	ClientEmail string      `json:"client_email"`

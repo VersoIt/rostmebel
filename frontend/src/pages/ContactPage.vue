@@ -28,7 +28,7 @@ import { LucidePhone, LucideMail, LucideMapPin } from 'lucide-vue-next';
               </div>
               <div>
                 <h3 class="font-medium text-brand-brown/40 uppercase tracking-widest text-sm mb-1">Email</h3>
-                <p class="text-2xl font-serif">info@rostmebel.ru</p>
+                <p class="text-2xl font-serif">rost.salon2003@mail.ru</p>
               </div>
             </div>
 
@@ -38,7 +38,7 @@ import { LucidePhone, LucideMail, LucideMapPin } from 'lucide-vue-next';
               </div>
               <div>
                 <h3 class="font-medium text-brand-brown/40 uppercase tracking-widest text-sm mb-1">Адрес</h3>
-                <p class="text-2xl font-serif">г. Москва, ул. Примерная, д. 1</p>
+                <p class="text-2xl font-serif">г. Симферополь</p>
               </div>
             </div>
           </div>

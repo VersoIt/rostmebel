@@ -14,7 +14,7 @@ export const useProductStore = defineStore('products', {
     async fetchProducts(params: any = {}) {
       this.loading = true;
       try {
-        const { data } = await api.get('/products', { params });
+        const { data } = await api.get('/projects', { params });
         this.products = data.items;
         this.total = data.total;
       } catch (err: any) {
@@ -45,7 +45,7 @@ export const useProductStore = defineStore('products', {
     },
     async fetchProduct(idOrSlug: string | number) {
       try {
-        const { data } = await api.get(`/products/${idOrSlug}`);
+        const { data } = await api.get(`/projects/${idOrSlug}`);
         return data as Product;
       } catch (err: any) {
         console.error(err);

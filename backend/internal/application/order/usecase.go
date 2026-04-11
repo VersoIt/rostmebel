@@ -25,15 +25,15 @@ func NewUseCase(repo order.Repository, prodRepo domProduct.Repository, redis *re
 
 func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 	if u.limitEnabled {
-		// Rate limiting: 1 order per IP per 24 hours
+		// Rate limiting: 5 orders per IP per 24 hours (increased from 1)
 		key := fmt.Sprintf("order_limit:%s", o.IPAddress.String())
 		count, err := u.redis.Get(ctx, key).Int()
 		if err != nil && err != redis.Nil {
 			return err
 		}
 
-		if count >= 1 {
-			return fmt.Errorf("Вы уже отправляли заявку сегодня. Пожалуйста, подождите 24 часа.")
+		if count >= 5 {
+			return fmt.Errorf("Превышен лимит заявок на сегодня. Пожалуйста, попробуйте завтра.")
 		}
 		
 		// Increment rate limit later
@@ -44,17 +44,24 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 	}
 
 	if err := u.repo.Create(ctx, o); err != nil {
-		return err
+		return fmt.Errorf("failed to save order to DB: %w", err)
 	}
 
 	// Telegram Notification
-	productName := "Общая консультация"
-	if o.ProductID != nil {
-		if p, err := u.prodRepo.GetByID(ctx, *o.ProductID); err == nil && p != nil {
-			productName = p.Name
+	projectName := "Общая консультация"
+	if o.ProjectID != nil {
+		if p, err := u.prodRepo.GetByID(ctx, *o.ProjectID); err == nil && p != nil {
+			projectName = p.Name
 		}
 	}
-	go u.tg.SendOrderNotification(o.ClientName, o.ClientPhone, productName, o.Comment)
+	
+	// Use background context for notification to avoid cancelling it if user request finishes
+	go func() {
+		err := u.tg.SendOrderNotification(o.ClientName, o.ClientPhone, projectName, o.Comment)
+		if err != nil {
+			fmt.Printf("TELEGRAM ERROR: %v\n", err)
+		}
+	}()
 
 	return nil
 }

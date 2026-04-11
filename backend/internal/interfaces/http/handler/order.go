@@ -40,7 +40,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	o := &domOrder.Order{
-		ProductID:   req.ProductID,
+		ProjectID:   req.ProjectID,
 		ClientName:  req.ClientName,
 		ClientPhone: req.ClientPhone,
 		ClientEmail: req.ClientEmail,

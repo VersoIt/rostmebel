@@ -8,11 +8,51 @@ const router = createRouter({
       path: '/',
       component: () => import('@/layouts/PublicLayout.vue'),
       children: [
-        { path: '', name: 'home', component: () => import('@/pages/HomePage.vue') },
-        { path: 'catalog', name: 'catalog', component: () => import('@/pages/CatalogPage.vue') },
-        { path: 'product/:id', name: 'product', component: () => import('@/pages/ProductPage.vue') },
-        { path: 'contact', name: 'contact', component: () => import('@/pages/ContactPage.vue') },
-        { path: 'favorites', name: 'favorites', component: () => import('@/pages/FavoritesPage.vue') },
+        { 
+          path: '', 
+          name: 'home', 
+          component: () => import('@/pages/HomePage.vue'),
+          meta: { 
+            title: 'РОСТ Мебель — Премиальная мебель на заказ по индивидуальным размерам', 
+            description: 'Изготовление кухонь, шкафов и авторской мебели на заказ. 15 лет опыта, гарантия качества и уникальный дизайн вашего интерьера.' 
+          }
+        },
+        { 
+          path: 'catalog', 
+          name: 'catalog', 
+          component: () => import('@/pages/CatalogPage.vue'),
+          meta: { 
+            title: 'Портфолио проектов — РОСТ Мебель', 
+            description: 'Смотрите примеры реализованных нами проектов: кухни, гостиные, спальни и другая мебель на заказ с ценами и деталями.' 
+          }
+        },
+        { 
+          path: 'product/:id', 
+          name: 'product', 
+          component: () => import('@/pages/ProductPage.vue'),
+          meta: { 
+            title: 'Детали проекта — РОСТ Мебель', 
+            description: 'Подробное описание реализованного проекта мебели на заказ.' 
+          }
+        },
+        { 
+          path: 'contact', 
+          name: 'contact', 
+          component: () => import('@/pages/ContactPage.vue'),
+          meta: { 
+            title: 'Контакты — РОСТ Мебель', 
+            description: 'Свяжитесь с нами для консультации или замера. Мы находимся в Симферополе, работаем по всему Крыму.'
+          }
+        },
+        { 
+          path: 'favorites', 
+          name: 'favorites', 
+          component: () => import('@/pages/FavoritesPage.vue'),
+          meta: { 
+            title: 'Избранные идеи — РОСТ Мебель', 
+            description: 'Проекты и идеи мебели, которые вы сохранили для своего будущего интерьера.' 
+          }
+        },
       ]
     },
     {
@@ -42,6 +82,24 @@ router.beforeEach((to, _from, next) => {
     next({ name: 'admin' });
   } else {
     next();
+  }
+});
+
+router.afterEach((to) => {
+  const defaultTitle = 'РОСТ Мебель — Премиальная мебель на заказ';
+  const title = (to.meta.title as string) || defaultTitle;
+  const description = (to.meta.description as string) || '';
+
+  document.title = title;
+
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) {
+    metaDesc.setAttribute('content', description);
+  } else {
+    const meta = document.createElement('meta');
+    meta.name = 'description';
+    meta.content = description;
+    document.head.appendChild(meta);
   }
 });
 
