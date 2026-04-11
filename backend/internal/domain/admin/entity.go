@@ -24,12 +24,21 @@ type Repository interface {
 }
 
 type Stats struct {
-	ProjectsCount  int64            `json:"projects_count"`
-	NewOrdersToday int64            `json:"new_orders_today"`
-	TotalOrders    int64            `json:"total_orders"`
-	SuccessRate    float64          `json:"success_rate"`
-	TopProjects    []TopProject     `json:"top_projects"`
-	OrdersByDay    []OrdersByDay    `json:"orders_by_day"`
+	ProjectsCount       int64            `json:"projects_count"`
+	NewOrdersToday      int64            `json:"new_orders_today"`
+	TotalOrders         int64            `json:"total_orders"`
+	SuccessRate         float64          `json:"success_rate"`
+	TopProjects         []TopProject     `json:"top_projects"`
+	OrdersByDay         []OrdersByDay    `json:"orders_by_day"`
+	RecentOrders        []RecentOrder    `json:"recent_orders"`
+	PendingReviewsCount int64            `json:"pending_reviews_count"`
+}
+
+type RecentOrder struct {
+	ID          int64     `json:"id"`
+	ClientName  string    `json:"client_name"`
+	ProjectName string    `json:"project_name"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type TopProject struct {

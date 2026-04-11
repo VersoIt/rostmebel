@@ -205,9 +205,9 @@ const getStatusClass = (status: string) => {
                   </button>
                 </template>
 
-                <!-- Для СПАМА: Вернуть в работу -->
+                <!-- Для СПАМА: Вернуть в новые -->
                 <template v-else-if="o.status === 'spam'">
-                  <button @click="updateStatus(o.id, 'processing')" class="p-2 bg-brand-gold/10 text-brand-gold rounded-lg hover:bg-brand-gold hover:text-white transition-all flex items-center gap-2 px-4" title="Восстановить">
+                  <button @click="updateStatus(o.id, 'new')" class="p-2 bg-brand-gold/10 text-brand-gold rounded-lg hover:bg-brand-gold hover:text-white transition-all flex items-center gap-2 px-4" title="Восстановить">
                     <LucideRefreshCw :size="18" />
                     <span class="text-[10px] font-bold uppercase">Восстановить</span>
                   </button>

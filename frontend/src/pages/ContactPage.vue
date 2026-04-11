@@ -99,7 +99,7 @@ onMounted(() => {
                 <div class="space-y-4 text-white/60 mb-10 text-lg">
                   <p class="flex items-center gap-3">
                     <LucideMapPin :size="20" class="text-brand-gold" />
-                    Севастополь, Фиолентовское шоссе, 1/2
+                    Симферополь
                   </p>
                   <p class="flex items-center gap-3">
                     <LucideClock :size="20" class="text-brand-gold" />

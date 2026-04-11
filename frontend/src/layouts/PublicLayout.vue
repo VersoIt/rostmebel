@@ -129,7 +129,7 @@ const isHeaderActive = computed(() => !isHomePage.value || isScrolled.value);
             <span class="font-serif text-2xl tracking-tighter uppercase font-black text-brand-brown">РОСТ <span class="text-brand-gold">Мебель</span></span>
           </div>
           <p class="text-brand-brown/60 max-w-sm mb-10 leading-relaxed font-medium">
-            Проектирование и изготовление премиальной мебели по индивидуальным размерам в Севастополе и по всему Крыму.
+            Проектирование и изготовление премиальной мебели по индивидуальным размерам по всему Крыму.
           </p>
         </div>
         
@@ -153,7 +153,7 @@ const isHeaderActive = computed(() => !isHomePage.value || isScrolled.value);
               <span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>
               info@rostmebel.ru
             </li>
-            <li class="text-[10px] uppercase text-brand-brown/40 tracking-widest mt-4">г. Севастополь, ул. Фиолентовское шоссе, 1/2</li>
+            <li class="text-[10px] uppercase text-brand-brown/40 tracking-widest mt-4">г. Симферополь</li>
           </ul>
         </div>
       </div>

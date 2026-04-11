@@ -22,9 +22,7 @@ func (r *AdminRepo) GetByUsername(ctx context.Context, username string) (*admin.
 	var a admin.Admin
 	err := r.pool.QueryRow(ctx, query, username).Scan(&a.ID, &a.Username, &a.PasswordHash, &a.RefreshToken, &a.LastLoginAt, &a.CreatedAt)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
+		if err == pgx.ErrNoRows { return nil, nil }
 		return nil, err
 	}
 	return &a, nil
@@ -35,9 +33,7 @@ func (r *AdminRepo) GetByID(ctx context.Context, id int64) (*admin.Admin, error)
 	var a admin.Admin
 	err := r.pool.QueryRow(ctx, query, id).Scan(&a.ID, &a.Username, &a.PasswordHash, &a.RefreshToken, &a.LastLoginAt, &a.CreatedAt)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
+		if err == pgx.ErrNoRows { return nil, nil }
 		return nil, err
 	}
 	return &a, nil
@@ -62,44 +58,37 @@ func (r *AdminRepo) UpdateRefreshToken(ctx context.Context, id int64, token *str
 
 func (r *AdminRepo) GetStats(ctx context.Context) (*admin.Stats, error) {
 	stats := &admin.Stats{
-		TopProjects: []admin.TopProject{},
-		OrdersByDay: []admin.OrdersByDay{},
+		TopProjects:  []admin.TopProject{},
+		OrdersByDay:  []admin.OrdersByDay{},
+		RecentOrders: []admin.RecentOrder{},
 	}
 
-	// Projects count
+	// 1. Projects count
 	err := r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM projects WHERE deleted_at IS NULL").Scan(&stats.ProjectsCount)
-	if err != nil {
-		return nil, fmt.Errorf("stats products count: %w", err)
-	}
+	if err != nil { return nil, fmt.Errorf("stats projects count: %w", err) }
 
-	// New orders today
-	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders WHERE created_at >= CURRENT_DATE").Scan(&stats.NewOrdersToday)
-	if err != nil {
-		return nil, fmt.Errorf("stats new orders: %w", err)
-	}
+	// 2. New orders today
+	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders WHERE created_at >= CURRENT_DATE AND status != 'spam'").Scan(&stats.NewOrdersToday)
+	if err != nil { return nil, fmt.Errorf("stats new orders: %w", err) }
 
-	// Total orders
+	// 3. Total orders
 	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders WHERE status != 'spam'").Scan(&stats.TotalOrders)
-	if err != nil {
-		return nil, fmt.Errorf("stats total orders: %w", err)
-	}
+	if err != nil { return nil, fmt.Errorf("stats total orders: %w", err) }
 
-	// Success rate
+	// 4. Success rate
 	var doneOrders int64
 	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders WHERE status = 'done'").Scan(&doneOrders)
-	if err != nil {
-		return nil, fmt.Errorf("stats success rate: %w", err)
-	}
+	if err != nil { return nil, fmt.Errorf("stats success rate: %w", err) }
 	if stats.TotalOrders > 0 {
 		stats.SuccessRate = float64(doneOrders) / float64(stats.TotalOrders) * 100
 	}
 
-	// Top projects
+	// 5. Top projects
 	rows, err := r.pool.Query(ctx, `
 		SELECT p.id, p.name, COUNT(o.id) as count
 		FROM projects p
 		JOIN orders o ON o.project_id = p.id
-		WHERE o.status != 'spam'
+		WHERE o.status != 'spam' AND p.deleted_at IS NULL
 		GROUP BY p.id, p.name
 		ORDER BY count DESC
 		LIMIT 5
@@ -114,7 +103,30 @@ func (r *AdminRepo) GetStats(ctx context.Context) (*admin.Stats, error) {
 		}
 	}
 
-	// Orders by day (last 30 days)
+	// 6. Recent Orders (LATEST 5)
+	rows, err = r.pool.Query(ctx, `
+		SELECT o.id, o.client_name, COALESCE(p.name, 'Общая консультация'), o.created_at
+		FROM orders o
+		LEFT JOIN projects p ON o.project_id = p.id
+		WHERE o.status = 'new'
+		ORDER BY o.created_at DESC
+		LIMIT 5
+	`)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var ro admin.RecentOrder
+			if err := rows.Scan(&ro.ID, &ro.ClientName, &ro.ProjectName, &ro.CreatedAt); err == nil {
+				stats.RecentOrders = append(stats.RecentOrders, ro)
+			}
+		}
+	}
+
+	// 7. Pending Reviews Count
+	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM reviews WHERE status = 'pending'").Scan(&stats.PendingReviewsCount)
+	if err != nil { stats.PendingReviewsCount = 0 }
+
+	// 8. Orders by day
 	rows, err = r.pool.Query(ctx, `
 		SELECT TO_CHAR(d, 'YYYY-MM-DD') as date, COUNT(o.id) as count
 		FROM (SELECT generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day')::date as d) d

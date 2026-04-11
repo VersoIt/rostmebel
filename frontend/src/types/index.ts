@@ -36,7 +36,7 @@ export type OrderStatus = 'new' | 'processing' | 'done' | 'rejected' | 'spam';
 export interface Order {
   id: number;
   project_id?: number;
-  project_name?: string; // Added for admin UI
+  project_name?: string;
   client_name: string;
   client_phone: string;
   client_email: string;
@@ -67,6 +67,13 @@ export interface TokenPair {
   refresh_token: string;
 }
 
+export interface RecentOrder {
+  id: number;
+  client_name: string;
+  project_name: string;
+  created_at: string;
+}
+
 export interface Stats {
   projects_count: number;
   new_orders_today: number;
@@ -74,4 +81,6 @@ export interface Stats {
   success_rate: number;
   top_projects: Array<{ id: number; name: string; count: number }>;
   orders_by_day: Array<{ date: string; count: number }>;
+  recent_orders: RecentOrder[];
+  pending_reviews_count: number;
 }
