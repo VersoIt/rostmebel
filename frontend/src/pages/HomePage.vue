@@ -81,7 +81,8 @@ onUnmounted(() => {
         
         <!-- Overlays -->
         <div class="absolute inset-0 bg-black/30 z-[11]"></div>
-        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-brand-cream z-[12]"></div>
+        <!-- Weakened white gradient for better button visibility -->
+        <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-brand-cream/40 z-[12]"></div>
       </div>
       
       <div class="relative z-20 text-center px-4">
