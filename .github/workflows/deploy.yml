@@ -1,0 +1,30 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            cd ${{ secrets.PROJECT_PATH }}
+            
+            # 1. Подтягиваем изменения
+            git pull origin main
+            
+            # 2. Собираем и запускаем в фоне
+            # Используем --build для пересборки при изменениях в коде
+            docker compose up --build -d
+            
+            # 3. Чистим старые образы, чтобы не забивать место
+            docker image prune -f
