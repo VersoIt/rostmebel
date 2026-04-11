@@ -13,7 +13,7 @@ const authStore = useAuthStore();
 
 const menuItems = [
   { name: 'Дашборд', icon: LucideLayoutDashboard, to: '/admin' },
-  { name: 'Проекты', icon: LucidePackage, to: '/admin/products' },
+  { name: 'Проекты', icon: LucidePackage, to: '/admin/projects' },
   { name: 'Заявки', icon: LucideClipboardList, to: '/admin/orders' },
   { name: 'Отзывы', icon: LucideMessageSquare, to: '/admin/reviews' },
 ];

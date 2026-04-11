@@ -54,7 +54,7 @@ const router = createRouter({
           component: () => import('@/pages/ContactPage.vue'),
           meta: { 
             title: 'Контакты — РОСТ Мебель', 
-            description: 'Свяжитесь с нами для консультации или замера. Мы находимся в Симферополе, работаем по всему Крыму.'
+            description: 'Свяжитесь с нами для консультации или замера. Мы находимся в Севастополе, работаем по всему Крыму.' 
           }
         },
         { 
@@ -79,7 +79,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: '', name: 'admin', component: () => import('@/pages/admin/DashboardPage.vue') },
-        { path: 'products', name: 'admin-products', component: () => import('@/pages/admin/ProductsPage.vue') },
+        { path: 'projects', name: 'admin-projects', component: () => import('@/pages/admin/ProjectsPage.vue') },
         { path: 'orders', name: 'admin-orders', component: () => import('@/pages/admin/OrdersPage.vue') },
         { path: 'reviews', name: 'admin-reviews', component: () => import('@/pages/admin/ReviewsPage.vue') },
       ]

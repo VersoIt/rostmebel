@@ -117,7 +117,7 @@ const getChartPath = () => {
         <div class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm">
           <h3 class="font-serif text-xl mb-6">Быстрые действия</h3>
           <div class="grid grid-cols-2 gap-4">
-            <router-link to="/admin/products" class="bg-brand-brown text-white p-6 rounded-2xl hover:bg-brand-gold transition-all text-left group">
+            <router-link to="/admin/projects" class="bg-brand-brown text-white p-6 rounded-2xl hover:bg-brand-gold transition-all text-left group">
               <LucidePackage class="mb-4 group-hover:scale-110 transition-transform" />
               <span class="font-medium">Управление проектами</span>
             </router-link>
