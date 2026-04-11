@@ -50,7 +50,8 @@ func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error)
 	return &o, nil
 }
 
-func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Order, int64, error) {
+// List returns filtered orders, filtered count and absolute total count
+func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Order, int64, int64, error) {
 	where := ""
 	args := []interface{}{}
 	if f.Status != "" {
@@ -58,9 +59,14 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 		args = append(args, f.Status)
 	}
 
+	// Filtered total
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM orders o %s", where)
-	var total int64
-	r.pool.QueryRow(ctx, countQuery, args...).Scan(&total)
+	var filteredTotal int64
+	r.pool.QueryRow(ctx, countQuery, args...).Scan(&filteredTotal)
+
+	// Absolute total
+	var absoluteTotal int64
+	r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders").Scan(&absoluteTotal)
 
 	limit := 20
 	if f.Limit > 0 { limit = f.Limit }
@@ -77,7 +83,7 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 	
 	args = append(args, limit, offset)
 	rows, err := r.pool.Query(ctx, query, args...)
-	if err != nil { return nil, 0, err }
+	if err != nil { return nil, 0, 0, err }
 	defer rows.Close()
 
 	var orders []*order.Order
@@ -94,7 +100,7 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 			orders = append(orders, &o)
 		}
 	}
-	return orders, total, nil
+	return orders, filteredTotal, absoluteTotal, nil
 }
 
 func (r *OrderRepo) UpdateStatus(ctx context.Context, id int64, status order.OrderStatus) error {
@@ -110,6 +116,13 @@ func (r *OrderRepo) GetOrderCountByIP(ctx context.Context, ip net.IP, since time
 	return count, err
 }
 
+func (r *OrderRepo) IsIPBlocked(ctx context.Context, ip net.IP) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM ip_blocks WHERE ip_address = $1 AND expires_at > NOW())`
+	var blocked bool
+	err := r.pool.QueryRow(ctx, query, ip.String()).Scan(&blocked)
+	return blocked, err
+}
+
 func (r *OrderRepo) MarkAsSpam(ctx context.Context, id int64) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil { return err }
@@ -123,6 +136,11 @@ func (r *OrderRepo) MarkAsSpam(ctx context.Context, id int64) error {
 	if err != nil { return err }
 
 	return tx.Commit(ctx)
+}
+
+func (r *OrderRepo) UnblockIP(ctx context.Context, ip net.IP) error {
+	_, err := r.pool.Exec(ctx, "DELETE FROM ip_blocks WHERE ip_address = $1", ip.String())
+	return err
 }
 
 func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {

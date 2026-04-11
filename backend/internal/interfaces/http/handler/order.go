@@ -71,7 +71,7 @@ func (h *OrderHandler) GetOrders(w http.ResponseWriter, r *http.Request) {
 		filter.Offset, _ = strconv.Atoi(offset)
 	}
 
-	orders, total, err := h.useCase.ListOrders(r.Context(), filter)
+	orders, filteredTotal, absoluteTotal, err := h.useCase.ListOrders(r.Context(), filter)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -83,8 +83,9 @@ func (h *OrderHandler) GetOrders(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"items": res,
-		"total": total,
+		"items":          res,
+		"total":          filteredTotal,
+		"absolute_total": absoluteTotal,
 	})
 }
 

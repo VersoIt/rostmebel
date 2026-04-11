@@ -15,6 +15,7 @@ import { useNotificationStore } from '@/stores/notifications';
 
 const reviews = ref<any[]>([]);
 const total = ref(0);
+const absoluteTotal = ref(0);
 const statusFilter = ref('pending');
 const notificationStore = useNotificationStore();
 const currentPage = ref(1);
@@ -30,6 +31,7 @@ const fetchReviews = async () => {
     const { data } = await api.get('/admin/reviews', { params });
     reviews.value = data.items;
     total.value = data.total;
+    absoluteTotal.value = data.absolute_total;
   } catch (err) {
     console.error(err);
   }
@@ -66,7 +68,7 @@ const deleteReview = async (id: number) => {
     <div class="flex items-center justify-between mb-12">
       <div>
         <h1 class="font-serif text-4xl text-brand-brown mb-2">Модерация отзывов</h1>
-        <p class="text-brand-brown/40">Всего отзывов в системе: {{ total }}</p>
+        <p class="text-brand-brown/40">Всего отзывов в системе: {{ absoluteTotal }}</p>
       </div>
     </div>
 
@@ -94,7 +96,7 @@ const deleteReview = async (id: number) => {
         <div class="md:w-1/4 space-y-4">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-brand-cream rounded-xl flex items-center justify-center text-brand-gold font-bold">
-              {{ rev.client_name[0] }}
+              {{ rev.client_name ? rev.client_name[0] : '?' }}
             </div>
             <div>
               <div class="font-bold text-brand-brown">{{ rev.client_name }}</div>
@@ -159,7 +161,7 @@ const deleteReview = async (id: number) => {
 
       <!-- Pagination -->
       <div class="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-brand-brown/5">
-        <span class="text-sm text-brand-brown/40">Показано {{ reviews.length }} из {{ total }}</span>
+        <span class="text-sm text-brand-brown/40">Показано {{ reviews.length }} из {{ total }} в текущем фильтре</span>
         <div class="flex gap-2">
           <button @click="currentPage--" :disabled="currentPage === 1" class="p-2 rounded-lg bg-brand-gray/50 disabled:opacity-30"><LucideChevronLeft :size="20"/></button>
           <div class="px-4 py-2 bg-brand-brown text-white rounded-lg font-bold">{{ currentPage }}</div>

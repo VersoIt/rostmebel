@@ -24,8 +24,17 @@ func NewUseCase(repo order.Repository, prodRepo domProduct.Repository, redis *re
 }
 
 func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
+	// 1. Check if IP is blocked
+	blocked, err := u.repo.IsIPBlocked(ctx, o.IPAddress)
+	if err != nil {
+		return err
+	}
+	if blocked {
+		return fmt.Errorf("ваш доступ временно ограничен из-за подозрений в спаме")
+	}
+
 	if u.limitEnabled {
-		// Rate limiting: 5 orders per IP per 24 hours (increased from 1)
+		// Rate limiting: 5 orders per IP per 24 hours
 		key := fmt.Sprintf("order_limit:%s", o.IPAddress.String())
 		count, err := u.redis.Get(ctx, key).Int()
 		if err != nil && err != redis.Nil {
@@ -36,7 +45,6 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 			return fmt.Errorf("Превышен лимит заявок на сегодня. Пожалуйста, попробуйте завтра.")
 		}
 		
-		// Increment rate limit later
 		defer func() {
 			u.redis.Incr(ctx, key)
 			u.redis.Expire(ctx, key, 24*time.Hour)
@@ -55,7 +63,6 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 		}
 	}
 	
-	// Use background context for notification to avoid cancelling it if user request finishes
 	go func() {
 		err := u.tg.SendOrderNotification(o.ClientName, o.ClientPhone, projectName, o.Comment)
 		if err != nil {
@@ -70,11 +77,17 @@ func (u *UseCase) GetOrder(ctx context.Context, id int64) (*order.Order, error) 
 	return u.repo.GetByID(ctx, id)
 }
 
-func (u *UseCase) ListOrders(ctx context.Context, f order.ListFilter) ([]*order.Order, int64, error) {
+func (u *UseCase) ListOrders(ctx context.Context, f order.ListFilter) ([]*order.Order, int64, int64, error) {
 	return u.repo.List(ctx, f)
 }
 
 func (u *UseCase) UpdateOrderStatus(ctx context.Context, id int64, status order.OrderStatus) error {
+	// If restoring from spam, unblock IP
+	oldOrder, err := u.repo.GetByID(ctx, id)
+	if err == nil && oldOrder != nil && oldOrder.Status == order.StatusSpam && status != order.StatusSpam {
+		u.repo.UnblockIP(ctx, oldOrder.IPAddress)
+	}
+
 	return u.repo.UpdateStatus(ctx, id, status)
 }
 

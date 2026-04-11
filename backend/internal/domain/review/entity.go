@@ -37,7 +37,7 @@ type Review struct {
 type Repository interface {
 	Create(ctx context.Context, r *Review) error
 	GetByID(ctx context.Context, id int64) (*Review, error)
-	List(ctx context.Context, filter ListFilter) ([]*Review, int64, error)
+	List(ctx context.Context, filter ListFilter) ([]*Review, int64, int64, error)
 	UpdateStatus(ctx context.Context, id int64, status ReviewStatus) error
 	Delete(ctx context.Context, id int64) error
 	GetByProjectID(ctx context.Context, projectID int64) ([]*Review, error)

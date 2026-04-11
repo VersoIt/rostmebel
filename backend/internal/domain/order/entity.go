@@ -35,10 +35,12 @@ type Order struct {
 type Repository interface {
 	Create(ctx context.Context, o *Order) error
 	GetByID(ctx context.Context, id int64) (*Order, error)
-	List(ctx context.Context, filter ListFilter) ([]*Order, int64, error)
+	List(ctx context.Context, filter ListFilter) ([]*Order, int64, int64, error)
 	UpdateStatus(ctx context.Context, id int64, status OrderStatus) error
 	GetOrderCountByIP(ctx context.Context, ip net.IP, since time.Time) (int, error)
+	IsIPBlocked(ctx context.Context, ip net.IP) (bool, error)
 	MarkAsSpam(ctx context.Context, id int64) error
+	UnblockIP(ctx context.Context, ip net.IP) error
 	Export(ctx context.Context) ([]*Order, error)
 }
 

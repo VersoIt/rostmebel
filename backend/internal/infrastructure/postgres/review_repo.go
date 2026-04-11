@@ -50,7 +50,7 @@ func (r *ReviewRepo) GetByID(ctx context.Context, id int64) (*review.Review, err
 	return &rev, nil
 }
 
-func (r *ReviewRepo) List(ctx context.Context, f review.ListFilter) ([]*review.Review, int64, error) {
+func (r *ReviewRepo) List(ctx context.Context, f review.ListFilter) ([]*review.Review, int64, int64, error) {
 	var conditions []string
 	var args []interface{}
 	argCount := 1
@@ -71,9 +71,14 @@ func (r *ReviewRepo) List(ctx context.Context, f review.ListFilter) ([]*review.R
 		where = "WHERE " + strings.Join(conditions, " AND ")
 	}
 
+	// Filtered count
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM reviews r %s", where)
-	var total int64
-	r.pool.QueryRow(ctx, countQuery, args...).Scan(&total)
+	var filteredTotal int64
+	r.pool.QueryRow(ctx, countQuery, args...).Scan(&filteredTotal)
+
+	// Absolute total
+	var absoluteTotal int64
+	r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM reviews").Scan(&absoluteTotal)
 
 	query := fmt.Sprintf(`
 		SELECT r.id, r.project_id, r.order_id, r.rating, r.comment, r.images, r.status, r.created_at, r.updated_at, o.client_name, p.name
@@ -86,7 +91,7 @@ func (r *ReviewRepo) List(ctx context.Context, f review.ListFilter) ([]*review.R
 	
 	args = append(args, f.Limit, f.Offset)
 	rows, err := r.pool.Query(ctx, query, args...)
-	if err != nil { return nil, 0, err }
+	if err != nil { return nil, 0, 0, err }
 	defer rows.Close()
 
 	var reviews []*review.Review
@@ -101,7 +106,7 @@ func (r *ReviewRepo) List(ctx context.Context, f review.ListFilter) ([]*review.R
 			reviews = append(reviews, &rev)
 		}
 	}
-	return reviews, total, nil
+	return reviews, filteredTotal, absoluteTotal, nil
 }
 
 func (r *ReviewRepo) UpdateStatus(ctx context.Context, id int64, status review.ReviewStatus) error {

@@ -70,7 +70,7 @@ func (h *ReviewHandler) AdminListReviews(w http.ResponseWriter, r *http.Request)
 		filter.Offset, _ = strconv.Atoi(o)
 	}
 
-	reviews, total, err := h.useCase.ListReviews(r.Context(), filter)
+	reviews, filteredTotal, absoluteTotal, err := h.useCase.ListReviews(r.Context(), filter)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -82,8 +82,9 @@ func (h *ReviewHandler) AdminListReviews(w http.ResponseWriter, r *http.Request)
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"items": res,
-		"total": total,
+		"items":          res,
+		"total":          filteredTotal,
+		"absolute_total": absoluteTotal,
 	})
 }
 

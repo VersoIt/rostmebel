@@ -26,7 +26,7 @@ func (u *UseCase) CreateReview(ctx context.Context, clientPhone string, rev *rev
 	}
 
 	// 2. Find order by phone with status 'done'
-	orders, _, err := u.orderRepo.List(ctx, order.ListFilter{
+	orders, _, _, err := u.orderRepo.List(ctx, order.ListFilter{
 		Limit: 100, // Enough to find recent
 	})
 	if err != nil {
@@ -58,7 +58,7 @@ func (u *UseCase) CreateReview(ctx context.Context, clientPhone string, rev *rev
 	return u.repo.Create(ctx, rev)
 }
 
-func (u *UseCase) ListReviews(ctx context.Context, f review.ListFilter) ([]*review.Review, int64, error) {
+func (u *UseCase) ListReviews(ctx context.Context, f review.ListFilter) ([]*review.Review, int64, int64, error) {
 	return u.repo.List(ctx, f)
 }
 

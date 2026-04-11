@@ -6,10 +6,11 @@ import {
   LucideXCircle, 
   LucideClock, 
   LucideDownload,
-  LucideTrash2,
   LucidePlayCircle,
   LucideChevronLeft,
-  LucideChevronRight
+  LucideChevronRight,
+  LucideBan,
+  LucideRefreshCw
 } from 'lucide-vue-next';
 import type { Order } from '@/types';
 import { useNotificationStore } from '@/stores/notifications';
@@ -17,6 +18,7 @@ import { downloadFile } from '@/utils/download';
 
 const orders = ref<Order[]>([]);
 const total = ref(0);
+const absoluteTotal = ref(0);
 const statusFilter = ref('new');
 const notificationStore = useNotificationStore();
 
@@ -42,6 +44,7 @@ const fetchOrders = async () => {
     const { data } = await api.get('/admin/orders', { params });
     orders.value = data.items;
     total.value = data.total;
+    absoluteTotal.value = data.absolute_total;
   } catch (err) {
     console.error(err);
   }
@@ -82,6 +85,7 @@ const getStatusIcon = (status: string) => {
     case 'processing': return LucidePlayCircle;
     case 'done': return LucideCheckCircle;
     case 'rejected': return LucideXCircle;
+    case 'spam': return LucideBan;
     default: return LucideClock;
   }
 };
@@ -92,6 +96,7 @@ const getStatusClass = (status: string) => {
     case 'processing': return 'bg-yellow-100 text-yellow-700';
     case 'done': return 'bg-green-100 text-green-700';
     case 'rejected': return 'bg-red-100 text-red-700';
+    case 'spam': return 'bg-gray-100 text-gray-700';
     default: return 'bg-gray-100 text-gray-700';
   }
 };
@@ -102,7 +107,7 @@ const getStatusClass = (status: string) => {
     <div class="flex items-center justify-between mb-12">
       <div>
         <h1 class="font-serif text-4xl text-brand-brown mb-2">Заявки клиентов</h1>
-        <p class="text-brand-brown/40">Всего заявок: {{ total }}</p>
+        <p class="text-brand-brown/40">Всего заявок в системе: {{ absoluteTotal }}</p>
       </div>
       <button @click="exportExcel" class="bg-brand-brown text-white px-6 py-3 rounded-xl font-medium hover:bg-brand-gold transition-all flex items-center gap-2 shadow-lg">
         <LucideDownload :size="20" />
@@ -110,9 +115,10 @@ const getStatusClass = (status: string) => {
       </button>
     </div>
 
+    <!-- Status Filters -->
     <div class="flex gap-2 mb-8 bg-white p-1.5 rounded-2xl border border-brand-brown/5 w-fit shadow-sm overflow-x-auto max-w-full">
       <button 
-        v-for="s in ['new', 'processing', 'done', 'rejected', 'all']" 
+        v-for="s in ['new', 'processing', 'done', 'rejected', 'spam', 'all']" 
         :key="s"
         @click="statusFilter = s; currentPage = 1"
         :class="['px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest transition-all whitespace-nowrap', statusFilter === s ? 'bg-brand-brown text-white shadow-md' : 'text-brand-brown/40 hover:bg-brand-gray']"
@@ -121,8 +127,9 @@ const getStatusClass = (status: string) => {
       </button>
     </div>
 
+    <!-- Table -->
     <div class="bg-white rounded-3xl shadow-sm border border-brand-brown/5 overflow-hidden">
-      <table class="w-full text-left">
+      <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-brand-gray/20 text-brand-brown/40 text-xs uppercase tracking-widest">
             <th class="px-8 py-4 font-semibold">Клиент</th>
@@ -135,6 +142,7 @@ const getStatusClass = (status: string) => {
         </thead>
         <tbody class="divide-y divide-brand-brown/5">
           <tr v-for="o in orders" :key="o.id" class="hover:bg-brand-gray/5 transition-colors group">
+            <!-- 1. Клиент -->
             <td class="px-8 py-6">
               <div class="font-bold text-brand-brown flex items-center gap-2">
                 <span class="text-brand-brown/20 font-mono text-xs">#{{ o.id }}</span>
@@ -142,6 +150,8 @@ const getStatusClass = (status: string) => {
               </div>
               <div class="text-sm text-brand-brown/60 mt-1 max-w-xs italic line-clamp-1">"{{ o.comment || 'Без комментария' }}"</div>
             </td>
+
+            <!-- 2. Проект -->
             <td class="px-8 py-6">
               <div v-if="o.project_name" class="flex flex-col">
                 <span class="text-sm font-bold text-brand-brown">{{ o.project_name }}</span>
@@ -149,38 +159,65 @@ const getStatusClass = (status: string) => {
               </div>
               <div v-else class="text-brand-brown/30 text-xs italic">Общая консультация</div>
             </td>
+
+            <!-- 3. Контакты -->
+            <td class="px-8 py-6">
+              <div class="font-medium text-brand-brown whitespace-nowrap">{{ o.client_phone }}</div>
+              <div class="text-xs text-brand-brown/40">{{ o.client_email || 'email не указан' }}</div>
+            </td>
+
+            <!-- 4. Статус -->
             <td class="px-8 py-6">
               <div :class="['inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter', getStatusClass(o.status)]">
                 <component :is="getStatusIcon(o.status)" :size="12" />
                 {{ statusMap[o.status] || o.status }}
               </div>
             </td>
-            <td class="px-8 py-6 text-sm text-brand-brown/40">
+
+            <!-- 5. Дата -->
+            <td class="px-8 py-6 text-sm text-brand-brown/40 whitespace-nowrap">
               {{ new Date(o.created_at).toLocaleDateString() }}<br>
               <span class="text-[10px] uppercase font-bold">{{ new Date(o.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</span>
             </td>
-            <td class="px-8 py-6 text-right">
+
+            <!-- 6. Действия (Интеллектуальные кнопки) -->
+            <td class="px-8 py-6 text-right min-w-[180px]">
               <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  v-if="o.status === 'new'" 
-                  @click="updateStatus(o.id, 'processing')"
-                  class="p-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100" title="В работу"
-                >
-                  <LucidePlayCircle :size="18" />
-                </button>
-                <button 
-                  v-if="o.status !== 'done'" 
-                  @click="updateStatus(o.id, 'done')"
-                  class="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100" title="Завершить"
-                >
-                  <LucideCheckCircle :size="18" />
-                </button>
-                <button 
-                  @click="markAsSpam(o.id)"
-                  class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100" title="Спам / Бан"
-                >
-                  <LucideTrash2 :size="18" />
-                </button>
+                
+                <!-- Для НОВЫХ: В работу, Отклонить, Спам -->
+                <template v-if="o.status === 'new'">
+                  <button @click="updateStatus(o.id, 'processing')" class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all" title="В работу">
+                    <LucidePlayCircle :size="18" />
+                  </button>
+                  <button @click="updateStatus(o.id, 'rejected')" class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all" title="Отклонить">
+                    <LucideXCircle :size="18" />
+                  </button>
+                  <button @click="markAsSpam(o.id)" class="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-600 hover:text-white transition-all" title="Это спам">
+                    <LucideBan :size="18" />
+                  </button>
+                </template>
+
+                <!-- Для В РАБОТЕ: Только Завершить -->
+                <template v-else-if="o.status === 'processing'">
+                  <button @click="updateStatus(o.id, 'done')" class="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-all flex items-center gap-2 px-4" title="Завершить проект">
+                    <LucideCheckCircle :size="18" />
+                    <span class="text-[10px] font-bold uppercase">Завершить</span>
+                  </button>
+                </template>
+
+                <!-- Для СПАМА: Вернуть в работу -->
+                <template v-else-if="o.status === 'spam'">
+                  <button @click="updateStatus(o.id, 'processing')" class="p-2 bg-brand-gold/10 text-brand-gold rounded-lg hover:bg-brand-gold hover:text-white transition-all flex items-center gap-2 px-4" title="Восстановить">
+                    <LucideRefreshCw :size="18" />
+                    <span class="text-[10px] font-bold uppercase">Восстановить</span>
+                  </button>
+                </template>
+
+                <!-- Для ЗАВЕРШЕННЫХ и ОТКЛОНЕННЫХ: Ничего (пусто) -->
+                <template v-else>
+                  <span class="text-[10px] text-brand-brown/20 font-bold uppercase italic tracking-widest">Архив</span>
+                </template>
+
               </div>
             </td>
           </tr>
@@ -193,7 +230,7 @@ const getStatusClass = (status: string) => {
 
       <!-- Pagination -->
       <div class="p-6 bg-brand-gray/10 flex items-center justify-between">
-        <span class="text-sm text-brand-brown/40">Показано {{ orders.length }} из {{ total }} заявок</span>
+        <span class="text-sm text-brand-brown/40">Показано {{ orders.length }} из {{ total }} в текущем фильтре</span>
         <div class="flex gap-2">
           <button 
             @click="currentPage--" 
