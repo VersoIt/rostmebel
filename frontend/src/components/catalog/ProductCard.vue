@@ -12,20 +12,23 @@ const props = defineProps<{
 const router = useRouter();
 const { toggleFavorite, isFavorite } = useFavorites();
 
-// Fast Base64 Placeholder (Zero network request)
+// Fast Base64 Placeholder
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800'%3E%3Crect width='800' height='800' fill='%23F5F5F0'/%3E%3Cpath d='M350 400l50-50 50 50M300 500h200' stroke='%23C9A84C' stroke-width='2' fill='none'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-family='serif' font-size='24' fill='%232C1810' opacity='0.2'%3EPOCT MEБEЛЬ%3C/text%3E%3C/svg%3E";
 
 const isQuickViewOpen = ref(false);
 const activeSlideIdx = ref(0);
+const slideDirection = ref('next');
 
 const nextSlide = () => {
-  if (props.product.images.length > 0) {
+  if (props.product.images.length > 1) {
+    slideDirection.value = 'next';
     activeSlideIdx.value = (activeSlideIdx.value + 1) % props.product.images.length;
   }
 };
 
 const prevSlide = () => {
-  if (props.product.images.length > 0) {
+  if (props.product.images.length > 1) {
+    slideDirection.value = 'prev';
     activeSlideIdx.value = (activeSlideIdx.value - 1 + props.product.images.length) % props.product.images.length;
   }
 };
@@ -100,62 +103,57 @@ const formatPrice = (price: number) => {
       </div>
     </div>
 
-    <!-- Quick View Modal (Teleported to root to avoid parent clipping) -->
     <Teleport to="body">
-      <transition 
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="opacity-0 scale-95"
-        enter-to-class="opacity-100 scale-100"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="opacity-100 scale-100"
-        leave-to-class="opacity-0 scale-95"
-      >
+      <transition name="modal-fade">
         <div v-if="isQuickViewOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12">
-          <div class="absolute inset-0 bg-brand-brown/95 backdrop-blur-xl" @click.stop="isQuickViewOpen = false"></div>
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-md" @click.stop="isQuickViewOpen = false"></div>
           
-          <div class="relative w-full max-w-6xl aspect-video bg-black rounded-[2rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] group/modal flex">
-            <div class="flex-1 relative bg-neutral-900 flex items-center justify-center">
-              <img 
-                :src="product.images[activeSlideIdx]?.url || placeholder" 
-                class="max-w-full max-h-full object-contain"
-                @error="handleImageError"
-              >
+          <div class="relative w-full max-w-6xl aspect-video bg-black rounded-[2rem] overflow-hidden shadow-2xl flex group/modal">
+            
+            <!-- Slider Area -->
+            <div class="flex-1 relative bg-neutral-900 overflow-hidden">
+              <transition :name="slideDirection === 'next' ? 'slide-next' : 'slide-prev'">
+                <img 
+                  :key="activeSlideIdx"
+                  :src="product.images[activeSlideIdx]?.url || placeholder" 
+                  class="absolute inset-0 w-full h-full object-cover"
+                  @error="handleImageError"
+                >
+              </transition>
               
               <!-- Controls -->
-              <button 
-                v-if="product.images.length > 1"
-                @click.stop="prevSlide" 
-                class="absolute left-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/5 hover:bg-white/10 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
-              >
-                <LucideChevronLeft :size="40" />
-              </button>
-              <button 
-                v-if="product.images.length > 1"
-                @click.stop="nextSlide" 
-                class="absolute right-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/5 hover:bg-white/10 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
-              >
-                <LucideChevronRight :size="40" />
-              </button>
+              <div v-if="product.images.length > 1" class="absolute inset-0 flex items-center justify-between px-6 opacity-0 group-hover/modal:opacity-100 transition-opacity pointer-events-none">
+                <button @click.stop="prevSlide" class="w-14 h-14 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md pointer-events-auto transition-all">
+                  <LucideChevronLeft :size="32" />
+                </button>
+                <button @click.stop="nextSlide" class="w-14 h-14 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md pointer-events-auto transition-all">
+                  <LucideChevronRight :size="32" />
+                </button>
+              </div>
+
+              <!-- Indicators -->
+              <div v-if="product.images.length > 1" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                <div v-for="(_, idx) in product.images" :key="idx" 
+                  :class="['h-1.5 rounded-full transition-all', idx === activeSlideIdx ? 'w-8 bg-brand-gold' : 'w-2 bg-white/30']">
+                </div>
+              </div>
             </div>
 
             <!-- Side Info -->
-            <div class="hidden lg:flex w-80 bg-white p-10 flex-col">
+            <div class="hidden lg:flex w-80 bg-white p-10 flex-col shrink-0">
               <div class="mb-auto">
-                <div class="text-brand-gold font-bold text-xs uppercase tracking-widest mb-4">Quick View</div>
-                <h3 class="font-serif text-3xl text-brand-brown mb-4">{{ product.name }}</h3>
+                <div class="text-brand-gold font-bold text-[10px] uppercase tracking-[0.2em] mb-4">Быстрый просмотр</div>
+                <h3 class="font-serif text-3xl text-brand-brown mb-4 leading-tight">{{ product.name }}</h3>
                 <div class="text-2xl font-medium text-brand-brown mb-6">{{ formatPrice(product.price) }}</div>
-                <p class="text-brand-brown/60 text-sm leading-relaxed line-clamp-6">
+                <p class="text-brand-brown/60 text-sm leading-relaxed line-clamp-[10]">
                   {{ product.description }}
                 </p>
               </div>
-              <button @click="goToProduct" class="w-full bg-brand-brown text-white py-4 rounded-xl font-bold hover:bg-brand-gold transition-all"> ПОДРОБНЕЕ </button>
+              <button @click="goToProduct" class="w-full bg-brand-brown text-white py-4 rounded-xl font-bold hover:bg-brand-gold transition-all shadow-lg active:scale-95"> ПОДРОБНЕЕ </button>
             </div>
 
-            <!-- Close -->
-            <button 
-              @click.stop="isQuickViewOpen = false" 
-              class="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-500 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
-            >
+            <!-- Close Button -->
+            <button @click.stop="isQuickViewOpen = false" class="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-500 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-10">
               <LucideX :size="24" />
             </button>
           </div>
@@ -164,3 +162,20 @@ const formatPrice = (price: number) => {
     </Teleport>
   </div>
 </template>
+
+<style scoped>
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.4s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
+/* Slide Next Animation */
+.slide-next-enter-active, .slide-next-leave-active,
+.slide-prev-enter-active, .slide-prev-leave-active {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-next-enter-from { transform: translateX(100%); }
+.slide-next-leave-to { transform: translateX(-100%); }
+
+.slide-prev-enter-from { transform: translateX(-100%); }
+.slide-prev-leave-to { transform: translateX(100%); }
+</style>

@@ -7,36 +7,42 @@ import (
 )
 
 type Config struct {
-	AppEnv         string
-	Port           string
-	DatabaseURL    string
-	RedisURL       string
-	RedisPassword  string
-	GeminiAPIKey   string
-	GeminiModel    string
-	JWTSecret      string
-	JWTAccessTTL   time.Duration
-	JWTRefreshTTL  time.Duration
-	AdminUsername  string
-	AdminPassword  string
-	AllowedOrigins []string
+	AppEnv            string
+	Port              string
+	DatabaseURL       string
+	RedisURL          string
+	RedisPassword     string
+	GeminiAPIKey      string
+	GeminiModel       string
+	JWTSecret         string
+	JWTAccessTTL      time.Duration
+	JWTRefreshTTL     time.Duration
+	AdminUsername     string
+	AdminPassword     string
+	AllowedOrigins    []string
+	TelegramToken     string
+	TelegramChatID    string
+	OrderLimitEnabled bool
 }
 
 func Load() *Config {
 	return &Config{
-		AppEnv:         getEnv("ENV", "development"),
-		Port:           getEnv("PORT", "8080"),
-		DatabaseURL:    getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/rostmebel?sslmode=disable"),
-		RedisURL:       getEnv("REDIS_URL", "localhost:6379"),
-		RedisPassword:  getEnv("REDIS_PASSWORD", ""),
-		GeminiAPIKey:   getEnv("GEMINI_API_KEY", ""),
-		GeminiModel:    getEnv("GEMINI_MODEL", "gemma-4-31b"),
-		JWTSecret:      getEnv("JWT_SECRET", "default-secret"),
-		JWTAccessTTL:   getDurationEnv("JWT_ACCESS_TTL", 15*time.Minute),
-		JWTRefreshTTL:  getDurationEnv("JWT_REFRESH_TTL", 720*time.Hour),
-		AdminUsername:  getEnv("ADMIN_USERNAME", "admin"),
-		AdminPassword:  getEnv("ADMIN_PASSWORD", "admin"),
-		AllowedOrigins: strings.Split(getEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:80"), ","),
+		AppEnv:            getEnv("ENV", "development"),
+		Port:              getEnv("PORT", "8080"),
+		DatabaseURL:       getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/rostmebel?sslmode=disable"),
+		RedisURL:          getEnv("REDIS_URL", "localhost:6379"),
+		RedisPassword:     getEnv("REDIS_PASSWORD", ""),
+		GeminiAPIKey:      getEnv("GEMINI_API_KEY", ""),
+		GeminiModel:       getEnv("GEMINI_MODEL", "gemma-4-31b"),
+		JWTSecret:         getEnv("JWT_SECRET", "default-secret"),
+		JWTAccessTTL:      getDurationEnv("JWT_ACCESS_TTL", 15*time.Minute),
+		JWTRefreshTTL:     getDurationEnv("JWT_REFRESH_TTL", 720*time.Hour),
+		AdminUsername:     getEnv("ADMIN_USERNAME", "admin"),
+		AdminPassword:     getEnv("ADMIN_PASSWORD", "admin"),
+		AllowedOrigins:    strings.Split(getEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:80"), ","),
+		TelegramToken:     getEnv("TELEGRAM_TOKEN", ""),
+		TelegramChatID:    getEnv("TELEGRAM_CHAT_ID", ""),
+		OrderLimitEnabled: getEnv("ORDER_LIMIT_ENABLED", "true") == "true",
 	}
 }
 

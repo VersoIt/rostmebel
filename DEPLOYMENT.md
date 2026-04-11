@@ -62,4 +62,6 @@ docker compose exec postgres pg_dump -U user rostmebel > backup_$(date +%F).sql
 ## 8. Troubleshooting
 - **Database Connection**: Ensure the `postgres` healthcheck passes.
 - **AI Search**: Check if `GEMINI_API_KEY` is valid. If not, the system will fallback to Postgres full-text search.
-- **Images**: Ensure the `./uploads` directory has proper permissions.
+- **Image Uploads**: Images are stored in a Docker volume `uploads_data`. Ensure the backend has write access and Nginx has read access. If running on Linux, you may need to set permissions: `sudo chown -R 101:101 uploads` (or the appropriate UID/GID).
+- **Rate Limit**: You can toggle the 1-order-per-day limit using `ORDER_LIMIT_ENABLED` in `.env`.
+

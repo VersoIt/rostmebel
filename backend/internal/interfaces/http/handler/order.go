@@ -128,11 +128,11 @@ func (h *OrderHandler) ExportOrders(w http.ResponseWriter, r *http.Request) {
 	f := excelize.NewFile()
 	defer f.Close()
 
-	sheet := "Orders"
+	sheet := "Заявки"
 	f.SetSheetName("Sheet1", sheet)
 
 	// Headers
-	headers := []string{"ID", "Client Name", "Phone", "Email", "Comment", "Status", "Date"}
+	headers := []string{"ID", "Имя клиента", "Телефон", "Email", "Комментарий", "Статус", "Дата"}
 	for i, head := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
 		f.SetCellValue(sheet, cell, head)

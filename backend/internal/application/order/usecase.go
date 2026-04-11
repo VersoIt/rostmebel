@@ -7,40 +7,54 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rostmebel/backend/internal/domain/order"
+	domProduct "github.com/rostmebel/backend/internal/domain/product"
+	"github.com/rostmebel/backend/internal/infrastructure/telegram"
 )
 
 type UseCase struct {
-	repo  order.Repository
-	redis *redis.Client
+	repo         order.Repository
+	prodRepo     domProduct.Repository
+	redis        *redis.Client
+	tg           *telegram.Client
+	limitEnabled bool
 }
 
-func NewUseCase(repo order.Repository, redis *redis.Client) *UseCase {
-	return &UseCase{repo: repo, redis: redis}
+func NewUseCase(repo order.Repository, prodRepo domProduct.Repository, redis *redis.Client, tg *telegram.Client, limitEnabled bool) *UseCase {
+	return &UseCase{repo: repo, prodRepo: prodRepo, redis: redis, tg: tg, limitEnabled: limitEnabled}
 }
 
 func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
-	// Rate limiting: 3 orders per IP per 24 hours
-	key := fmt.Sprintf("order_limit:%s", o.IPAddress.String())
-	count, err := u.redis.Get(ctx, key).Int()
-	if err != nil && err != redis.Nil {
-		return err
-	}
+	if u.limitEnabled {
+		// Rate limiting: 1 order per IP per 24 hours
+		key := fmt.Sprintf("order_limit:%s", o.IPAddress.String())
+		count, err := u.redis.Get(ctx, key).Int()
+		if err != nil && err != redis.Nil {
+			return err
+		}
 
-	if count >= 3 {
-		return fmt.Errorf("rate limit exceeded: max 3 orders per 24 hours")
+		if count >= 1 {
+			return fmt.Errorf("Вы уже отправляли заявку сегодня. Пожалуйста, подождите 24 часа.")
+		}
+		
+		// Increment rate limit later
+		defer func() {
+			u.redis.Incr(ctx, key)
+			u.redis.Expire(ctx, key, 24*time.Hour)
+		}()
 	}
 
 	if err := u.repo.Create(ctx, o); err != nil {
 		return err
 	}
 
-	// Increment rate limit
-	if err := u.redis.Incr(ctx, key).Err(); err != nil {
-		return err
+	// Telegram Notification
+	productName := "Общая консультация"
+	if o.ProductID != nil {
+		if p, err := u.prodRepo.GetByID(ctx, *o.ProductID); err == nil && p != nil {
+			productName = p.Name
+		}
 	}
-	if count == 0 {
-		u.redis.Expire(ctx, key, 24*time.Hour)
-	}
+	go u.tg.SendOrderNotification(o.ClientName, o.ClientPhone, productName, o.Comment)
 
 	return nil
 }

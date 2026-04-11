@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { LucideX, LucidePlus, LucideTrash2, LucideUpload } from 'lucide-vue-next';
 import type { Product, Category, Image } from '@/types';
 import api from '@/api/client';
+import { useNotificationStore } from '@/stores/notifications';
 
 const props = defineProps<{
   product?: Product | null;
@@ -10,6 +11,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['close', 'saved']);
+const notificationStore = useNotificationStore();
 
 const form = ref<Partial<Product>>({
   name: '',
@@ -58,12 +60,40 @@ const removeSpec = (key: string) => {
   }
 };
 
-const addImageUrl = () => {
-  const url = prompt('Введите URL изображения:');
-  if (url) {
+const fileInput = ref<HTMLInputElement | null>(null);
+const isUploading = ref(false);
+
+const handleFileUpload = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (!target.files?.length) return;
+
+  const file = target.files[0];
+  const formData = new FormData();
+  formData.append('image', file);
+
+  isUploading.value = true;
+  errorMessage.value = '';
+  try {
+    // Axios handles multipart/form-data boundary automatically
+    const { data } = await api.post('/admin/upload', formData);
+    
     if (!form.value.images) form.value.images = [];
-    form.value.images.push({ url, is_main: form.value.images.length === 0 });
+    form.value.images.push({ 
+      url: data.url, 
+      is_main: form.value.images.length === 0 
+    });
+    notificationStore.show('Изображение загружено', 'success');
+  } catch (err: any) {
+    errorMessage.value = err.response?.data?.error || 'Ошибка при загрузке изображения на сервер';
+    notificationStore.show(errorMessage.value, 'error');
+  } finally {
+    isUploading.value = false;
+    target.value = ''; // Reset input
   }
+};
+
+const triggerUpload = () => {
+  fileInput.value?.click();
 };
 
 const errorMessage = ref('');
@@ -164,22 +194,37 @@ const save = async () => {
         <!-- Изображения -->
         <div>
           <div class="flex items-center justify-between mb-4">
-            <label class="block text-sm font-semibold">Изображения</label>
-            <button @click="addImageUrl" class="text-brand-gold text-sm font-bold flex items-center gap-1 hover:underline">
-              <LucidePlus :size="16" /> Добавить URL
-            </button>
+            <label class="block text-sm font-semibold">Изображения (файлы загружаются на сервер)</label>
+            <input 
+              type="file" 
+              ref="fileInput" 
+              class="hidden" 
+              accept="image/*" 
+              @change="handleFileUpload"
+            >
           </div>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div v-for="(img, idx) in form.images" :key="idx" class="relative aspect-square rounded-2xl overflow-hidden border border-brand-brown/10 group">
               <img :src="img.url" class="w-full h-full object-cover">
-              <button @click="form.images?.splice(idx, 1)" class="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                <LucideTrash2 :size="14" />
-              </button>
-              <div v-if="img.is_main" class="absolute bottom-2 left-2 bg-brand-gold text-white text-[10px] px-2 py-0.5 rounded font-bold">MAIN</div>
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <button @click="form.images?.splice(idx, 1)" class="p-2 bg-red-500 text-white rounded-lg" title="Удалить">
+                  <LucideTrash2 :size="16" />
+                </button>
+                <button v-if="!img.is_main" @click="form.images?.forEach((m, i) => m.is_main = i === idx)" class="p-2 bg-brand-gold text-white rounded-lg" title="Сделать главной">
+                  <LucidePlus :size="16" />
+                </button>
+              </div>
+              <div v-if="img.is_main" class="absolute bottom-2 left-2 bg-brand-gold text-white text-[10px] px-2 py-0.5 rounded font-bold">ГЛАВНАЯ</div>
             </div>
-            <button @click="addImageUrl" class="aspect-square rounded-2xl border-2 border-dashed border-brand-brown/10 flex flex-col items-center justify-center text-brand-brown/20 hover:border-brand-gold hover:text-brand-gold transition-all">
-              <LucideUpload :size="24" class="mb-2" />
-              <span class="text-xs font-bold">ЗАГРУЗИТЬ</span>
+            
+            <button 
+              @click="triggerUpload"
+              :disabled="isUploading"
+              class="aspect-square rounded-2xl border-2 border-dashed border-brand-brown/10 flex flex-col items-center justify-center text-brand-brown/20 hover:border-brand-gold hover:text-brand-gold transition-all disabled:opacity-50"
+            >
+              <LucideUpload v-if="!isUploading" :size="24" class="mb-2" />
+              <div v-else class="w-6 h-6 border-2 border-brand-gold border-t-transparent animate-spin rounded-full mb-2"></div>
+              <span class="text-xs font-bold">{{ isUploading ? 'ЗАГРУЗКА...' : 'ВЫБРАТЬ ФАЙЛ' }}</span>
             </button>
           </div>
         </div>

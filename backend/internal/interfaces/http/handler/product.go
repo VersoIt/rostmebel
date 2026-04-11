@@ -1,13 +1,19 @@
 package handler
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rostmebel/backend/internal/application/product"
 	domProduct "github.com/rostmebel/backend/internal/domain/product"
 	"github.com/rostmebel/backend/internal/interfaces/dto"
+	"github.com/xuri/excelize/v2"
 )
 
 type ProductHandler struct {
@@ -136,6 +142,85 @@ func (h *ProductHandler) AISearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, res)
+}
+func (h *ProductHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
+	// r.FormFile automatically calls r.ParseMultipartForm
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		fmt.Printf("Upload error: %v\n", err) // Log to console for debugging
+		respondWithError(w, http.StatusBadRequest, "Не удалось получить файл. Убедитесь, что Content-Type верный.")
+		return
+	}
+	defer file.Close()
+
+	// 10MB limit check
+	if handler.Size > 10<<20 {
+		respondWithError(w, http.StatusBadRequest, "Файл слишком большой (макс. 10МБ)")
+		return
+	}
+
+	// Ensure upload dir exists relative to the current working directory
+	uploadDir := "./uploads"
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Ошибка создания папки для загрузок")
+		return
+	}
+
+	// Create unique filename
+	ext := filepath.Ext(handler.Filename)
+	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	filePath := filepath.Join(uploadDir, filename)
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Не удалось создать файл на сервере")
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Ошибка при сохранении содержимого файла")
+		return
+	}
+
+	// Absolute URL for the client
+	respondWithJSON(w, http.StatusOK, map[string]string{
+		"url": "/uploads/" + filename,
+	})
+}
+func (h *ProductHandler) ExportProducts(w http.ResponseWriter, r *http.Request) {
+	products, _, err := h.useCase.ListProducts(r.Context(), domProduct.ListFilter{Limit: 10000})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheet := "Товары"
+	f.SetSheetName("Sheet1", sheet)
+
+	headers := []string{"ID", "Название", "Slug", "Цена", "Статус", "Просмотры", "Заказы"}
+	for i, head := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, head)
+	}
+
+	for i, p := range products {
+		row := i + 2
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), p.ID)
+		f.SetCellValue(sheet, fmt.Sprintf("B%d", row), p.Name)
+		f.SetCellValue(sheet, fmt.Sprintf("C%d", row), p.Slug)
+		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), p.Price)
+		f.SetCellValue(sheet, fmt.Sprintf("E%d", row), string(p.Status))
+		f.SetCellValue(sheet, fmt.Sprintf("F%d", row), p.ViewsCount)
+		f.SetCellValue(sheet, fmt.Sprintf("G%d", row), p.OrdersCount)
+	}
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", "attachment; filename=products.xlsx")
+	f.Write(w)
 }
 
 // Admin Handlers

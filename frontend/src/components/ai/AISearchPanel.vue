@@ -20,7 +20,7 @@ const handleSearch = async () => {
   try {
     results.value = await productStore.aiSearch(query.value);
     if (results.value.length === 0) {
-      notificationStore.show('Gemma 4 не нашла подходящих товаров. Попробуйте другой запрос.', 'info');
+      notificationStore.show('Мы не нашли подходящих товаров по вашему описанию. Попробуйте изменить запрос.', 'info');
     }
   } catch (err) {
     notificationStore.show('Ошибка ИИ-агента. Повторите попытку позже.', 'error');
@@ -58,7 +58,7 @@ const handleSearch = async () => {
     <div v-if="results.length > 0" id="ai-results" class="mt-20">
       <div class="flex items-center justify-center gap-2 mb-8">
         <div class="h-px bg-brand-gold/20 flex-1"></div>
-        <span class="bg-brand-gold text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Персональный подбор Gemma 4</span>
+        <span class="bg-brand-gold text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Персональный подбор ИИ</span>
         <div class="h-px bg-brand-gold/20 flex-1"></div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

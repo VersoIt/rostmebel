@@ -54,11 +54,14 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 			r.Get("/admin/stats", ah.GetStats)
 
 			r.Route("/admin/products", func(r chi.Router) {
-				r.Get("/", ph.GetProducts) // reusing with filters
+				r.Get("/", ph.GetProducts)
 				r.Post("/", ph.CreateProduct)
+				r.Get("/export", ph.ExportProducts)
 				r.Put("/{id}", ph.UpdateProduct)
 				r.Delete("/{id}", ph.DeleteProduct)
 			})
+
+			r.Post("/admin/upload", ph.UploadImage)
 
 			r.Route("/admin/orders", func(r chi.Router) {
 				r.Get("/", oh.GetOrders)

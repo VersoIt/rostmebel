@@ -4,14 +4,14 @@ import { useProductStore } from '@/stores/products';
 import AISearchPanel from '@/components/ai/AISearchPanel.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
 import { gsap } from 'gsap';
-import { LucideChevronRight } from 'lucide-vue-next';
+import { LucideChevronRight, LucideArrowRight } from 'lucide-vue-next';
 import type { Product } from '@/types';
 
 const productStore = useProductStore();
 const hits = ref<Product[]>([]);
 
 onMounted(async () => {
-  await productStore.fetchProducts({ limit: 4, sort_by: 'views_count', sort_order: 'desc', status: 'published' });
+  await productStore.fetchProducts({ limit: 6, sort_by: 'views_count', sort_order: 'desc', status: 'published' });
   hits.value = productStore.products;
   
   gsap.from('.hero-text', { 
@@ -75,8 +75,21 @@ onMounted(async () => {
         </router-link>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <ProductCard v-for="product in hits" :key="product.id" :product="product" />
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <ProductCard v-for="product in hits.slice(0, 5)" :key="product.id" :product="product" />
+        
+        <!-- More Card -->
+        <router-link 
+          v-if="hits.length > 5"
+          to="/catalog" 
+          class="bg-brand-brown rounded-3xl p-8 flex flex-col items-center justify-center text-center group transition-all hover:bg-brand-gold shadow-xl"
+        >
+          <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
+            <LucideArrowRight :size="32" />
+          </div>
+          <h3 class="text-white font-serif text-xl mb-2">Смотреть всё</h3>
+          <p class="text-white/60 text-sm">Весь каталог продукции</p>
+        </router-link>
       </div>
     </section>
 

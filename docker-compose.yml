@@ -42,8 +42,9 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ORDER_LIMIT_ENABLED=${ORDER_LIMIT_ENABLED}
     volumes:
-      - ./uploads:/app/uploads
+      - uploads_data:/app/uploads
     ports:
       - "8081:8080"
 
@@ -52,9 +53,12 @@ services:
     container_name: rostmebel_frontend
     depends_on:
       - backend
+    volumes:
+      - uploads_data:/var/www/uploads:ro
     ports:
       - "4322:80"
 
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:

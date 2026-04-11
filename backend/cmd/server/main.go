@@ -15,6 +15,7 @@ import (
 	"github.com/rostmebel/backend/internal/infrastructure/gemini"
 	"github.com/rostmebel/backend/internal/infrastructure/postgres"
 	"github.com/rostmebel/backend/internal/infrastructure/redis"
+	"github.com/rostmebel/backend/internal/infrastructure/telegram"
 	"github.com/rostmebel/backend/internal/interfaces/http"
 	"github.com/rostmebel/backend/internal/interfaces/http/handler"
 	"github.com/rostmebel/backend/pkg/logger"
@@ -55,6 +56,7 @@ func main() {
 	}
 
 	geminiClient := gemini.NewClient(cfg.GeminiAPIKey, cfg.GeminiModel)
+	tgClient := telegram.NewClient(cfg.TelegramToken, cfg.TelegramChatID)
 
 	// Repositories
 	productRepo := postgres.NewProductRepo(pool)
@@ -67,7 +69,7 @@ func main() {
 	// UseCases
 	productUC := product.NewUseCase(productRepo)
 	aiUC := product.NewAIUseCase(productRepo, geminiClient, rdb, log)
-	orderUC := order.NewUseCase(orderRepo, rdb)
+	orderUC := order.NewUseCase(orderRepo, productRepo, rdb, tgClient, cfg.OrderLimitEnabled)
 	adminUC := admin.NewUseCase(adminRepo, cfg.JWTSecret, cfg.JWTAccessTTL, cfg.JWTRefreshTTL)
 
 	// Handlers

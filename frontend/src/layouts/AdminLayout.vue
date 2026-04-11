@@ -32,8 +32,8 @@ const menuItems = [
           :key="item.name"
           :to="item.to"
           class="admin-sidebar-link flex items-center gap-4 px-6 py-4 rounded-xl transition-all hover:bg-white/5 group"
-          active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20"
-          exact-active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20"
+          active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20 !pointer-events-none"
+          exact-active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20 !pointer-events-none"
         >
           <component :is="item.icon" :size="20" class="group-hover:scale-110 transition-transform" />
           {{ item.name }}

@@ -1,28 +1,90 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import api from '@/api/client';
-import { LucideCheckCircle, LucideXCircle, LucideClock, LucideDownload } from 'lucide-vue-next';
+import { 
+  LucideCheckCircle, 
+  LucideXCircle, 
+  LucideClock, 
+  LucideDownload,
+  LucideTrash2,
+  LucidePlayCircle,
+  LucideChevronLeft,
+  LucideChevronRight
+} from 'lucide-vue-next';
 import type { Order } from '@/types';
+import { useNotificationStore } from '@/stores/notifications';
+import { downloadFile } from '@/utils/download';
 
 const orders = ref<Order[]>([]);
 const total = ref(0);
+const statusFilter = ref('new');
+const notificationStore = useNotificationStore();
 
-onMounted(async () => {
+const currentPage = ref(1);
+const limit = 10;
+
+const fetchOrders = async () => {
   try {
-    const { data } = await api.get('/admin/orders');
+    const params: any = { 
+      limit, 
+      offset: (currentPage.value - 1) * limit 
+    };
+    if (statusFilter.value !== 'all') params.status = statusFilter.value;
+    
+    const { data } = await api.get('/admin/orders', { params });
     orders.value = data.items;
     total.value = data.total;
   } catch (err) {
     console.error(err);
   }
-});
+};
+
+onMounted(fetchOrders);
+watch([statusFilter, currentPage], fetchOrders);
+
+const updateStatus = async (id: number, status: string) => {
+  try {
+    await api.patch(`/admin/orders/${id}/status`, { status });
+    notificationStore.show(`Статус заявки #${id} обновлен`, 'success');
+    fetchOrders();
+  } catch (err) {
+    notificationStore.show('Ошибка при обновлении статуса', 'error');
+  }
+};
+
+const markAsSpam = async (id: number) => {
+  if (confirm('Заблокировать IP и пометить как спам?')) {
+    try {
+      await api.post(`/admin/orders/${id}/spam`);
+      notificationStore.show('Заявка помечена как спам', 'info');
+      fetchOrders();
+    } catch (err) {
+      notificationStore.show('Ошибка', 'error');
+    }
+  }
+};
+
+const exportExcel = () => {
+  downloadFile('/admin/orders/export', 'orders.xlsx');
+};
 
 const getStatusIcon = (status: string) => {
   switch (status) {
     case 'new': return LucideClock;
+    case 'processing': return LucidePlayCircle;
     case 'done': return LucideCheckCircle;
     case 'rejected': return LucideXCircle;
     default: return LucideClock;
+  }
+};
+
+const getStatusClass = (status: string) => {
+  switch (status) {
+    case 'new': return 'bg-blue-100 text-blue-700';
+    case 'processing': return 'bg-yellow-100 text-yellow-700';
+    case 'done': return 'bg-green-100 text-green-700';
+    case 'rejected': return 'bg-red-100 text-red-700';
+    default: return 'bg-gray-100 text-gray-700';
   }
 };
 </script>
@@ -30,10 +92,24 @@ const getStatusIcon = (status: string) => {
 <template>
   <div>
     <div class="flex items-center justify-between mb-12">
-      <h1 class="font-serif text-4xl text-brand-brown">Заявки клиентов</h1>
-      <button class="bg-brand-gray text-brand-brown px-6 py-3 rounded-xl font-medium hover:bg-brand-brown hover:text-white transition-all flex items-center gap-2">
+      <div>
+        <h1 class="font-serif text-4xl text-brand-brown mb-2">Заявки клиентов</h1>
+        <p class="text-brand-brown/40">Всего заявок: {{ total }}</p>
+      </div>
+      <button @click="exportExcel" class="bg-brand-brown text-white px-6 py-3 rounded-xl font-medium hover:bg-brand-gold transition-all flex items-center gap-2 shadow-lg">
         <LucideDownload :size="20" />
-        Экспорт CSV
+        Экспорт EXCEL
+      </button>
+    </div>
+
+    <div class="flex gap-2 mb-8 bg-white p-1.5 rounded-2xl border border-brand-brown/5 w-fit shadow-sm">
+      <button 
+        v-for="s in ['new', 'processing', 'done', 'rejected', 'all']" 
+        :key="s"
+        @click="statusFilter = s; currentPage = 1"
+        :class="['px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest transition-all', statusFilter === s ? 'bg-brand-brown text-white shadow-md' : 'text-brand-brown/40 hover:bg-brand-gray']"
+      >
+        {{ s === 'all' ? 'Все' : s }}
       </button>
     </div>
 
@@ -41,36 +117,89 @@ const getStatusIcon = (status: string) => {
       <table class="w-full text-left">
         <thead>
           <tr class="bg-brand-gray/20 text-brand-brown/40 text-xs uppercase tracking-widest">
-            <th class="px-8 py-4 font-semibold">ID</th>
             <th class="px-8 py-4 font-semibold">Клиент</th>
             <th class="px-8 py-4 font-semibold">Контакты</th>
             <th class="px-8 py-4 font-semibold">Статус</th>
             <th class="px-8 py-4 font-semibold">Дата</th>
+            <th class="px-8 py-4 font-semibold text-right">Действия</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-brand-brown/5">
-          <tr v-for="o in orders" :key="o.id" class="hover:bg-brand-gray/10 transition-colors">
-            <td class="px-8 py-4 font-mono text-xs text-brand-brown/40">#{{ o.id }}</td>
-            <td class="px-8 py-4">
-              <div class="font-medium">{{ o.client_name }}</div>
-              <div class="text-xs text-brand-brown/40">{{ o.comment }}</div>
+          <tr v-for="o in orders" :key="o.id" class="hover:bg-brand-gray/5 transition-colors group">
+            <td class="px-8 py-6">
+              <div class="font-bold text-brand-brown flex items-center gap-2">
+                <span class="text-brand-brown/20 font-mono text-xs">#{{ o.id }}</span>
+                {{ o.client_name }}
+              </div>
+              <div class="text-sm text-brand-brown/60 mt-1 max-w-xs italic line-clamp-1">"{{ o.comment || 'Без комментария' }}"</div>
             </td>
-            <td class="px-8 py-4">
-              <div>{{ o.client_phone }}</div>
-              <div class="text-sm text-brand-brown/40">{{ o.client_email }}</div>
+            <td class="px-8 py-6">
+              <div class="font-medium text-brand-brown">{{ o.client_phone }}</div>
+              <div class="text-xs text-brand-brown/40">{{ o.client_email || 'email не указан' }}</div>
             </td>
-            <td class="px-8 py-4">
-              <div class="flex items-center gap-2">
-                <component :is="getStatusIcon(o.status)" :size="16" class="text-brand-gold" />
-                <span class="capitalize">{{ o.status }}</span>
+            <td class="px-8 py-6">
+              <div :class="['inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter', getStatusClass(o.status)]">
+                <component :is="getStatusIcon(o.status)" :size="12" />
+                {{ o.status }}
               </div>
             </td>
-            <td class="px-8 py-4 text-sm text-brand-brown/60">
-              {{ new Date(o.created_at).toLocaleDateString() }}
+            <td class="px-8 py-6 text-sm text-brand-brown/40">
+              {{ new Date(o.created_at).toLocaleDateString() }}<br>
+              <span class="text-[10px] uppercase font-bold">{{ new Date(o.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</span>
+            </td>
+            <td class="px-8 py-6 text-right">
+              <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  v-if="o.status === 'new'" 
+                  @click="updateStatus(o.id, 'processing')"
+                  class="p-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100" title="В работу"
+                >
+                  <LucidePlayCircle :size="18" />
+                </button>
+                <button 
+                  v-if="o.status !== 'done'" 
+                  @click="updateStatus(o.id, 'done')"
+                  class="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100" title="Завершить"
+                >
+                  <LucideCheckCircle :size="18" />
+                </button>
+                <button 
+                  @click="markAsSpam(o.id)"
+                  class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100" title="Спам / Бан"
+                >
+                  <LucideTrash2 :size="18" />
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+      
+      <div v-if="orders.length === 0" class="p-20 text-center text-brand-brown/20 italic">
+        Заявок с таким статусом не найдено
+      </div>
+
+      <!-- Pagination -->
+      <div class="p-6 bg-brand-gray/10 flex items-center justify-between">
+        <span class="text-sm text-brand-brown/40">Показано {{ orders.length }} из {{ total }} заявок</span>
+        <div class="flex gap-2">
+          <button 
+            @click="currentPage--" 
+            :disabled="currentPage === 1"
+            class="p-2 rounded-lg bg-white border border-brand-brown/5 disabled:opacity-30"
+          >
+            <LucideChevronLeft :size="20" />
+          </button>
+          <div class="px-4 py-2 bg-brand-brown text-white rounded-lg font-bold text-sm">{{ currentPage }}</div>
+          <button 
+            @click="currentPage++" 
+            :disabled="currentPage * limit >= total"
+            class="p-2 rounded-lg bg-white border border-brand-brown/5 disabled:opacity-30"
+          >
+            <LucideChevronRight :size="20" />
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

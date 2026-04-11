@@ -75,7 +75,7 @@ const getChartPath = () => {
     </div>
 
     <!-- Chart -->
-    <div class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm mb-12">
+    <div v-if="stats?.orders_by_day && stats.orders_by_day.length > 0" class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm mb-12">
       <h3 class="font-serif text-xl mb-8">Активность заказов (30 дней)</h3>
       <div class="h-48 w-full">
         <svg viewBox="0 0 1000 200" class="w-full h-full preserve-aspect-ratio-none">
