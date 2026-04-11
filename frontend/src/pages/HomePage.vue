@@ -25,12 +25,13 @@ import type { Product } from '@/types';
 const productStore = useProductStore();
 const hits = ref<Product[]>([]);
 
-// Hero Slider
+// Hero Slider - Updated with more stable high-res kitchen images
 const heroImages = [
-  'https://images.unsplash.com/photo-1556911223-05345a39365e?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1600585152220-90363fe7e115?q=80&w=1600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1565183275290-0b174804bb3d?q=80&w=1600&auto=format&fit=crop'
+  'https://images.unsplash.com/photo-1556911223-05345a39365e?q=80&w=2000&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=2000&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1600585152220-90363fe7e115?q=80&w=2000&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1565183275290-0b174804bb3d?q=80&w=2000&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?q=80&w=2000&auto=format&fit=crop'
 ];
 const currentHeroIndex = ref(0);
 let heroInterval: any = null;
@@ -47,9 +48,10 @@ onMounted(async () => {
     ease: 'power3.out' 
   });
 
+  // Start rotation with a slightly longer delay for the first frame
   heroInterval = setInterval(() => {
     currentHeroIndex.value = (currentHeroIndex.value + 1) % heroImages.length;
-  }, 5000);
+  }, 6000);
 });
 
 onUnmounted(() => {
@@ -59,17 +61,34 @@ onUnmounted(() => {
 
 <template>
   <div class="bg-brand-cream min-h-screen text-brand-brown">
+    <!-- Image Preloader (Hidden) -->
+    <div class="fixed opacity-0 pointer-events-none -z-50 overflow-hidden w-0 h-0">
+      <img v-for="img in heroImages" :key="img" :src="img">
+    </div>
+
     <!-- 1. Hero Section -->
     <section class="relative h-screen flex items-center justify-center overflow-hidden bg-brand-brown">
       <div class="absolute inset-0 z-0">
-        <transition name="fade-bg">
-          <div :key="currentHeroIndex" class="absolute inset-0">
+        <!-- Persistent base image to avoid black flashes -->
+        <div 
+          class="absolute inset-0 bg-cover bg-center opacity-40 scale-110"
+          :style="{ backgroundImage: `url(${heroImages[0]})` }"
+        ></div>
+
+        <transition-group name="fade-bg">
+          <div 
+            v-for="(img, idx) in heroImages" 
+            :key="img"
+            v-show="currentHeroIndex === idx"
+            class="absolute inset-0"
+          >
             <div 
-              class="absolute inset-0 bg-cover bg-center scale-100 transition-transform duration-[10000ms] ease-linear"
-              :style="{ backgroundImage: `url(${heroImages[currentHeroIndex]})`, opacity: 0.6 }"
+              class="absolute inset-0 bg-cover bg-center transition-transform duration-[15000ms] ease-linear scale-100"
+              :class="{ 'scale-110': currentHeroIndex === idx }"
+              :style="{ backgroundImage: `url(${img})`, opacity: 0.6 }"
             ></div>
           </div>
-        </transition>
+        </transition-group>
         <div class="absolute inset-0 bg-black/20"></div>
         <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-brand-cream"></div>
       </div>
@@ -106,7 +125,7 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- 2. Hits Section (NOW HIGHER) -->
+    <!-- 2. Hits Section -->
     <section id="projects-grid" class="py-32 px-4 max-w-7xl mx-auto">
       <div class="flex items-end justify-between mb-16">
         <div>
@@ -133,7 +152,7 @@ onUnmounted(() => {
     </section>
 
     <!-- 3. Supervision Section -->
-    <section class="py-32 px-4 bg-[#1a1410] text-white relative overflow-hidden">
+    <section class="py-32 px-4 bg-[#1a1410] text-white relative overflow-hidden text-left">
       <div class="absolute top-0 right-0 w-1/3 h-full bg-brand-gold/5 skew-x-12 translate-x-20"></div>
       <div class="max-w-7xl mx-auto relative z-10">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
@@ -143,7 +162,7 @@ onUnmounted(() => {
               Expert Supervision
             </div>
             <h2 class="font-serif text-5xl md:text-6xl mb-10 leading-tight">Мы не просто рисуем, <br> <span class="text-brand-gold italic">мы строим.</span></h2>
-            <p class="text-white/60 text-lg mb-12 leading-relaxed max-w-xl">
+            <p class="text-white/60 text-lg mb-12 leading-relaxed max-w-xl text-left">
               Чтобы мебель встала идеально, помещение должно быть подготовлено безупречно. Мы берем на себя авторское сопровождение и выдаем строителям точные технические карты.
             </p>
             
@@ -177,15 +196,15 @@ onUnmounted(() => {
             </div>
             <div class="absolute -bottom-10 -left-10 bg-brand-gold p-10 rounded-3xl shadow-2xl hidden md:block">
               <div class="text-brand-brown font-serif text-4xl mb-2">0%</div>
-              <div class="text-brand-brown/80 text-xs font-bold uppercase tracking-widest">ошибок при <br> монтаже</div>
+              <div class="text-brand-brown/80 text-xs font-bold uppercase tracking-widest text-left">ошибок при <br> монтаже</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 4. Services Section (Complex Furnishing) -->
-    <section class="py-32 px-4 bg-white">
+    <!-- 4. Services Section -->
+    <section class="py-32 px-4 bg-white text-left">
       <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div class="grid grid-cols-2 gap-4">
@@ -225,7 +244,7 @@ onUnmounted(() => {
 
     <!-- 5. Process Section -->
     <section class="py-32 px-4 bg-brand-cream/50 relative overflow-hidden border-y border-brand-brown/5">
-      <div class="max-w-7xl mx-auto relative z-10">
+      <div class="max-w-7xl mx-auto relative z-10 text-center">
         <div class="text-center mb-20">
           <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Workflow</span>
           <h2 class="font-serif text-5xl text-brand-brown">Как мы работаем</h2>
@@ -253,8 +272,8 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- 6. AI Search Section (Moved Lower) -->
-    <section id="ai-search" class="py-32 px-4 bg-white">
+    <!-- 6. AI Search Section -->
+    <section id="ai-search" class="py-32 px-4 bg-white text-center">
       <div class="max-w-4xl mx-auto text-center mb-16">
         <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Инновации</span>
         <h2 class="font-serif text-4xl text-brand-brown mb-4">Не нашли то, что искали?</h2>
@@ -263,8 +282,8 @@ onUnmounted(() => {
       <AISearchPanel />
     </section>
 
-    <!-- 7. Why Us (Trust) -->
-    <section class="py-24 px-4 bg-brand-brown text-brand-white">
+    <!-- 7. Why Us -->
+    <section class="py-24 px-4 bg-brand-brown text-brand-white text-center">
       <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
         <div>
           <div class="text-brand-gold text-5xl mb-4 font-serif">15+</div>
@@ -284,12 +303,12 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- 8. Final CTA (Lead Capture) -->
-    <section class="py-32 px-4 bg-brand-gold relative overflow-hidden">
+    <!-- 8. Final CTA -->
+    <section class="py-32 px-4 bg-brand-gold relative overflow-hidden text-center">
       <div class="absolute inset-0 bg-black/5"></div>
       <div class="max-w-4xl mx-auto text-center relative z-10">
         <h2 class="font-serif text-5xl text-brand-brown mb-8">Готовы создать интерьер <br> своей мечты?</h2>
-        <p class="text-brand-brown/80 text-xl mb-12">Запишитесь на бесплатный замер и получите 3D-проект в подарок!</p>
+        <p class="text-brand-brown/80 text-xl mb-12 text-center">Запишитесь на бесплатный замер и получите 3D-проект в подарок!</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <router-link to="/contact" class="bg-brand-brown text-white px-12 py-5 rounded-full font-black uppercase tracking-widest hover:bg-black transition-all shadow-2xl flex items-center justify-center gap-3">
             <LucideMessageSquare :size="20" />
@@ -303,10 +322,10 @@ onUnmounted(() => {
     </section>
 
     <!-- 9. SEO Content -->
-    <section class="py-24 px-4 bg-white border-t border-brand-brown/5">
+    <section class="py-24 px-4 bg-white border-t border-brand-brown/5 text-center">
       <div class="max-w-4xl mx-auto prose prose-brand opacity-50 hover:opacity-100 transition-opacity">
         <h2 class="font-serif text-2xl text-brand-brown mb-8 text-center">Кухни и мебель на заказ в Севастополе и Крыму</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-brand-brown/70 leading-relaxed text-[10px] uppercase tracking-wider">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-brand-brown/70 leading-relaxed text-[10px] uppercase tracking-wider text-left">
           <p>
             Компания <strong>РОСТ Мебель</strong> специализируется на проектировании и изготовлении премиальной мебели по индивидуальным размерам. Наше производство оснащено современным оборудованием, что позволяет создавать изделия любой сложности.
           </p>

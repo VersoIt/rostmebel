@@ -1,80 +1,72 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/products';
 import ProductCard from '@/components/catalog/ProductCard.vue';
-import { LucideFilter, LucideChevronDown, LucideSearch, LucideRotateCcw } from 'lucide-vue-next';
+import { LucideSearch, LucideFilterX, LucideLoader2 } from 'lucide-vue-next';
 
 const productStore = useProductStore();
 const route = useRoute();
 const router = useRouter();
 
-// Filter States (Internal for form)
-const search = ref(route.query.search?.toString() || '');
-const minPrice = ref(route.query.min_price?.toString() || '');
-const maxPrice = ref(route.query.max_price?.toString() || '');
 const selectedCategory = ref(route.query.category?.toString() || '');
-const sortBy = ref(route.query.sort_by?.toString() || 'id');
+const searchQuery = ref('');
+
+const fetch = async () => {
+  const params: any = { status: 'published' };
+  if (selectedCategory.value) {
+    const cat = productStore.categories.find(c => c.slug === selectedCategory.value);
+    if (cat) params.category_id = cat.id;
+  }
+  if (searchQuery.value) params.search = searchQuery.value;
+  
+  await productStore.fetchProducts(params);
+};
 
 onMounted(async () => {
   await productStore.fetchCategories();
-  loadProducts();
+  await fetch();
 });
 
-const loadProducts = () => {
-  const params: any = {
-    sort_by: sortBy.value,
-    status: 'published',
-    search: search.value,
-  };
-  
-  if (selectedCategory.value) params.category_id = selectedCategory.value;
-  if (minPrice.value) params.min_price = minPrice.value;
-  if (maxPrice.value) params.max_price = maxPrice.value;
-  
-  // Sync URL
-  router.push({ query: params });
-  productStore.fetchProducts(params);
+const selectCategory = (slug: string) => {
+  selectedCategory.value = slug;
+  router.push({ query: { ...route.query, category: slug || undefined } });
+  fetch();
 };
 
 const resetFilters = () => {
-  search.value = '';
-  minPrice.value = '';
-  maxPrice.value = '';
   selectedCategory.value = '';
-  sortBy.value = 'id';
-  loadProducts();
-};
-
-const selectCategory = (id: string) => {
-  selectedCategory.value = id;
-  loadProducts(); // Category click still triggers immediate load for UX
+  searchQuery.value = '';
+  router.push({ query: {} });
+  fetch();
 };
 </script>
 
 <template>
-  <div class="bg-brand-gray/30 min-h-screen pt-32 pb-24 px-4">
-    <div class="max-w-7xl mx-auto">
-      <header class="mb-12">
-        <h1 class="font-serif text-5xl text-brand-brown mb-6">Наши проекты</h1>
+  <div class="bg-brand-cream/20 min-h-screen pt-32 pb-24">
+    <div class="max-w-7xl mx-auto px-6">
+      <header class="mb-16">
+        <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Портфолио</span>
+        <h1 class="font-serif text-5xl md:text-7xl text-brand-brown mb-8">Наши проекты</h1>
         
-        <div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+        <!-- Category Filters -->
+        <div class="flex flex-wrap gap-3">
           <button 
             @click="selectCategory('')"
             :class="[
-              'px-6 py-3 rounded-full font-medium transition-all whitespace-nowrap border-2',
-              !selectedCategory ? 'bg-brand-brown border-brand-brown text-white shadow-lg' : 'bg-white border-transparent text-brand-brown hover:bg-brand-brown/5'
+              'px-8 py-3.5 rounded-full font-bold text-xs uppercase tracking-widest transition-all border-2',
+              !selectedCategory ? 'bg-brand-brown border-brand-brown text-white shadow-xl scale-105' : 'bg-white border-brand-brown/5 text-brand-brown/60 hover:border-brand-gold hover:text-brand-gold'
             ]"
           >
-            Все проекты
+            Все работы
           </button>
           <button 
             v-for="cat in productStore.categories" 
             :key="cat.id"
-            @click="selectCategory(cat.id.toString())"
+            @click="selectCategory(cat.slug)"
             :class="[
-              'px-6 py-3 rounded-full font-medium transition-all whitespace-nowrap border-2',
-              selectedCategory === cat.id.toString() ? 'bg-brand-brown border-brand-brown text-white shadow-lg' : 'bg-white border-transparent text-brand-brown hover:bg-brand-brown/5'
+              'px-8 py-3.5 rounded-full font-bold text-xs uppercase tracking-widest transition-all border-2',
+              selectedCategory === cat.slug ? 'bg-brand-brown border-brand-brown text-white shadow-xl scale-105' : 'bg-white border-brand-brown/5 text-brand-brown/60 hover:border-brand-gold hover:text-brand-gold'
             ]"
           >
             {{ cat.name }}
@@ -82,85 +74,72 @@ const selectCategory = (id: string) => {
         </div>
       </header>
 
-      <div class="flex flex-col md:flex-row gap-8">
-        <aside class="w-full md:w-72 shrink-0">
-          <div class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm sticky top-32 space-y-8">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <LucideFilter :size="20" class="text-brand-gold" />
-                <h3 class="font-serif text-xl">Фильтры</h3>
-              </div>
-              <button @click="resetFilters" class="text-brand-brown/40 hover:text-brand-gold transition-colors p-1">
-                <LucideRotateCcw :size="18" />
-              </button>
+      <!-- Search & Results -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-12">
+        <!-- Sidebar Search -->
+        <aside class="lg:col-span-1">
+          <div class="sticky top-32 space-y-8">
+            <div class="relative group">
+              <input 
+                v-model="searchQuery"
+                @input="fetch"
+                type="text" 
+                placeholder="Поиск проекта..." 
+                class="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border-2 border-transparent focus:border-brand-gold outline-none shadow-sm transition-all group-hover:shadow-md font-medium"
+              >
+              <LucideSearch class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-brown/20" :size="20" />
             </div>
 
-            <div>
-              <label class="block text-xs font-bold text-brand-brown/40 mb-3 uppercase tracking-widest">Поиск</label>
-              <div class="relative">
-                <input 
-                  v-model="search"
-                  type="text"
-                  placeholder="Название..."
-                  class="w-full pl-10 pr-4 py-3 rounded-xl bg-brand-gray/50 border-none outline-none focus:ring-2 ring-brand-gold/20 text-sm"
-                >
-                <LucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-brand-brown/30" :size="16" />
+            <div class="p-8 bg-brand-brown rounded-[2rem] text-white shadow-2xl relative overflow-hidden">
+              <div class="relative z-10">
+                <h4 class="font-serif text-xl mb-4 text-brand-gold">Нужна помощь?</h4>
+                <p class="text-white/60 text-sm leading-relaxed mb-6">Наш ИИ поможет подобрать проект под ваши требования.</p>
+                <router-link to="/#ai-search" class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:text-brand-gold transition-colors">
+                  Запустить ИИ-поиск
+                  <LucideArrowRight :size="14" />
+                </router-link>
               </div>
+              <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
             </div>
-            
-            <div>
-              <label class="block text-xs font-bold text-brand-brown/40 mb-3 uppercase tracking-widest">Цена (₽)</label>
-              <div class="flex items-center gap-3">
-                <input v-model="minPrice" type="number" placeholder="От" class="w-full px-3 py-3 rounded-xl bg-brand-gray/50 border-none outline-none focus:ring-2 ring-brand-gold/20 text-sm">
-                <div class="w-2 h-px bg-brand-brown/20"></div>
-                <input v-model="maxPrice" type="number" placeholder="До" class="w-full px-3 py-3 rounded-xl bg-brand-gray/50 border-none outline-none focus:ring-2 ring-brand-gold/20 text-sm">
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-brand-brown/40 mb-3 uppercase tracking-widest">Сортировка</label>
-              <div class="relative">
-                <select 
-                  v-model="sortBy"
-                  class="w-full appearance-none bg-brand-gray/50 border-none px-4 py-3 rounded-xl outline-none focus:ring-2 ring-brand-gold/20 text-sm cursor-pointer"
-                >
-                  <option value="id">По умолчанию</option>
-                  <option value="price">По цене</option>
-                  <option value="views_count">Популярные</option>
-                  <option value="created_at">Новинки</option>
-                </select>
-                <LucideChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-brand-brown/40" :size="16" />
-              </div>
-            </div>
-
-            <button 
-              @click="loadProducts"
-              class="w-full bg-brand-brown text-white py-4 rounded-xl font-bold hover:bg-brand-gold transition-all shadow-lg shadow-brand-brown/10 active:scale-[0.98]"
-            >
-              ПРИМЕНИТЬ
-            </button>
           </div>
         </aside>
 
-        <main class="flex-1">
-          <div v-if="productStore.loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div v-for="i in 6" :key="i" class="animate-pulse bg-white rounded-3xl h-96"></div>
-          </div>
-          
-          <div v-else-if="productStore.products.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <ProductCard v-for="p in productStore.products" :key="p.id" :product="p" />
+        <!-- Main Grid -->
+        <main class="lg:col-span-3">
+          <div v-if="productStore.loading" class="flex flex-col items-center justify-center py-40 gap-4">
+            <LucideLoader2 class="animate-spin text-brand-gold" :size="48" />
+            <span class="text-brand-brown/40 font-bold text-xs uppercase tracking-widest">Загружаем шедевры...</span>
           </div>
 
-          <div v-else class="bg-white py-32 text-center rounded-[3rem] border border-dashed border-brand-brown/10 flex flex-col items-center">
-            <div class="w-20 h-20 bg-brand-gray rounded-full flex items-center justify-center text-brand-brown/20 mb-6">
-              <LucideSearch :size="40" />
+          <div v-else-if="productStore.products.length > 0">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in">
+              <ProductCard v-for="p in productStore.products" :key="p.id" :product="p" />
             </div>
-            <h3 class="text-2xl font-serif text-brand-brown mb-2">Ничего не нашли</h3>
-            <p class="text-brand-brown/40 mb-8">Измените параметры фильтров</p>
-            <button @click="resetFilters" class="text-brand-gold font-bold hover:underline">Сбросить всё</button>
+            
+            <div class="mt-16 pt-8 border-t border-brand-brown/5 flex justify-between items-center">
+              <span class="text-sm text-brand-brown/40 font-medium">Показано {{ productStore.products.length }} проектов</span>
+            </div>
+          </div>
+
+          <div v-else class="text-center py-40 bg-white rounded-[3rem] border-2 border-dashed border-brand-brown/5">
+            <LucideFilterX :size="64" class="mx-auto text-brand-brown/10 mb-6" />
+            <h3 class="text-2xl font-serif text-brand-brown mb-2">Ничего не найдено</h3>
+            <p class="text-brand-brown/40 mb-8">Попробуйте изменить параметры поиска или категорию</p>
+            <button @click="resetFilters" class="text-brand-gold font-bold hover:underline uppercase text-xs tracking-widest">Сбросить всё</button>
           </div>
         </main>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.animate-in {
+  animation: fade-up 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
