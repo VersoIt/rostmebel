@@ -25,7 +25,7 @@ import type { Product } from '@/types';
 const productStore = useProductStore();
 const hits = ref<Product[]>([]);
 
-// Hero Slider - Using LOCAL images for maximum reliability
+// Hero Slider - Using LOCAL images
 const heroImages = [
   '/assets/images/hero-1.jpg',
   '/assets/images/hero-2.jpg',
@@ -144,13 +144,13 @@ onUnmounted(() => {
     <section class="py-32 px-4 bg-[#1a1410] text-white relative overflow-hidden">
       <div class="absolute top-0 right-0 w-1/3 h-full bg-brand-gold/5 skew-x-12 translate-x-20"></div>
       <div class="max-w-7xl mx-auto relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
-          <div class="text-left">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center text-left">
+          <div>
             <div class="inline-flex items-center gap-2 text-brand-gold font-bold text-xs uppercase tracking-[0.4em] mb-6">
               <span class="w-10 h-px bg-brand-gold"></span>
               Expert Supervision
             </div>
-            <h2 class="font-serif text-5xl md:text-6xl mb-10 leading-tight">Мы не просто рисуем, <br> <span class="text-brand-gold italic text-left">мы строим.</span></h2>
+            <h2 class="font-serif text-5xl md:text-6xl mb-10 leading-tight">Мы не просто рисуем, <br> <span class="text-brand-gold italic">мы строим.</span></h2>
             <p class="text-white/60 text-lg mb-12 leading-relaxed max-w-xl text-left">
               Чтобы мебель встала идеально, помещение должно быть подготовлено безупречно. Мы берем на себя авторское сопровождение и выдаем строителям точные технические карты.
             </p>
@@ -179,9 +179,8 @@ onUnmounted(() => {
             </div>
           </div>
           
-          <div class="relative">
+          <div class="relative text-left">
             <div class="aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border border-white/10">
-              <!-- Using hero-1.jpg as local fallback -->
               <img src="/assets/images/hero-1.jpg" class="w-full h-full object-cover grayscale-[0.5] hover:grayscale-0 transition-all duration-700" alt="Technical Drawing">
             </div>
             <div class="absolute -bottom-10 -left-10 bg-brand-gold p-10 rounded-3xl shadow-2xl hidden md:block text-left">
@@ -198,7 +197,6 @@ onUnmounted(() => {
       <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div class="grid grid-cols-2 gap-4">
-            <!-- Using hero-2 and hero-3 as local fallbacks -->
             <img src="/assets/images/hero-2.jpg" class="rounded-3xl aspect-[3/4] object-cover mt-12 shadow-2xl" alt="Interior 1">
             <img src="/assets/images/hero-3.jpg" class="rounded-3xl aspect-[3/4] object-cover shadow-2xl" alt="Interior 2">
           </div>
@@ -208,7 +206,7 @@ onUnmounted(() => {
             <p class="text-lg text-brand-brown/70 mb-10 leading-relaxed text-left">
               Мы создаем единую экосистему вашего интерьера. Никакого «разнобоя» в материалах и стилях. Наша команда закроет все потребности в мебели: от кухни до прикроватной тумбочки.
             </p>
-            <div class="space-y-8">
+            <div class="space-y-8 text-left">
               <div class="flex gap-6 items-start">
                 <div class="w-14 h-14 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-gold shrink-0 border border-brand-gold/10">
                   <LucideCrown :size="28" />
@@ -218,7 +216,7 @@ onUnmounted(() => {
                   <p class="text-brand-brown/60">Blum, Hettich, Grass. Петли и ящики, которые работают бесшумно десятилетиями.</p>
                 </div>
               </div>
-              <div class="flex gap-6 items-start">
+              <div class="flex gap-6 items-start text-left">
                 <div class="w-14 h-14 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-gold shrink-0 border border-brand-gold/10">
                   <LucideLayout :size="28" />
                 </div>
@@ -312,16 +310,16 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- 9. SEO Content -->
-    <section class="py-24 px-4 bg-white border-t border-brand-brown/5 text-center">
-      <div class="max-w-4xl mx-auto prose prose-brand text-center">
-        <h2 class="font-serif text-2xl text-brand-brown mb-8 text-center uppercase tracking-widest">Кухни и мебель на заказ в Севастополе и Крыму</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-brand-brown/70 leading-relaxed text-[10px] uppercase tracking-wider text-left">
-          <p>
-            Компания <strong>РОСТ Мебель</strong> специализируется на проектировании и изготовлении премиальной мебели по индивидуальным размерам. Наше производство оснащено современным оборудованием, что позволяет создавать изделия любой сложности.
+    <!-- 9. About / SEO Section -->
+    <section class="py-32 px-4 bg-white border-t border-brand-brown/5">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="font-serif text-4xl text-brand-brown mb-12 text-center">Искусство создания <span class="text-brand-gold italic">вашего пространства</span></h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-16 text-brand-brown/80 leading-relaxed text-lg text-left">
+          <p class="font-light">
+            Компания <strong class="font-bold text-brand-brown">РОСТ Мебель</strong> — это не просто производство, это команда профессионалов, влюбленных в свое дело. Мы специализируемся на проектировании и изготовлении премиальной мебели по индивидуальным размерам в Севастополе и по всему Крыму, превращая сложные технические задачи в элегантные интерьерные решения.
           </p>
-          <p>
-            Мы предлагаем комплексный подход: от замера и создания 3D-проекта до профессионального монтажа. Используем только проверенные материалы и надежную фурнитуру от ведущих мировых производителей.
+          <p class="font-light">
+            Наше производство оснащено передовым оборудованием, что позволяет нам работать с любыми материалами: от натурального массива и шпона до итальянского нано-пластика Fenix. Мы обеспечиваем полный цикл авторского сопровождения: от первого наброска и разметки розеток до финальной установки «под ключ».
           </p>
         </div>
       </div>

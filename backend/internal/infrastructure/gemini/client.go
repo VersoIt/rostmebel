@@ -23,44 +23,20 @@ func NewClient(apiKey, model string) *Client {
 	}
 }
 
-type GeminiRequest struct {
-	Contents []Content `json:"contents"`
-}
-
-type Content struct {
-	Parts []Part `json:"parts"`
-}
-
-type Part struct {
-	Text string `json:"text"`
-}
-
-type GeminiResponse struct {
-	Candidates []Candidate `json:"candidates"`
-}
-
-type Candidate struct {
-	Content Content `json:"content"`
-}
-
-type AIResponse struct {
-	IDs []int64 `json:"ids"`
-}
-
-func (c *Client) SearchProducts(ctx context.Context, userQuery string, productsJSON string) ([]int64, error) {
+func (c *Client) SearchProducts(ctx context.Context, userQuery string, projectsJSON string) ([]int64, error) {
 	if c.apiKey == "" {
-		return nil, fmt.Errorf("api key is not set")
+		return []int64{}, nil
 	}
 
 	prompt := fmt.Sprintf(`
 Ты — экспертный ИИ-консультант РОСТ Мебель. 
-Твоя задача: проанализировать свободный запрос пользователя и подобрать из списка ниже наиболее подходящие реализованные проекты.
+Твоя задача: проанализировать запрос пользователя и подобрать из списка ниже наиболее подходящие реализованные проекты.
 
-ИНСТРУКЦИИ:
-1. Анализируй стиль (скандинавский, лофт, классика), материал, цвет и бюджет, если они указаны.
-2. Если в запросе есть бюджет (например, "до 50000"), исключай проекты дороже.
-3. Если запрос касается комнаты (например, "для спальни"), подбирай проекты с соответствующими тегами.
-4. Сортируй результат по степени соответствия запросу.
+КРИТИЧЕСКИЕ ПРАВИЛА:
+1. КАТЕГОРИЯ: Если в запросе указан тип мебели (кухня, шкаф, гардеробная), возвращай ТОЛЬКО проекты из этой категории. Если пользователь ищет КУХНЮ, не предлагай шкафы, даже если они подходят по бюджету.
+2. БЮДЖЕТ: Если указана сумма (например, "до 100000"), исключай все проекты, бюджет которых превышает эту сумму.
+3. ТЕГИ: Анализируй стиль (лофт, классика, сканди) и материалы.
+4. СОРТИРОВКА: Первыми ставь проекты, максимально похожие на описание.
 
 СПИСОК ПРОЕКТОВ (JSON):
 %s
@@ -69,27 +45,22 @@ func (c *Client) SearchProducts(ctx context.Context, userQuery string, productsJ
 
 ОТВЕТЬ СТРОГО В ФОРМАТЕ JSON: {"ids": [id1, id2, ...]}
 Если ничего не подходит, верни {"ids": []}.
-`, productsJSON, userQuery)
+`, projectsJSON, userQuery)
 
-	reqBody := GeminiRequest{
-		Contents: []Content{
+	payload := map[string]interface{}{
+		"contents": []map[string]interface{}{
 			{
-				Parts: []Part{{Text: prompt}},
+				"parts": []map[string]interface{}{
+					{"text": prompt},
+				},
 			},
 		},
 	}
 
-	jsonData, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, err
-	}
-
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", c.model, c.apiKey)
 	
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, err
-	}
+	data, _ := json.Marshal(payload)
+	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.client.Do(req)
@@ -98,34 +69,37 @@ func (c *Client) SearchProducts(ctx context.Context, userQuery string, productsJ
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("gemini api returned status %d", resp.StatusCode)
+	var result struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text string `json:"text"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
 	}
 
-	var geminiResp GeminiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&geminiResp); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
 
-	if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 {
-		return nil, fmt.Errorf("gemini api returned no candidates")
+	if len(result.Candidates) == 0 || len(result.Candidates[0].Content.Parts) == 0 {
+		return []int64{}, nil
 	}
 
-	responseText := geminiResp.Candidates[0].Content.Parts[0].Text
+	cleanJSON := extractJSON(result.Candidates[0].Content.Parts[0].Text)
 	
-	// Try to parse the response text as JSON
-	var aiResp AIResponse
-	// Sometimes Gemini wraps JSON in markdown blocks
-	cleanedText := cleanJSONResponse(responseText)
-	if err := json.Unmarshal([]byte(cleanedText), &aiResp); err != nil {
-		return nil, fmt.Errorf("failed to parse gemini response: %w, text: %s", err, responseText)
+	var finalResult struct {
+		IDs []int64 `json:"ids"`
+	}
+	if err := json.Unmarshal([]byte(cleanJSON), &finalResult); err != nil {
+		return nil, nil
 	}
 
-	return aiResp.IDs, nil
+	return finalResult.IDs, nil
 }
 
-func cleanJSONResponse(text string) string {
-	// Simple cleanup for markdown code blocks
+func extractJSON(text string) string {
 	if start := bytes.Index([]byte(text), []byte("```json")); start != -1 {
 		text = text[start+7:]
 	} else if start := bytes.Index([]byte(text), []byte("```")); start != -1 {

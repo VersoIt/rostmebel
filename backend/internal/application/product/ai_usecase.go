@@ -33,7 +33,6 @@ func NewAIUseCase(repo product.Repository, gemini *gemini.Client, redis *redis.C
 func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Project, error) {
 	u.logger.Info("AI Search request", "query", query)
 
-	// Check cache
 	cacheKey := fmt.Sprintf("ai_search:%s", hashQuery(query))
 	if cached, err := u.redis.Get(ctx, cacheKey).Result(); err == nil {
 		var projects []*product.Project
@@ -49,7 +48,6 @@ func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Projec
 		u.logger.Warn("Initial FTS search failed", "error", err)
 	}
 
-	// 2. If FTS didn't find enough, add some popular/recent projects as context
 	if len(candidates) < 10 {
 		popular, _, _ := u.repo.List(ctx, product.ListFilter{
 			Status: ptr(product.StatusPublished),
@@ -59,7 +57,6 @@ func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Projec
 		candidates = append(candidates, popular...)
 	}
 
-	// Remove duplicates
 	uniqueCandidates := make([]*product.Project, 0)
 	seen := make(map[int64]bool)
 	for _, c := range candidates {
@@ -69,20 +66,33 @@ func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Projec
 		}
 	}
 
-	// 3. Simplify candidates for Gemini
+	// Get categories map for names
+	cats, _ := u.repo.ListCategories(ctx)
+	catMap := make(map[int64]string)
+	for _, c := range cats {
+		catMap[c.ID] = c.Name
+	}
+
+	// 3. Simplify candidates for Gemini with CATEGORY NAME
 	type simpleProj struct {
-		ID     int64   `json:"id"`
-		Name   string  `json:"name"`
-		Budget float64 `json:"budget"`
-		Tags   string  `json:"tags"`
+		ID       int64   `json:"id"`
+		Category string  `json:"category"`
+		Name     string  `json:"name"`
+		Budget   float64 `json:"budget"`
+		Tags     string  `json:"tags"`
 	}
 	simpleProjects := make([]simpleProj, len(uniqueCandidates))
 	for i, p := range uniqueCandidates {
+		catName := "Прочее"
+		if p.ProjectCategoryID != nil {
+			catName = catMap[*p.ProjectCategoryID]
+		}
 		simpleProjects[i] = simpleProj{
-			ID:     p.ID,
-			Name:   p.Name,
-			Budget: p.Budget,
-			Tags:   p.AITags,
+			ID:       p.ID,
+			Category: catName,
+			Name:     p.Name,
+			Budget:   p.Budget,
+			Tags:     p.AITags,
 		}
 	}
 
