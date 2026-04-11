@@ -60,6 +60,7 @@ const formatPrice = (price: number) => {
     @click="goToProduct"
     class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-brand-brown/5 cursor-pointer h-full flex flex-col"
   >
+    <!-- Image Area -->
     <div class="relative aspect-square overflow-hidden bg-brand-gray shrink-0">
       <img 
         :src="product.images[0]?.url || placeholder" 
@@ -82,12 +83,9 @@ const formatPrice = (price: number) => {
           <LucideEye :size="20" />
         </button>
       </div>
-
-      <div v-if="product.price_old" class="absolute top-4 left-4 bg-brand-gold text-white px-3 py-1 rounded-lg text-sm font-medium">
-        SALE
-      </div>
     </div>
 
+    <!-- Content Area -->
     <div class="p-6 flex-1 flex flex-col">
       <div class="text-xs text-brand-brown/40 uppercase tracking-widest mb-2">
         {{ product.ai_tags?.split(',')[0] || 'Мебель' }}
@@ -103,6 +101,7 @@ const formatPrice = (price: number) => {
       </div>
     </div>
 
+    <!-- Quick View Modal -->
     <Teleport to="body">
       <transition name="modal-fade">
         <div v-if="isQuickViewOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12">
