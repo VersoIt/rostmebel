@@ -19,6 +19,7 @@ const (
 type Order struct {
 	ID          int64       `json:"id"`
 	ProjectID   *int64      `json:"project_id"`
+	ProjectName string      `json:"project_name,omitempty"` // Added for admin view
 	ClientName  string      `json:"client_name"`
 	ClientPhone string      `json:"client_phone"`
 	ClientEmail string      `json:"client_email"`

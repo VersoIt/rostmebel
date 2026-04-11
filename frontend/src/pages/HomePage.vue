@@ -25,11 +25,11 @@ import type { Product } from '@/types';
 const productStore = useProductStore();
 const hits = ref<Product[]>([]);
 
-// Hero Slider - Using stable Yandex URL for testing
+// Hero Slider - Using LOCAL images for maximum reliability
 const heroImages = [
-  'https://avatars.mds.yandex.net/get-mpic/5350118/2a00000190d5e003ac96d8f2931951244300/orig',
-  'https://main-cdn.sbermegamarket.ru/big2/hlr-system/189/762/071/092/017/50/100070396583b0.jpg',
-  'https://avatars.mds.yandex.net/i?id=cab0021c95256a2fad40d928695673a2_l-3397820-images-thumbs&n=13'
+  '/assets/images/hero-1.jpg',
+  '/assets/images/hero-2.jpg',
+  '/assets/images/hero-3.jpg'
 ];
 const currentHeroIndex = ref(0);
 let heroInterval: any = null;
@@ -57,10 +57,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="bg-brand-cream min-h-screen text-brand-brown font-sans">
+  <div class="bg-brand-cream min-h-screen text-brand-brown font-sans selection:bg-brand-gold selection:text-white">
     <!-- 1. Hero Section -->
     <section class="relative h-screen flex items-center justify-center overflow-hidden bg-neutral-900">
-      <!-- High-Reliability Slider -->
       <div class="absolute inset-0 z-0">
         <div 
           v-for="(img, idx) in heroImages" 
@@ -79,9 +78,7 @@ onUnmounted(() => {
           >
         </div>
         
-        <!-- Overlays -->
         <div class="absolute inset-0 bg-black/30 z-[11]"></div>
-        <!-- Weakened white gradient for better button visibility -->
         <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-brand-cream/40 z-[12]"></div>
       </div>
       
@@ -109,7 +106,6 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Indicators -->
       <div class="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 flex gap-3">
         <div v-for="(_, idx) in heroImages" :key="idx"
           class="h-1 transition-all duration-500 rounded-full"
@@ -122,9 +118,9 @@ onUnmounted(() => {
     <section id="projects-grid" class="py-32 px-4 max-w-7xl mx-auto">
       <div class="flex items-end justify-between mb-16">
         <div>
-          <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Портфолио</span>
-          <h2 class="font-serif text-5xl text-brand-brown mb-2">Наши последние проекты</h2>
-          <p class="text-brand-brown/60 text-lg">Решения, которые вдохновляют на перемены</p>
+          <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block text-left">Портфолио</span>
+          <h2 class="font-serif text-5xl text-brand-brown mb-2 text-left">Наши последние проекты</h2>
+          <p class="text-brand-brown/60 text-lg text-left">Решения, которые вдохновляют на перемены</p>
         </div>
         <router-link to="/catalog" class="hidden md:flex items-center gap-2 text-brand-gold font-bold hover:underline group">
           Смотреть все работы
@@ -148,13 +144,13 @@ onUnmounted(() => {
     <section class="py-32 px-4 bg-[#1a1410] text-white relative overflow-hidden">
       <div class="absolute top-0 right-0 w-1/3 h-full bg-brand-gold/5 skew-x-12 translate-x-20"></div>
       <div class="max-w-7xl mx-auto relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center text-left">
-          <div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+          <div class="text-left">
             <div class="inline-flex items-center gap-2 text-brand-gold font-bold text-xs uppercase tracking-[0.4em] mb-6">
               <span class="w-10 h-px bg-brand-gold"></span>
               Expert Supervision
             </div>
-            <h2 class="font-serif text-5xl md:text-6xl mb-10 leading-tight">Мы не просто рисуем, <br> <span class="text-brand-gold italic">мы строим.</span></h2>
+            <h2 class="font-serif text-5xl md:text-6xl mb-10 leading-tight">Мы не просто рисуем, <br> <span class="text-brand-gold italic text-left">мы строим.</span></h2>
             <p class="text-white/60 text-lg mb-12 leading-relaxed max-w-xl text-left">
               Чтобы мебель встала идеально, помещение должно быть подготовлено безупречно. Мы берем на себя авторское сопровождение и выдаем строителям точные технические карты.
             </p>
@@ -185,7 +181,8 @@ onUnmounted(() => {
           
           <div class="relative">
             <div class="aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border border-white/10">
-              <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover grayscale-[0.5] hover:grayscale-0 transition-all duration-700" alt="Technical Drawing">
+              <!-- Using hero-1.jpg as local fallback -->
+              <img src="/assets/images/hero-1.jpg" class="w-full h-full object-cover grayscale-[0.5] hover:grayscale-0 transition-all duration-700" alt="Technical Drawing">
             </div>
             <div class="absolute -bottom-10 -left-10 bg-brand-gold p-10 rounded-3xl shadow-2xl hidden md:block text-left">
               <div class="text-brand-brown font-serif text-4xl mb-2">0%</div>
@@ -199,12 +196,13 @@ onUnmounted(() => {
     <!-- 4. Services Section -->
     <section class="py-32 px-4 bg-white">
       <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center text-left">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div class="grid grid-cols-2 gap-4">
-            <img src="https://images.unsplash.com/photo-1556912173-3bb406ef7e77?q=80&w=800&auto=format&fit=crop" class="rounded-3xl aspect-[3/4] object-cover mt-12 shadow-2xl" alt="Interior 1">
-            <img src="https://images.unsplash.com/photo-1556909190-eccf4a8bf97a?q=80&w=800&auto=format&fit=crop" class="rounded-3xl aspect-[3/4] object-cover shadow-2xl" alt="Interior 2">
+            <!-- Using hero-2 and hero-3 as local fallbacks -->
+            <img src="/assets/images/hero-2.jpg" class="rounded-3xl aspect-[3/4] object-cover mt-12 shadow-2xl" alt="Interior 1">
+            <img src="/assets/images/hero-3.jpg" class="rounded-3xl aspect-[3/4] object-cover shadow-2xl" alt="Interior 2">
           </div>
-          <div>
+          <div class="text-left">
             <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">All-in-one</span>
             <h2 class="font-serif text-5xl text-brand-brown mb-8 leading-tight">Комплексное меблирование дома</h2>
             <p class="text-lg text-brand-brown/70 mb-10 leading-relaxed text-left">
@@ -238,7 +236,7 @@ onUnmounted(() => {
     <!-- 5. Process Section -->
     <section class="py-32 px-4 bg-brand-cream/50 relative overflow-hidden border-y border-brand-brown/5">
       <div class="max-w-7xl mx-auto relative z-10 text-center">
-        <div class="text-center mb-20">
+        <div class="text-center mb-20 text-center">
           <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Workflow</span>
           <h2 class="font-serif text-5xl text-brand-brown text-center">Как мы работаем</h2>
         </div>

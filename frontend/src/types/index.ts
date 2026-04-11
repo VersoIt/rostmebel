@@ -36,6 +36,7 @@ export type OrderStatus = 'new' | 'processing' | 'done' | 'rejected' | 'spam';
 export interface Order {
   id: number;
   project_id?: number;
+  project_name?: string; // Added for admin UI
   client_name: string;
   client_phone: string;
   client_email: string;

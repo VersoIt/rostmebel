@@ -117,7 +117,7 @@ onMounted(() => {
               </div>
               <div class="hidden md:block">
                 <div class="aspect-square rounded-3xl overflow-hidden grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700">
-                  <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover">
+                  <img src="/assets/images/showroom.jpg" class="w-full h-full object-cover">
                 </div>
               </div>
             </div>

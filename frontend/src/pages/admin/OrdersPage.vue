@@ -126,6 +126,7 @@ const getStatusClass = (status: string) => {
         <thead>
           <tr class="bg-brand-gray/20 text-brand-brown/40 text-xs uppercase tracking-widest">
             <th class="px-8 py-4 font-semibold">Клиент</th>
+            <th class="px-8 py-4 font-semibold">Проект</th>
             <th class="px-8 py-4 font-semibold">Контакты</th>
             <th class="px-8 py-4 font-semibold">Статус</th>
             <th class="px-8 py-4 font-semibold">Дата</th>
@@ -142,8 +143,11 @@ const getStatusClass = (status: string) => {
               <div class="text-sm text-brand-brown/60 mt-1 max-w-xs italic line-clamp-1">"{{ o.comment || 'Без комментария' }}"</div>
             </td>
             <td class="px-8 py-6">
-              <div class="font-medium text-brand-brown">{{ o.client_phone }}</div>
-              <div class="text-xs text-brand-brown/40">{{ o.client_email || 'email не указан' }}</div>
+              <div v-if="o.project_name" class="flex flex-col">
+                <span class="text-sm font-bold text-brand-brown">{{ o.project_name }}</span>
+                <span class="text-[10px] uppercase font-black text-brand-gold tracking-widest">Индивидуальный заказ</span>
+              </div>
+              <div v-else class="text-brand-brown/30 text-xs italic">Общая консультация</div>
             </td>
             <td class="px-8 py-6">
               <div :class="['inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter', getStatusClass(o.status)]">

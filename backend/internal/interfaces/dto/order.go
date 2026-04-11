@@ -17,6 +17,7 @@ type CreateOrderRequest struct {
 type OrderResponse struct {
 	ID          int64             `json:"id"`
 	ProjectID   *int64            `json:"project_id"`
+	ProjectName string            `json:"project_name,omitempty"`
 	ClientName  string            `json:"client_name"`
 	ClientPhone string            `json:"client_phone"`
 	ClientEmail string            `json:"client_email"`
@@ -30,6 +31,7 @@ func FromOrder(o *order.Order) OrderResponse {
 	return OrderResponse{
 		ID:          o.ID,
 		ProjectID:   o.ProjectID,
+		ProjectName: o.ProjectName,
 		ClientName:  o.ClientName,
 		ClientPhone: o.ClientPhone,
 		ClientEmail: o.ClientEmail,
