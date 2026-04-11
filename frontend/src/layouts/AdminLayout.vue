@@ -31,23 +31,32 @@ const menuItems = [
           v-for="item in menuItems" 
           :key="item.name"
           :to="item.to"
-          class="admin-sidebar-link flex items-center gap-4 px-6 py-4 rounded-xl transition-all hover:bg-white/5 group cursor-pointer"
-          active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20"
-          exact-active-class="bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20"
+          v-slot="{ isExactActive, navigate }"
+          custom
         >
-          <component :is="item.icon" :size="20" class="group-hover:scale-110 transition-transform" />
-          {{ item.name }}
+          <div 
+            @click="navigate"
+            class="admin-sidebar-link flex items-center gap-4 px-6 py-4 rounded-xl transition-all group cursor-pointer"
+            :class="[
+              isExactActive 
+                ? 'bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20' 
+                : 'hover:bg-white/5 text-white/60 hover:text-white'
+            ]"
+          >
+            <component :is="item.icon" :size="20" />
+            {{ item.name }}
+          </div>
         </router-link>
       </nav>
 
-      <div class="p-6 border-t border-white/5">
-        <a href="/" target="_blank" class="flex items-center gap-4 px-6 py-4 rounded-xl hover:bg-white/5 transition-all text-white/60 hover:text-white group">
+      <div class="p-6 space-y-2 border-t border-white/5">
+        <a href="/" target="_blank" class="flex items-center gap-4 px-6 py-4 rounded-xl text-white/40 hover:text-brand-gold hover:bg-white/5 transition-all group">
           <LucideExternalLink :size="20" />
           На сайт
         </a>
         <button 
           @click="authStore.logout()"
-          class="w-full flex items-center gap-4 px-6 py-4 rounded-xl hover:bg-red-500/20 hover:text-red-400 transition-all group"
+          class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/5 transition-all group"
         >
           <LucideLogOut :size="20" class="group-hover:-translate-x-1 transition-transform" />
           Выйти
@@ -61,3 +70,10 @@ const menuItems = [
     </main>
   </div>
 </template>
+
+<style scoped>
+.admin-sidebar-link {
+  text-decoration: none;
+  user-select: none;
+}
+</style>
