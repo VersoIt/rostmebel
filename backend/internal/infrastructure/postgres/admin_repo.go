@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -60,61 +61,67 @@ func (r *AdminRepo) UpdateRefreshToken(ctx context.Context, id int64, token *str
 }
 
 func (r *AdminRepo) GetStats(ctx context.Context) (*admin.Stats, error) {
-	var stats admin.Stats
+	stats := &admin.Stats{
+		TopProjects: []admin.TopProject{},
+		OrdersByDay: []admin.OrdersByDay{},
+	}
 
-	// Products count
-	err := r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM products WHERE deleted_at IS NULL").Scan(&stats.ProductsCount)
+	// Projects count
+	err := r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM projects WHERE deleted_at IS NULL").Scan(&stats.ProjectsCount)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("stats products count: %w", err)
 	}
 
 	// New orders today
 	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders WHERE created_at >= CURRENT_DATE").Scan(&stats.NewOrdersToday)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("stats new orders: %w", err)
 	}
 
 	// Total orders
-	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders").Scan(&stats.TotalOrders)
+	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders WHERE status != 'spam'").Scan(&stats.TotalOrders)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("stats total orders: %w", err)
 	}
 
-	// Success rate (done orders / total orders)
+	// Success rate
+	var doneOrders int64
+	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders WHERE status = 'done'").Scan(&doneOrders)
+	if err != nil {
+		return nil, fmt.Errorf("stats success rate: %w", err)
+	}
 	if stats.TotalOrders > 0 {
-		var doneOrders int64
-		r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders WHERE status = 'done'").Scan(&doneOrders)
 		stats.SuccessRate = float64(doneOrders) / float64(stats.TotalOrders) * 100
-	} else {
-		stats.SuccessRate = 0
 	}
 
-	// Top products
+	// Top projects
 	rows, err := r.pool.Query(ctx, `
-		SELECT p.id, p.name, COUNT(o.id) as count 
-		FROM products p 
-		LEFT JOIN orders o ON p.id = o.product_id 
-		WHERE p.deleted_at IS NULL 
-		GROUP BY p.id 
-		ORDER BY count DESC 
-		LIMIT 3`)
+		SELECT p.id, p.name, COUNT(o.id) as count
+		FROM projects p
+		JOIN orders o ON o.project_id = p.id
+		WHERE o.status != 'spam'
+		GROUP BY p.id, p.name
+		ORDER BY count DESC
+		LIMIT 5
+	`)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
-			var tp admin.TopProduct
+			var tp admin.TopProject
 			if err := rows.Scan(&tp.ID, &tp.Name, &tp.Count); err == nil {
-				stats.TopProducts = append(stats.TopProducts, tp)
+				stats.TopProjects = append(stats.TopProjects, tp)
 			}
 		}
 	}
 
 	// Orders by day (last 30 days)
 	rows, err = r.pool.Query(ctx, `
-		SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as date, COUNT(*) 
-		FROM orders 
-		WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' 
-		GROUP BY date 
-		ORDER BY date ASC`)
+		SELECT TO_CHAR(d, 'YYYY-MM-DD') as date, COUNT(o.id) as count
+		FROM (SELECT generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day')::date as d) d
+		LEFT JOIN orders o ON DATE(o.created_at) = d AND o.status != 'spam'
+		GROUP BY d
+		ORDER BY d ASC
+	`)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -125,5 +132,5 @@ func (r *AdminRepo) GetStats(ctx context.Context) (*admin.Stats, error) {
 		}
 	}
 
-	return &stats, nil
+	return stats, nil
 }

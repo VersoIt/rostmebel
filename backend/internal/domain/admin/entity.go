@@ -24,15 +24,15 @@ type Repository interface {
 }
 
 type Stats struct {
-	ProductsCount  int64            `json:"products_count"`
+	ProjectsCount  int64            `json:"projects_count"`
 	NewOrdersToday int64            `json:"new_orders_today"`
 	TotalOrders    int64            `json:"total_orders"`
 	SuccessRate    float64          `json:"success_rate"`
-	TopProducts    []TopProduct     `json:"top_products"`
+	TopProjects    []TopProject     `json:"top_projects"`
 	OrdersByDay    []OrdersByDay    `json:"orders_by_day"`
 }
 
-type TopProduct struct {
+type TopProject struct {
 	ID    int64  `json:"id"`
 	Name  string `json:"name"`
 	Count int64  `json:"count"`
