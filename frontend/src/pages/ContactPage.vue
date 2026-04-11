@@ -78,13 +78,13 @@ onMounted(() => {
               <span class="text-2xl font-medium text-brand-brown border-b-2 border-brand-gold/20 group-hover:border-brand-gold transition-colors">+7 (978) 763-16-03</span>
             </a>
 
-            <a href="mailto:info@rostmebel.ru" class="reveal group p-10 bg-brand-cream/20 rounded-[2rem] border border-brand-brown/5 hover:border-brand-gold/20 transition-all duration-500 hover:shadow-2xl hover:shadow-brand-gold/5">
+            <a href="mailto:rost.salon2003@mail.ru" class="reveal group p-10 bg-brand-cream/20 rounded-[2rem] border border-brand-brown/5 hover:border-brand-gold/20 transition-all duration-500 hover:shadow-2xl hover:shadow-brand-gold/5">
               <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-brand-gold shadow-sm mb-8 group-hover:scale-110 transition-transform">
                 <LucideMail :size="24" />
               </div>
               <h4 class="font-serif text-2xl text-brand-brown mb-2">Написать</h4>
               <p class="text-brand-brown/40 text-sm mb-6 uppercase tracking-widest font-bold">Для ТЗ и предложений</p>
-              <span class="text-2xl font-medium text-brand-brown border-b-2 border-brand-gold/20 group-hover:border-brand-gold transition-colors">info@rostmebel.ru</span>
+              <span class="text-2xl font-medium text-brand-brown border-b-2 border-brand-gold/20 group-hover:border-brand-gold transition-colors">rost.salon2003@mail.ru</span>
             </a>
           </div>
 

@@ -151,7 +151,7 @@ const isHeaderActive = computed(() => !isHomePage.value || isScrolled.value);
             </li>
             <li class="flex items-center gap-2">
               <span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>
-              info@rostmebel.ru
+              rost.salon2003@mail.ru
             </li>
             <li class="text-[10px] uppercase text-brand-brown/40 tracking-widest mt-4">г. Симферополь</li>
           </ul>
