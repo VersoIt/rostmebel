@@ -17,7 +17,8 @@ import {
   LucideZap,
   LucideCompass,
   LucideLayers,
-  LucideShieldCheck
+  LucideShieldCheck,
+  LucideMessageSquare
 } from 'lucide-vue-next';
 import type { Product } from '@/types';
 
@@ -58,13 +59,13 @@ onUnmounted(() => {
 
 <template>
   <div class="bg-brand-cream min-h-screen text-brand-brown">
-    <!-- Hero Section -->
+    <!-- 1. Hero Section -->
     <section class="relative h-screen flex items-center justify-center overflow-hidden bg-brand-brown">
       <div class="absolute inset-0 z-0">
         <transition name="fade-bg">
           <div :key="currentHeroIndex" class="absolute inset-0">
             <div 
-              class="absolute inset-0 bg-cover bg-center scale-100"
+              class="absolute inset-0 bg-cover bg-center scale-100 transition-transform duration-[10000ms] ease-linear"
               :style="{ backgroundImage: `url(${heroImages[currentHeroIndex]})`, opacity: 0.6 }"
             ></div>
           </div>
@@ -90,9 +91,9 @@ onUnmounted(() => {
             Наши работы
             <LucideChevronRight :size="20" />
           </router-link>
-          <a href="#ai-search" 
+          <a href="#projects-grid" 
             class="bg-white/10 backdrop-blur-xl text-white border-2 border-white/30 px-12 py-5 rounded-full font-black uppercase tracking-widest hover:bg-white/20 transition-all hover:scale-105">
-            Подобрать с ИИ
+            Узнать больше
           </a>
         </div>
       </div>
@@ -105,20 +106,35 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- AI Search Section -->
-    <section id="ai-search" class="py-24 px-4 bg-white">
-      <div class="max-w-4xl mx-auto text-center mb-16">
-        <h2 class="font-serif text-4xl text-brand-brown mb-4">Умный поиск по проектам</h2>
-        <p class="text-brand-brown/60">Опишите ваши пожелания, и наш ИИ подберет похожие реализованные проекты</p>
+    <!-- 2. Hits Section (NOW HIGHER) -->
+    <section id="projects-grid" class="py-32 px-4 max-w-7xl mx-auto">
+      <div class="flex items-end justify-between mb-16">
+        <div>
+          <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Портфолио</span>
+          <h2 class="font-serif text-5xl text-brand-brown mb-2">Наши последние проекты</h2>
+          <p class="text-brand-brown/60 text-lg">Решения, которые вдохновляют на перемены</p>
+        </div>
+        <router-link to="/catalog" class="hidden md:flex items-center gap-2 text-brand-gold font-bold hover:underline group">
+          Смотреть все работы
+          <LucideArrowRight :size="20" class="group-hover:translate-x-2 transition-transform" />
+        </router-link>
       </div>
-      <AISearchPanel />
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <ProductCard v-for="product in hits.slice(0, 6)" :key="product.id" :product="product" />
+      </div>
+
+      <div class="mt-16 text-center md:hidden">
+        <router-link to="/catalog" class="inline-flex items-center gap-2 bg-brand-brown text-white px-8 py-4 rounded-xl font-bold">
+          Все проекты
+          <LucideArrowRight :size="20" />
+        </router-link>
+      </div>
     </section>
 
-    <!-- Supervision Section (THE WOW FACTOR) -->
+    <!-- 3. Supervision Section -->
     <section class="py-32 px-4 bg-[#1a1410] text-white relative overflow-hidden">
-      <!-- Decorative Background elements -->
       <div class="absolute top-0 right-0 w-1/3 h-full bg-brand-gold/5 skew-x-12 translate-x-20"></div>
-      
       <div class="max-w-7xl mx-auto relative z-10">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
           <div>
@@ -128,29 +144,29 @@ onUnmounted(() => {
             </div>
             <h2 class="font-serif text-5xl md:text-6xl mb-10 leading-tight">Мы не просто рисуем, <br> <span class="text-brand-gold italic">мы строим.</span></h2>
             <p class="text-white/60 text-lg mb-12 leading-relaxed max-w-xl">
-              Чтобы кухня встала идеально, помещение должно быть подготовлено безупречно. Мы берем на себя авторское сопровождение и выдаем строителям точные технические карты.
+              Чтобы мебель встала идеально, помещение должно быть подготовлено безупречно. Мы берем на себя авторское сопровождение и выдаем строителям точные технические карты.
             </p>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <div class="space-y-4">
-                <LucideZap class="text-brand-gold" :size="32" />
-                <h4 class="font-bold text-xl">Электрика</h4>
-                <p class="text-sm text-white/40 leading-relaxed">План вывода розеток с точностью до миллиметра под вашу технику и подсветку.</p>
+              <div class="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-brand-gold/30 transition-colors group">
+                <LucideZap class="text-brand-gold group-hover:scale-110 transition-transform" :size="32" />
+                <h4 class="font-bold text-xl text-white">Электрика</h4>
+                <p class="text-sm text-white/40">План розеток под вашу технику и подсветку.</p>
               </div>
-              <div class="space-y-4">
-                <LucideCompass class="text-brand-gold" :size="32" />
-                <h4 class="font-bold text-xl">Раскладка плитки</h4>
-                <p class="text-sm text-white/40 leading-relaxed">Инструкция для плиточника: откуда начинать ряд, чтобы швы совпали с краем мебели.</p>
+              <div class="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-brand-gold/30 transition-colors group">
+                <LucideCompass class="text-brand-gold group-hover:scale-110 transition-transform" :size="32" />
+                <h4 class="font-bold text-xl text-white">Плитка</h4>
+                <p class="text-sm text-white/40">Раскладка фартука для идеального примыкания.</p>
               </div>
-              <div class="space-y-4">
-                <LucideLayers class="text-brand-gold" :size="32" />
-                <h4 class="font-bold text-xl">Потолки и ниши</h4>
-                <p class="text-sm text-white/40 leading-relaxed">Разметка уровней натяжных и ГКЛ-потолков для идеальной интеграции шкафов под потолок.</p>
+              <div class="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-brand-gold/30 transition-colors group">
+                <LucideLayers class="text-brand-gold group-hover:scale-110 transition-transform" :size="32" />
+                <h4 class="font-bold text-xl text-white">Инженерия</h4>
+                <p class="text-sm text-white/40">Разметка уровней потолков и сантехники.</p>
               </div>
-              <div class="space-y-4">
-                <LucideShieldCheck class="text-brand-gold" :size="32" />
-                <h4 class="font-bold text-xl">Технадзор</h4>
-                <p class="text-sm text-white/40 leading-relaxed">Контроль качества подготовки стен и углов до того, как мебель приедет на монтаж.</p>
+              <div class="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-brand-gold/30 transition-colors group">
+                <LucideShieldCheck class="text-brand-gold group-hover:scale-110 transition-transform" :size="32" />
+                <h4 class="font-bold text-xl text-white">Технадзор</h4>
+                <p class="text-sm text-white/40">Контроль подготовки стен и углов 90°.</p>
               </div>
             </div>
           </div>
@@ -159,7 +175,6 @@ onUnmounted(() => {
             <div class="aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border border-white/10">
               <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover grayscale-[0.5] hover:grayscale-0 transition-all duration-700" alt="Technical Drawing">
             </div>
-            <!-- Floating badge -->
             <div class="absolute -bottom-10 -left-10 bg-brand-gold p-10 rounded-3xl shadow-2xl hidden md:block">
               <div class="text-brand-brown font-serif text-4xl mb-2">0%</div>
               <div class="text-brand-brown/80 text-xs font-bold uppercase tracking-widest">ошибок при <br> монтаже</div>
@@ -169,37 +184,37 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Services Section -->
+    <!-- 4. Services Section (Complex Furnishing) -->
     <section class="py-32 px-4 bg-white">
       <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          <div class="order-2 lg:order-1 grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-4">
             <img src="https://images.unsplash.com/photo-1556912173-3bb406ef7e77?q=80&w=800&auto=format&fit=crop" class="rounded-3xl aspect-[3/4] object-cover mt-12 shadow-2xl" alt="Interior 1">
             <img src="https://images.unsplash.com/photo-1556909190-eccf4a8bf97a?q=80&w=800&auto=format&fit=crop" class="rounded-3xl aspect-[3/4] object-cover shadow-2xl" alt="Interior 2">
           </div>
-          <div class="order-1 lg:order-2">
-            <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Наши возможности</span>
-            <h2 class="font-serif text-5xl text-brand-brown mb-8 leading-tight">Комплексное меблирование</h2>
+          <div>
+            <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">All-in-one</span>
+            <h2 class="font-serif text-5xl text-brand-brown mb-8 leading-tight">Комплексное меблирование дома</h2>
             <p class="text-lg text-brand-brown/70 mb-10 leading-relaxed">
-              Мы создаем единое стилистическое пространство вашего дома. Наша команда возьмет на себя полное обустройство: от прихожей до спальни.
+              Мы создаем единую экосистему вашего интерьера. Никакого «разнобоя» в материалах и стилях. Наша команда закроет все потребности в мебели: от кухни до прикроватной тумбочки.
             </p>
-            <div class="space-y-6">
-              <div class="flex gap-4">
-                <div class="w-12 h-12 bg-brand-cream rounded-xl flex items-center justify-center text-brand-gold shrink-0">
-                  <LucideCrown :size="24" />
+            <div class="space-y-8">
+              <div class="flex gap-6 items-start">
+                <div class="w-14 h-14 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-gold shrink-0 border border-brand-gold/10">
+                  <LucideCrown :size="28" />
                 </div>
                 <div>
-                  <h4 class="font-bold text-brand-brown mb-1">Мировые бренды фурнитуры</h4>
-                  <p class="text-sm text-brand-brown/60">Blum, Hettich, Grass — механизмы с пожизненной гарантией.</p>
+                  <h4 class="font-bold text-xl text-brand-brown mb-2">Фурнитура ТОП-уровня</h4>
+                  <p class="text-brand-brown/60">Blum, Hettich, Grass. Петли и ящики, которые работают бесшумно десятилетиями.</p>
                 </div>
               </div>
-              <div class="flex gap-4">
-                <div class="w-12 h-12 bg-brand-cream rounded-xl flex items-center justify-center text-brand-gold shrink-0">
-                  <LucideLayout :size="24" />
+              <div class="flex gap-6 items-start">
+                <div class="w-14 h-14 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-gold shrink-0 border border-brand-gold/10">
+                  <LucideLayout :size="28" />
                 </div>
                 <div>
-                  <h4 class="font-bold text-brand-brown mb-1">Современные материалы</h4>
-                  <p class="text-sm text-brand-brown/60">Итальянский пластик Fenix, шпон, эмаль и компакт-плиты.</p>
+                  <h4 class="font-bold text-xl text-brand-brown mb-2">Эксклюзивные фасады</h4>
+                  <p class="text-brand-brown/60">Итальянский пластик Fenix, матовая эмаль, натуральный шпон и компакт-плиты.</p>
                 </div>
               </div>
             </div>
@@ -208,124 +223,95 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Process Section -->
+    <!-- 5. Process Section -->
     <section class="py-32 px-4 bg-brand-cream/50 relative overflow-hidden border-y border-brand-brown/5">
       <div class="max-w-7xl mx-auto relative z-10">
         <div class="text-center mb-20">
-          <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Путь к идеалу</span>
-          <h2 class="font-serif text-5xl text-brand-brown">Этапы реализации проекта</h2>
+          <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Workflow</span>
+          <h2 class="font-serif text-5xl text-brand-brown">Как мы работаем</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-12 relative">
           <div class="hidden md:block absolute top-10 left-0 right-0 h-0.5 bg-brand-gold/10 -z-0"></div>
 
-          <div class="relative group">
+          <div v-for="(step, idx) in [
+            { icon: LucideRuler, title: 'Замер', desc: 'Бесплатный выезд дизайнера по всему Крыму для точного обмера.' },
+            { icon: LucidePenTool, title: 'Проект', desc: 'Создание фотореалистичного 3D-проекта и подбор материалов.' },
+            { icon: LucideHammer, title: 'Фабрика', desc: 'Изготовление на современном производстве с контролем ОТК.' },
+            { icon: LucideTruck, title: 'Монтаж', desc: 'Профессиональная установка «под ключ» в любой точке полуострова.' }
+          ]" :key="idx" class="relative group">
             <div class="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 mx-auto group-hover:bg-brand-gold group-hover:text-white transition-all duration-500 relative z-10 border border-brand-brown/5">
-              <LucideRuler :size="32" />
-              <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-brown text-white text-xs font-bold rounded-full flex items-center justify-center">01</div>
+              <component :is="step.icon" :size="32" />
+              <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-brown text-white text-xs font-bold rounded-full flex items-center justify-center">0{{ idx + 1 }}</div>
             </div>
             <div class="text-center px-4">
-              <h3 class="font-serif text-xl mb-4">Бесплатный замер</h3>
-              <p class="text-brand-brown/60 text-sm leading-relaxed">Выезд дизайнера по всему Крыму для точного и предварительного обмера помещения.</p>
-            </div>
-          </div>
-
-          <div class="relative group">
-            <div class="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 mx-auto group-hover:bg-brand-gold group-hover:text-white transition-all duration-500 relative z-10 border border-brand-brown/5">
-              <LucidePenTool :size="32" />
-              <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-brown text-white text-xs font-bold rounded-full flex items-center justify-center">02</div>
-            </div>
-            <div class="text-center px-4">
-              <h3 class="font-serif text-xl mb-4">3D-проектирование</h3>
-              <p class="text-brand-brown/60 text-sm leading-relaxed">Индивидуальный проект с учетом вашей эргономики.</p>
-            </div>
-          </div>
-
-          <div class="relative group">
-            <div class="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 mx-auto group-hover:bg-brand-gold group-hover:text-white transition-all duration-500 relative z-10 border border-brand-brown/5">
-              <LucideHammer :size="32" />
-              <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-brown text-white text-xs font-bold rounded-full flex items-center justify-center">03</div>
-            </div>
-            <div class="text-center px-4">
-              <h3 class="font-serif text-xl mb-4">Производство</h3>
-              <p class="text-brand-brown/60 text-sm leading-relaxed">Изготовление на современном оборудовании.</p>
-            </div>
-          </div>
-
-          <div class="relative group">
-            <div class="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 mx-auto group-hover:bg-brand-gold group-hover:text-white transition-all duration-500 relative z-10 border border-brand-brown/5">
-              <LucideTruck :size="32" />
-              <div class="absolute -top-3 -right-3 w-8 h-8 bg-brand-brown text-white text-xs font-bold rounded-full flex items-center justify-center">04</div>
-            </div>
-            <div class="text-center px-4">
-              <h3 class="font-serif text-xl mb-4">Монтаж под ключ</h3>
-              <p class="text-brand-brown/60 text-sm leading-relaxed">Профессиональная сборка в любой точке Крыма.</p>
+              <h3 class="font-serif text-xl mb-4">{{ step.title }}</h3>
+              <p class="text-brand-brown/60 text-sm leading-relaxed">{{ step.desc }}</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Hits Section -->
-    <section class="py-24 px-4 max-w-7xl mx-auto">
-      <div class="flex items-end justify-between mb-12">
-        <div>
-          <h2 class="font-serif text-4xl text-brand-brown mb-2">Популярные проекты</h2>
-          <p class="text-brand-brown/60">Решения, которые вдохновляют чаще всего</p>
-        </div>
-        <router-link to="/catalog" class="text-brand-gold font-medium hover:underline">
-          Все проекты
-        </router-link>
+    <!-- 6. AI Search Section (Moved Lower) -->
+    <section id="ai-search" class="py-32 px-4 bg-white">
+      <div class="max-w-4xl mx-auto text-center mb-16">
+        <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Инновации</span>
+        <h2 class="font-serif text-4xl text-brand-brown mb-4">Не нашли то, что искали?</h2>
+        <p class="text-brand-brown/60 text-lg">Опишите вашу идеальную кухню, и наш ИИ подберет похожие проекты из нашего опыта</p>
       </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-        <ProductCard v-for="product in hits.slice(0, 5)" :key="product.id" :product="product" />
-        
-        <router-link 
-          v-if="hits.length > 5"
-          to="/catalog" 
-          class="bg-brand-brown rounded-3xl p-8 flex flex-col items-center justify-center text-center group transition-all hover:bg-brand-gold shadow-xl"
-        >
-          <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
-            <LucideArrowRight :size="32" />
-          </div>
-          <h3 class="text-white font-serif text-xl mb-2">Смотреть всё</h3>
-          <p class="text-white/60 text-sm">Полное портфолио работ</p>
-        </router-link>
-      </div>
+      <AISearchPanel />
     </section>
 
-    <!-- Why Us -->
+    <!-- 7. Why Us (Trust) -->
     <section class="py-24 px-4 bg-brand-brown text-brand-white">
       <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
         <div>
-          <div class="text-brand-gold text-4xl mb-4 font-serif">25+</div>
-          <h3 class="text-xl mb-2 font-serif">Лет опыта</h3>
-          <p class="text-brand-white/60">Мы знаем о мебели всё и даже больше</p>
+          <div class="text-brand-gold text-5xl mb-4 font-serif">15+</div>
+          <h3 class="text-2xl mb-2 font-serif">Лет на рынке</h3>
+          <p class="text-brand-white/60">Реализовали более 1000 проектов разной сложности</p>
         </div>
         <div>
-          <div class="text-brand-gold text-4xl mb-4 font-serif">24/7</div>
-          <h3 class="text-xl mb-2 font-serif">Поддержка</h3>
-          <p class="text-brand-white/60">Всегда на связи для решения ваших вопросов</p>
+          <div class="text-brand-gold text-5xl mb-4 font-serif">2 года</div>
+          <h3 class="text-2xl mb-2 font-serif">Прямая гарантия</h3>
+          <p class="text-brand-white/60">Честная гарантия на мебель и фурнитуру по договору</p>
         </div>
         <div>
-          <div class="text-brand-gold text-4xl mb-4 font-serif">100%</div>
-          <h3 class="text-xl mb-2 font-serif">Гарантия</h3>
-          <p class="text-brand-white/60">Контроль качества на каждом этапе производства</p>
+          <div class="text-brand-gold text-5xl mb-4 font-serif">100%</div>
+          <h3 class="text-2xl mb-2 font-serif">Своя фабрика</h3>
+          <p class="text-brand-white/60">Никаких посредников — полный цикл производства</p>
         </div>
       </div>
     </section>
 
-    <!-- SEO Content Section -->
-    <section class="py-24 px-4 bg-white">
-      <div class="max-w-4xl mx-auto prose prose-brand">
-        <h2 class="font-serif text-3xl text-brand-brown mb-8 text-center">Мебель по индивидуальным проектам в Севастополе и Крыму</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-brand-brown/70 leading-relaxed text-sm">
+    <!-- 8. Final CTA (Lead Capture) -->
+    <section class="py-32 px-4 bg-brand-gold relative overflow-hidden">
+      <div class="absolute inset-0 bg-black/5"></div>
+      <div class="max-w-4xl mx-auto text-center relative z-10">
+        <h2 class="font-serif text-5xl text-brand-brown mb-8">Готовы создать интерьер <br> своей мечты?</h2>
+        <p class="text-brand-brown/80 text-xl mb-12">Запишитесь на бесплатный замер и получите 3D-проект в подарок!</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <router-link to="/contact" class="bg-brand-brown text-white px-12 py-5 rounded-full font-black uppercase tracking-widest hover:bg-black transition-all shadow-2xl flex items-center justify-center gap-3">
+            <LucideMessageSquare :size="20" />
+            Обсудить проект
+          </router-link>
+          <a href="tel:+79787631603" class="bg-white text-brand-brown px-12 py-5 rounded-full font-black uppercase tracking-widest hover:bg-brand-cream transition-all shadow-xl flex items-center justify-center gap-3">
+            Позвонить нам
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. SEO Content -->
+    <section class="py-24 px-4 bg-white border-t border-brand-brown/5">
+      <div class="max-w-4xl mx-auto prose prose-brand opacity-50 hover:opacity-100 transition-opacity">
+        <h2 class="font-serif text-2xl text-brand-brown mb-8 text-center">Кухни и мебель на заказ в Севастополе и Крыму</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-brand-brown/70 leading-relaxed text-[10px] uppercase tracking-wider">
           <p>
-            Компания <strong>РОСТ Мебель</strong> специализируется на проектировании и изготовлении премиальной мебели по индивидуальным размерам. Наше производство оснащено современным оборудованием, что позволяет создавать изделия любой сложности: от классических кухонь из массива до современных шкафов-купе в стиле минимализм.
+            Компания <strong>РОСТ Мебель</strong> специализируется на проектировании и изготовлении премиальной мебели по индивидуальным размерам. Наше производство оснащено современным оборудованием, что позволяет создавать изделия любой сложности.
           </p>
           <p>
-            Мы предлагаем комплексный подход: от замера и создания 3D-проекта до профессионального монтажа. Используем только проверенные материалы и надежную фурнитуру от ведущих мировых производителей. Наша мебель на заказ — это сочетание эргономики, стиля и долговечности для вашего дома или офиса.
+            Мы предлагаем комплексный подход: от замера и создания 3D-проекта до профессионального монтажа. Используем только проверенные материалы и надежную фурнитуру от ведущих мировых производителей.
           </p>
         </div>
       </div>
