@@ -29,7 +29,7 @@ func (r *OrderRepo) Create(ctx context.Context, o *order.Order) error {
 }
 
 func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error) {
-	query := `SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders WHERE id = $1`
+	query := `SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address::text, user_agent, fingerprint, created_at, updated_at FROM orders WHERE id = $1`
 	var o order.Order
 	var ip string
 	err := r.pool.QueryRow(ctx, query, id).Scan(
@@ -68,7 +68,7 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 		offset = f.Offset
 	}
 
-	query := fmt.Sprintf("SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d", where, len(args)+1, len(args)+2)
+	query := fmt.Sprintf("SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address::text, user_agent, fingerprint, created_at, updated_at FROM orders %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d", where, len(args)+1, len(args)+2)
 	args = append(args, limit, offset)
 
 	rows, err := r.pool.Query(ctx, query, args...)
@@ -111,7 +111,7 @@ func (r *OrderRepo) MarkAsSpam(ctx context.Context, id int64) error {
 	defer tx.Rollback(ctx)
 
 	var ip string
-	err = tx.QueryRow(ctx, "UPDATE orders SET status = 'spam' WHERE id = $1 RETURNING ip_address", id).Scan(&ip)
+	err = tx.QueryRow(ctx, "UPDATE orders SET status = 'spam' WHERE id = $1 RETURNING ip_address::text", id).Scan(&ip)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (r *OrderRepo) MarkAsSpam(ctx context.Context, id int64) error {
 }
 
 func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
-	query := `SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint, created_at, updated_at FROM orders ORDER BY created_at DESC`
+	query := `SELECT id, project_id, client_name, client_phone, client_email, comment, status, ip_address::text, user_agent, fingerprint, created_at, updated_at FROM orders ORDER BY created_at DESC`
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
