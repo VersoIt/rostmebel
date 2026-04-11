@@ -19,7 +19,7 @@ type Server struct {
 	port   string
 }
 
-func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.OrderHandler, ah *handler.AdminHandler) *Server {
+func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.OrderHandler, ah *handler.AdminHandler, rh *handler.ReviewHandler) *Server {
 	r := chi.NewRouter()
 
 	r.Use(chiMiddleware.Logger)
@@ -38,8 +38,10 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 		// Public
 		r.Get("/projects", ph.GetProducts)
 		r.Get("/projects/{id}", ph.GetProduct)
+		r.Get("/projects/{id}/reviews", rh.GetProjectReviews)
 		r.Get("/categories", ph.GetCategories)
 		r.Post("/orders", oh.CreateOrder)
+		r.Post("/reviews", rh.CreateReview)
 		r.Post("/ai/search", ph.AISearch)
 
 		// Admin Auth
@@ -59,6 +61,12 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 				r.Get("/export", ph.ExportProducts)
 				r.Put("/{id}", ph.UpdateProduct)
 				r.Delete("/{id}", ph.DeleteProduct)
+			})
+
+			r.Route("/admin/reviews", func(r chi.Router) {
+				r.Get("/", rh.AdminListReviews)
+				r.Patch("/{id}/status", rh.AdminModerateReview)
+				r.Delete("/{id}", rh.AdminDeleteReview)
 			})
 
 			r.Post("/admin/upload", ph.UploadImage)

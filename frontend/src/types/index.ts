@@ -45,6 +45,22 @@ export interface Order {
   updated_at: string;
 }
 
+export interface ReviewImage {
+  url: string;
+}
+
+export interface ReviewResponse {
+  id: number;
+  project_id?: number;
+  rating: number;
+  comment: string;
+  images: ReviewImage[];
+  status: 'pending' | 'approved' | 'rejected';
+  client_name: string;
+  project_name: string;
+  created_at: string;
+}
+
 export interface TokenPair {
   access_token: string;
   refresh_token: string;

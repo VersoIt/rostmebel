@@ -4,6 +4,7 @@ import type { Product } from '@/types';
 import { useFavorites } from '@/composables/useFavorites';
 import { useRouter } from 'vue-router';
 import { ref } from 'vue';
+import { PLACEHOLDER_IMAGE } from '@/utils/constants';
 
 const props = defineProps<{
   product: Product;
@@ -11,9 +12,6 @@ const props = defineProps<{
 
 const router = useRouter();
 const { toggleFavorite, isFavorite } = useFavorites();
-
-// Fast Base64 Placeholder
-const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800'%3E%3Crect width='800' height='800' fill='%23F5F5F0'/%3E%3Cpath d='M350 400l50-50 50 50M300 500h200' stroke='%23C9A84C' stroke-width='2' fill='none'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-family='serif' font-size='24' fill='%232C1810' opacity='0.2'%3EPOCT MEБEЛЬ%3C/text%3E%3C/svg%3E";
 
 const isQuickViewOpen = ref(false);
 const activeSlideIdx = ref(0);
@@ -34,7 +32,7 @@ const prevSlide = () => {
 };
 
 const handleImageError = (e: Event) => {
-  (e.target as HTMLImageElement).src = placeholder;
+  (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
 };
 
 const goToProduct = () => {
@@ -63,7 +61,7 @@ const formatPrice = (price: number) => {
     <!-- Image Area -->
     <div class="relative aspect-square overflow-hidden bg-brand-gray shrink-0">
       <img 
-        :src="product.images[0]?.url || placeholder" 
+        :src="product.images[0]?.url || PLACEHOLDER_IMAGE" 
         @error="handleImageError"
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         :alt="product.name"
@@ -88,7 +86,7 @@ const formatPrice = (price: number) => {
     <!-- Content Area -->
     <div class="p-6 flex-1 flex flex-col">
       <div class="text-xs text-brand-brown/40 uppercase tracking-widest mb-2">
-        {{ product.ai_tags?.split(',')[0] || 'Мебель' }}
+        {{ product.ai_tags?.split(',')[0] || 'Проект' }}
       </div>
       <h3 class="font-serif text-lg text-brand-brown mb-2 group-hover:text-brand-gold transition-colors line-clamp-2">
         {{ product.name }}
@@ -114,7 +112,7 @@ const formatPrice = (price: number) => {
               <transition :name="slideDirection === 'next' ? 'slide-next' : 'slide-prev'">
                 <img 
                   :key="activeSlideIdx"
-                  :src="product.images[activeSlideIdx]?.url || placeholder" 
+                  :src="product.images[activeSlideIdx]?.url || PLACEHOLDER_IMAGE" 
                   class="absolute inset-0 w-full h-full object-cover"
                   @error="handleImageError"
                 >
@@ -166,7 +164,6 @@ const formatPrice = (price: number) => {
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.4s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 
-/* Slide Next Animation */
 .slide-next-enter-active, .slide-next-leave-active,
 .slide-prev-enter-active, .slide-prev-leave-active {
   transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);

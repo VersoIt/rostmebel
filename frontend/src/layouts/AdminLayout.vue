@@ -5,7 +5,8 @@ import {
   LucidePackage, 
   LucideClipboardList, 
   LucideLogOut, 
-  LucideExternalLink
+  LucideExternalLink,
+  LucideMessageSquare
 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -14,6 +15,7 @@ const menuItems = [
   { name: 'Дашборд', icon: LucideLayoutDashboard, to: '/admin' },
   { name: 'Проекты', icon: LucidePackage, to: '/admin/products' },
   { name: 'Заявки', icon: LucideClipboardList, to: '/admin/orders' },
+  { name: 'Отзывы', icon: LucideMessageSquare, to: '/admin/reviews' },
 ];
 </script>
 

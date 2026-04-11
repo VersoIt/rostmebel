@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,6 +9,7 @@ import (
 	"github.com/rostmebel/backend/internal/application/admin"
 	"github.com/rostmebel/backend/internal/application/order"
 	"github.com/rostmebel/backend/internal/application/product"
+	"github.com/rostmebel/backend/internal/application/review"
 	domAdmin "github.com/rostmebel/backend/internal/domain/admin"
 	"github.com/rostmebel/backend/internal/config"
 	"github.com/rostmebel/backend/internal/infrastructure/gemini"
@@ -33,10 +33,8 @@ func main() {
 	defer stop()
 
 	// Infrastructure
-	// Run Migrations first
 	if err := runMigrations(cfg.DatabaseURL); err != nil {
 		log.Error("failed to run migrations", "error", err)
-		// Don't exit here if it's "no change", but for other errors we should
 		if err != migrate.ErrNoChange {
 			os.Exit(1)
 		}
@@ -62,8 +60,9 @@ func main() {
 	productRepo := postgres.NewProductRepo(pool)
 	orderRepo := postgres.NewOrderRepo(pool)
 	adminRepo := postgres.NewAdminRepo(pool)
+	reviewRepo := postgres.NewReviewRepo(pool)
 
-	// Seed first admin if not exists
+	// Seed first admin
 	seedAdmin(ctx, adminRepo, cfg.AdminUsername, cfg.AdminPassword)
 
 	// UseCases
@@ -71,14 +70,16 @@ func main() {
 	aiUC := product.NewAIUseCase(productRepo, geminiClient, rdb, log)
 	orderUC := order.NewUseCase(orderRepo, productRepo, rdb, tgClient, cfg.OrderLimitEnabled)
 	adminUC := admin.NewUseCase(adminRepo, cfg.JWTSecret, cfg.JWTAccessTTL, cfg.JWTRefreshTTL)
+	reviewUC := review.NewUseCase(reviewRepo, orderRepo)
 
 	// Handlers
 	ph := handler.NewProductHandler(productUC, aiUC)
 	oh := handler.NewOrderHandler(orderUC)
 	ah := handler.NewAdminHandler(adminUC)
+	rh := handler.NewReviewHandler(reviewUC)
 
 	// Server
-	srv := http.NewServer(cfg, ph, oh, ah)
+	srv := http.NewServer(cfg, ph, oh, ah, rh)
 
 	if err := srv.Start(ctx); err != nil {
 		log.Error("server error", "error", err)
@@ -90,30 +91,17 @@ func seedAdmin(ctx context.Context, repo domAdmin.Repository, username, password
 	if err != nil || a != nil {
 		return
 	}
-
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	
 	newAdmin := &domAdmin.Admin{
 		Username:     username,
 		PasswordHash: string(hash),
 	}
-	
-	if err := repo.Create(ctx, newAdmin); err != nil {
-		fmt.Printf("Failed to seed admin: %v\n", err)
-		return
-	}
-	fmt.Printf("Seeded admin user: %s\n", username)
+	repo.Create(ctx, newAdmin)
 }
 
 func runMigrations(databaseURL string) error {
 	m, err := migrate.New("file://migrations", databaseURL)
-	if err != nil {
-		return fmt.Errorf("could not create migrate instance: %w", err)
-	}
-	
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("could not run up migrations: %w", err)
-	}
-	
+	if err != nil { return err }
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange { return err }
 	return nil
 }

@@ -81,6 +81,7 @@ const router = createRouter({
         { path: '', name: 'admin', component: () => import('@/pages/admin/DashboardPage.vue') },
         { path: 'products', name: 'admin-products', component: () => import('@/pages/admin/ProductsPage.vue') },
         { path: 'orders', name: 'admin-orders', component: () => import('@/pages/admin/OrdersPage.vue') },
+        { path: 'reviews', name: 'admin-reviews', component: () => import('@/pages/admin/ReviewsPage.vue') },
       ]
     },
   ],

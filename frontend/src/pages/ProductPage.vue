@@ -9,11 +9,16 @@ import {
   LucideSearch, 
   LucideX,
   LucideChevronLeft,
-  LucideArrowRight
+  LucideArrowRight,
+  LucideMessageSquare,
+  LucideStar
 } from 'lucide-vue-next';
 import OrderForm from '@/components/order/OrderForm.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
+import ReviewForm from '@/components/catalog/ReviewForm.vue';
+import ReviewList from '@/components/catalog/ReviewList.vue';
 import type { Product } from '@/types';
+import { PLACEHOLDER_IMAGE } from '@/utils/constants';
 
 const route = useRoute();
 const router = useRouter();
@@ -22,12 +27,12 @@ const product = ref<Product | null>(null);
 const relatedProjects = ref<Product[]>([]);
 const activeImage = ref('');
 const isOrderModalOpen = ref(false);
+const isReviewModalOpen = ref(false);
 const isLightboxOpen = ref(false);
-
-const placeholder = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=800&auto=format&fit=crop';
+const reviewListRef = ref<any>(null);
 
 const handleImageError = (e: Event) => {
-  (e.target as HTMLImageElement).src = placeholder;
+  (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
 };
 
 const openLightbox = (url: string) => {
@@ -40,13 +45,9 @@ const loadProjectData = async () => {
   const p = await productStore.fetchProduct(id);
   if (p) {
     product.value = p;
-    activeImage.value = p.images[0]?.url || placeholder;
+    activeImage.value = p.images[0]?.url || PLACEHOLDER_IMAGE;
     updateSchema(p);
-    
-    // SEO
     document.title = `${p.name} — РОСТ Мебель`;
-    
-    // Fetch related
     await productStore.fetchProducts({ 
       project_category_id: p.project_category_id, 
       limit: 4,
@@ -58,7 +59,6 @@ const loadProjectData = async () => {
 };
 
 watch(() => route.params.id, loadProjectData);
-
 onMounted(loadProjectData);
 
 const updateSchema = (p: Product) => {
@@ -97,6 +97,11 @@ const formatPrice = (price: number) => {
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency', currency: 'RUB', maximumFractionDigits: 0,
   }).format(price);
+};
+
+const handleReviewSuccess = () => {
+  isReviewModalOpen.value = false;
+  reviewListRef.value?.refresh();
 };
 </script>
 
@@ -197,6 +202,26 @@ const formatPrice = (price: number) => {
         </div>
       </div>
 
+      <!-- Reviews Section -->
+      <section class="mt-40">
+        <div class="flex items-end justify-between mb-16">
+          <div>
+            <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Feedback</span>
+            <h2 class="font-serif text-5xl text-brand-brown mb-2">Отзывы клиентов</h2>
+            <p class="text-brand-brown/60 text-lg">Что говорят те, кто уже живет с нашей мебелью</p>
+          </div>
+          <button 
+            @click="isReviewModalOpen = true"
+            class="flex items-center gap-3 bg-brand-cream text-brand-brown px-8 py-4 rounded-2xl font-bold text-sm hover:bg-brand-gold hover:text-white transition-all group"
+          >
+            <LucideMessageSquare :size="20" />
+            Оставить отзыв
+          </button>
+        </div>
+        
+        <ReviewList ref="reviewListRef" :project-id="product.id" />
+      </section>
+
       <!-- Related Projects -->
       <div v-if="relatedProjects.length" class="mt-40">
         <div class="flex items-end justify-between mb-12">
@@ -212,7 +237,7 @@ const formatPrice = (price: number) => {
       </div>
     </div>
 
-    <!-- Modals (Lightbox & Order) -->
+    <!-- Modals -->
     <Teleport to="body">
       <transition name="fade">
         <div v-if="isOrderModalOpen" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4" @click.self="isOrderModalOpen = false">
@@ -223,6 +248,19 @@ const formatPrice = (price: number) => {
             <h2 class="font-serif text-4xl mb-4 text-brand-brown">Заявка</h2>
             <p class="text-brand-brown/60 mb-10 font-medium">Обсудим ваш будущий проект?</p>
             <OrderForm :project-id="product.id" @success="isOrderModalOpen = false" />
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+
+    <Teleport to="body">
+      <transition name="fade">
+        <div v-if="isReviewModalOpen" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4" @click.self="isReviewModalOpen = false">
+          <div class="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden transform transition-all max-h-[90vh] overflow-y-auto">
+            <button @click="isReviewModalOpen = false" class="absolute top-8 right-8 text-brand-brown/20 hover:text-brand-brown transition-colors z-10">
+              <LucideX :size="32" />
+            </button>
+            <ReviewForm :project-id="product.id" @success="handleReviewSuccess" />
           </div>
         </div>
       </transition>
