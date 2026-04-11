@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { LucideStar, LucideCheckCircle, LucideMessageSquare, LucideImage } from 'lucide-vue-next';
+import { LucideStar, LucideCheckCircle, LucideMessageSquare, LucideX, LucideSearch } from 'lucide-vue-next';
 import api from '@/api/client';
 import type { ReviewResponse } from '@/types';
 
@@ -11,11 +11,20 @@ const props = defineProps<{
 const reviews = ref<ReviewResponse[]>([]);
 const loading = ref(true);
 
+// Lightbox state
+const isLightboxOpen = ref(false);
+const activeImage = ref('');
+
+const openLightbox = (url: string) => {
+  activeImage.value = url;
+  isLightboxOpen.value = true;
+};
+
 const fetchReviews = async () => {
   try {
     const url = props.projectId 
       ? `/projects/${props.projectId}/reviews` 
-      : '/reviews'; // We'll need a global reviews route if we want all reviews on home
+      : '/reviews';
     const { data } = await api.get(url);
     reviews.value = data;
   } catch (err) {
@@ -74,9 +83,13 @@ defineExpose({ refresh: fetchReviews });
         <div v-if="rev.images && rev.images.length > 0" class="flex gap-3 mt-auto pt-6 border-t border-brand-brown/5 overflow-x-auto no-scrollbar">
           <div 
             v-for="(img, idx) in rev.images" :key="idx"
-            class="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-brand-brown/5 cursor-pointer hover:scale-105 transition-transform"
+            @click="openLightbox(img.url)"
+            class="relative w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-brand-brown/5 cursor-zoom-in group"
           >
-            <img :src="img.url" class="w-full h-full object-cover">
+            <img :src="img.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <LucideSearch :size="20" class="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
           </div>
         </div>
         
@@ -86,5 +99,25 @@ defineExpose({ refresh: fetchReviews });
         </div>
       </div>
     </div>
+
+    <!-- Review Lightbox -->
+    <Teleport to="body">
+      <transition name="fade">
+        <div v-if="isLightboxOpen" class="fixed inset-0 z-[250] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-12" @click="isLightboxOpen = false">
+          <button class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors">
+            <LucideX :size="40" />
+          </button>
+          <img :src="activeImage" class="max-w-full max-h-full object-contain shadow-2xl rounded-2xl border border-white/10 transition-all duration-500">
+        </div>
+      </transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
