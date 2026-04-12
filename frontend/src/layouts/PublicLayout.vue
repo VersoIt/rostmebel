@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { LucideHeart, LucideMenu, LucidePhone, LucideX } from 'lucide-vue-next';
 import { useFavorites } from '@/composables/useFavorites';
+import BrandMark from '@/components/common/BrandMark.vue';
 
 const { favorites } = useFavorites();
 const route = useRoute();
@@ -59,11 +60,11 @@ onUnmounted(() => {
         <router-link to="/" class="flex min-w-0 items-center gap-3" aria-label="РОСТ Мебель">
           <div
             :class="[
-              'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg font-serif text-2xl font-bold transition-colors duration-200',
+              'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors duration-200',
               isHeaderActive ? 'bg-brand-brown text-brand-gold' : 'bg-white text-brand-brown'
             ]"
           >
-            Р
+            <BrandMark size="1.55rem" />
           </div>
           <div class="min-w-0">
             <div :class="['truncate font-serif text-2xl font-black uppercase leading-none', isHeaderActive ? 'text-brand-brown' : 'text-white']">
@@ -131,9 +132,14 @@ onUnmounted(() => {
       <transition name="menu">
         <div v-if="isMenuOpen" class="fixed inset-0 z-[210] flex flex-col bg-brand-brown p-5 text-white">
           <div class="flex items-center justify-between">
-            <div>
-              <div class="text-[11px] font-black uppercase tracking-widest text-brand-gold">РОСТ Мебель</div>
-              <div class="font-serif text-3xl font-bold">Меню</div>
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/10 text-brand-gold">
+                <BrandMark size="1.5rem" />
+              </div>
+              <div>
+                <div class="text-[11px] font-black uppercase tracking-widest text-brand-gold">РОСТ Мебель</div>
+                <div class="font-serif text-3xl font-bold">Меню</div>
+              </div>
             </div>
             <button
               type="button"
@@ -173,7 +179,9 @@ onUnmounted(() => {
       <div class="mx-auto grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-4">
         <div class="md:col-span-2">
           <div class="mb-6 flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-brown font-serif text-xl font-bold text-brand-gold">Р</div>
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-brown text-brand-gold">
+              <BrandMark size="1.45rem" />
+            </div>
             <span class="font-serif text-2xl font-black uppercase text-brand-brown">РОСТ <span class="text-brand-gold">Мебель</span></span>
           </div>
           <p class="max-w-md leading-7 text-brand-brown/62">

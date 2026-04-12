@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import BrandMark from '@/components/common/BrandMark.vue';
 import {
   LucideClipboardList,
   LucideExternalLink,
@@ -41,8 +42,8 @@ const logout = () => {
   <div class="min-h-screen bg-brand-gray/40 text-brand-brown">
     <aside class="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col bg-brand-brown text-brand-white shadow-2xl lg:flex">
       <div class="flex items-center gap-3 border-b border-white/10 p-6">
-        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold font-serif text-2xl font-bold text-white">
-          Р
+        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold text-white">
+          <BrandMark size="1.45rem" />
         </div>
         <div>
           <div class="font-serif text-xl font-bold uppercase leading-none">РОСТ</div>
@@ -89,9 +90,14 @@ const logout = () => {
 
     <header class="sticky top-0 z-40 border-b border-brand-brown/10 bg-white/95 backdrop-blur lg:hidden">
       <div class="flex items-center justify-between gap-3 px-4 py-3">
-        <div class="min-w-0">
-          <div class="text-[11px] font-black uppercase tracking-widest text-brand-gold">РОСТ Админ</div>
-          <div class="truncate font-serif text-xl font-bold text-brand-brown">{{ currentPage }}</div>
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-brown text-brand-gold">
+            <BrandMark size="1.4rem" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-[11px] font-black uppercase tracking-widest text-brand-gold">РОСТ Админ</div>
+            <div class="truncate font-serif text-xl font-bold text-brand-brown">{{ currentPage }}</div>
+          </div>
         </div>
 
         <div class="flex shrink-0 items-center gap-2">

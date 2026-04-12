@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { LucideArrowRight, LucideLock, LucideUser } from 'lucide-vue-next';
+import BrandMark from '@/components/common/BrandMark.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -26,8 +27,8 @@ const handleLogin = async () => {
   <div class="flex min-h-screen items-center justify-center bg-brand-cream px-4 py-10">
     <div class="w-full max-w-md">
       <div class="mb-8 text-center">
-        <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-brand-gold font-serif text-3xl font-bold text-white shadow-xl">
-          Р
+        <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-brand-gold text-white shadow-xl">
+          <BrandMark size="2.25rem" />
         </div>
         <h1 class="font-serif text-3xl font-bold text-brand-brown">Панель управления</h1>
         <p class="mt-2 text-sm text-brand-brown/55">Введите данные администратора, чтобы продолжить</p>
