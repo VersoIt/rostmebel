@@ -111,9 +111,9 @@ const formatPrice = (price: number) => {
         <div v-if="isQuickViewOpen" class="ui-modal-backdrop" @click.stop>
           <div class="absolute inset-0" @click="isQuickViewOpen = false"></div>
 
-          <section class="ui-modal-panel z-10 max-w-6xl overflow-hidden bg-black lg:aspect-video">
-            <div class="grid min-h-[70vh] grid-cols-1 lg:grid-cols-[1fr_320px]">
-              <div class="relative min-h-[58vh] overflow-hidden bg-neutral-900">
+          <section class="ui-modal-panel z-10 max-w-6xl overflow-hidden bg-white">
+            <div class="grid grid-cols-1 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_340px]">
+              <div class="relative aspect-[4/3] min-h-[320px] overflow-hidden bg-brand-gray sm:aspect-video lg:aspect-auto lg:min-h-[560px]">
                 <transition :name="slideDirection === 'next' ? 'slide-next' : 'slide-prev'">
                   <img
                     :key="activeSlideIdx"

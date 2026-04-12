@@ -57,15 +57,14 @@ onUnmounted(() => {
       ]"
     >
       <div class="ui-container flex items-center justify-between gap-4">
-        <router-link to="/" class="flex min-w-0 items-center gap-3" aria-label="РОСТ Мебель">
-          <div
+        <router-link to="/" class="flex min-w-0 items-center gap-2" aria-label="РОСТ Мебель">
+          <BrandMark
             :class="[
-              'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors duration-200',
-              isHeaderActive ? 'bg-brand-brown text-brand-gold' : 'bg-white text-brand-brown'
+              'shrink-0 transition-colors duration-200',
+              isHeaderActive ? 'text-brand-gold' : 'text-white'
             ]"
-          >
-            <BrandMark size="1.55rem" />
-          </div>
+            size="3rem"
+          />
           <div class="min-w-0">
             <div :class="['truncate font-serif text-2xl font-black uppercase leading-none', isHeaderActive ? 'text-brand-brown' : 'text-white']">
               РОСТ
@@ -132,10 +131,8 @@ onUnmounted(() => {
       <transition name="menu">
         <div v-if="isMenuOpen" class="fixed inset-0 z-[210] flex flex-col bg-brand-brown p-5 text-white">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/10 text-brand-gold">
-                <BrandMark size="1.5rem" />
-              </div>
+            <div class="flex items-center gap-2">
+              <BrandMark class="shrink-0 text-brand-gold" size="3rem" />
               <div>
                 <div class="text-[11px] font-black uppercase tracking-widest text-brand-gold">РОСТ Мебель</div>
                 <div class="font-serif text-3xl font-bold">Меню</div>
@@ -178,10 +175,8 @@ onUnmounted(() => {
     <footer class="border-t border-brand-brown/10 bg-brand-cream px-4 py-12 sm:px-6 lg:py-16">
       <div class="mx-auto grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-4">
         <div class="md:col-span-2">
-          <div class="mb-6 flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-brown text-brand-gold">
-              <BrandMark size="1.45rem" />
-            </div>
+          <div class="mb-6 flex items-center gap-2">
+            <BrandMark class="shrink-0 text-brand-gold" size="2.35rem" />
             <span class="font-serif text-2xl font-black uppercase text-brand-brown">РОСТ <span class="text-brand-gold">Мебель</span></span>
           </div>
           <p class="max-w-md leading-7 text-brand-brown/62">

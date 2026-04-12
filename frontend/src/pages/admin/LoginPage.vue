@@ -27,9 +27,7 @@ const handleLogin = async () => {
   <div class="flex min-h-screen items-center justify-center bg-brand-cream px-4 py-10">
     <div class="w-full max-w-md">
       <div class="mb-8 text-center">
-        <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-brand-gold text-white shadow-xl">
-          <BrandMark size="2.25rem" />
-        </div>
+        <BrandMark class="mx-auto mb-5 text-brand-gold" size="4rem" />
         <h1 class="font-serif text-3xl font-bold text-brand-brown">Панель управления</h1>
         <p class="mt-2 text-sm text-brand-brown/55">Введите данные администратора, чтобы продолжить</p>
       </div>
