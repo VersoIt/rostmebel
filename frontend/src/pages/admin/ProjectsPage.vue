@@ -13,10 +13,13 @@ import {
 import ProductModal from '@/components/admin/ProductModal.vue';
 import type { Product } from '@/types';
 import api from '@/api/client';
+import { getApiErrorMessage } from '@/api/errors';
+import { useNotificationStore } from '@/stores/notifications';
 import { downloadFile } from '@/utils/download';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
 
 const productStore = useProductStore();
+const notificationStore = useNotificationStore();
 const searchQuery = ref('');
 const isModalOpen = ref(false);
 const editingProduct = ref<Product | null>(null);
@@ -52,10 +55,10 @@ const openEdit = (p: Product) => {
 const deleteProduct = async (id: number) => {
   if (confirm('Вы уверены, что хотите удалить этот проект?')) {
     try {
-      await api.delete(`/admin/products/${id}`);
+      await api.delete(`/admin/projects/${id}`);
       fetch();
     } catch (err) {
-      alert('Ошибка при удалении');
+      notificationStore.show(getApiErrorMessage(err), 'error');
     }
   }
 };
@@ -133,7 +136,7 @@ const handleImgError = (e: Event) => {
             </td>
             <td class="px-8 py-4">
               <span :class="[
-                'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter',
+                'px-3 py-1 rounded-full text-[10px] font-bold uppercase',
                 p.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
               ]">
                 {{ p.status }}

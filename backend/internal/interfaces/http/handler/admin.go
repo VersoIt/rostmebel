@@ -18,13 +18,13 @@ func NewAdminHandler(useCase *admin.UseCase) *AdminHandler {
 func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
 	tokens, err := h.useCase.Login(r.Context(), req.Username, req.Password)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -37,13 +37,13 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AdminHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req dto.RefreshRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
 	tokens, err := h.useCase.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -57,7 +57,7 @@ func (h *AdminHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// sub is set in JWT middleware
 	adminID := r.Context().Value("sub").(int64)
 	if err := h.useCase.Logout(r.Context(), adminID); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (h *AdminHandler) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *AdminHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.useCase.GetStats(r.Context())
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 

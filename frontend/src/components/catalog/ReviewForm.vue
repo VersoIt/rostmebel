@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { LucideStar, LucideSend, LucideCamera, LucideX, LucideCheckCircle } from 'lucide-vue-next';
 import api from '@/api/client';
+import { getApiErrorMessage } from '@/api/errors';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
 
 const props = defineProps<{
@@ -31,10 +32,10 @@ const handleFileUpload = async (e: Event) => {
 
   isUploading.value = true;
   try {
-    const { data } = await api.post('/admin/upload', formData); // Using existing upload route
+    const { data } = await api.post('/uploads/images', formData);
     images.value.push({ url: data.url });
   } catch (err) {
-    console.error('Upload failed');
+    error.value = getApiErrorMessage(err);
   } finally {
     isUploading.value = false;
   }
@@ -71,7 +72,7 @@ const submit = async () => {
     isSuccess.value = true;
     setTimeout(() => emit('success'), 2000);
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'Ошибка при отправке отзыва';
+    error.value = getApiErrorMessage(err);
   } finally {
     isSubmitting.value = false;
   }

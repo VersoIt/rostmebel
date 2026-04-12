@@ -1,4 +1,5 @@
 import api from '@/api/client';
+import { getApiErrorMessage } from '@/api/errors';
 
 export async function downloadFile(url: string, filename: string) {
   try {
@@ -20,6 +21,6 @@ export async function downloadFile(url: string, filename: string) {
     window.URL.revokeObjectURL(downloadUrl);
   } catch (error) {
     console.error('Download failed:', error);
-    alert('Ошибка при скачивании файла');
+    alert(getApiErrorMessage(error));
   }
 }

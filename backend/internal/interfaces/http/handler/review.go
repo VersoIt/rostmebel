@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rostmebel/backend/internal/application/review"
+	"github.com/rostmebel/backend/internal/domain/apperror"
 	domReview "github.com/rostmebel/backend/internal/domain/review"
 	"github.com/rostmebel/backend/internal/interfaces/dto"
 )
@@ -21,7 +22,7 @@ func NewReviewHandler(useCase *review.UseCase) *ReviewHandler {
 func (h *ReviewHandler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateReviewRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -33,7 +34,7 @@ func (h *ReviewHandler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.useCase.CreateReview(r.Context(), req.ClientPhone, rev); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -42,11 +43,15 @@ func (h *ReviewHandler) CreateReview(w http.ResponseWriter, r *http.Request) {
 
 func (h *ReviewHandler) GetProjectReviews(w http.ResponseWriter, r *http.Request) {
 	projectIDStr := chi.URLParam(r, "id")
-	projectID, _ := strconv.ParseInt(projectIDStr, 10, 64)
+	projectID, err := strconv.ParseInt(projectIDStr, 10, 64)
+	if err != nil {
+		respondWithError(w, apperror.New(apperror.CodeInvalidID, "Invalid project id", map[string]any{"id": projectIDStr}))
+		return
+	}
 
 	reviews, err := h.useCase.GetByProject(r.Context(), projectID)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -72,7 +77,7 @@ func (h *ReviewHandler) AdminListReviews(w http.ResponseWriter, r *http.Request)
 
 	reviews, filteredTotal, absoluteTotal, err := h.useCase.ListReviews(r.Context(), filter)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -90,16 +95,20 @@ func (h *ReviewHandler) AdminListReviews(w http.ResponseWriter, r *http.Request)
 
 func (h *ReviewHandler) AdminModerateReview(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		respondWithError(w, apperror.New(apperror.CodeInvalidID, "Invalid review id", map[string]any{"id": idStr}))
+		return
+	}
 
 	var req dto.ModerateReviewRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
 	if err := h.useCase.ModerateReview(r.Context(), id, req.Approved); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -108,10 +117,14 @@ func (h *ReviewHandler) AdminModerateReview(w http.ResponseWriter, r *http.Reque
 
 func (h *ReviewHandler) AdminDeleteReview(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		respondWithError(w, apperror.New(apperror.CodeInvalidID, "Invalid review id", map[string]any{"id": idStr}))
+		return
+	}
 
 	if err := h.useCase.DeleteReview(r.Context(), id); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 

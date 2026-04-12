@@ -56,7 +56,7 @@ const formatPrice = (price: number) => {
 <template>
   <div 
     @click="goToProduct"
-    class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-brand-brown/5 cursor-pointer h-full flex flex-col"
+    class="group bg-white rounded-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-brand-brown/5 cursor-pointer h-full flex flex-col"
   >
     <!-- Image Area -->
     <div class="relative aspect-square overflow-hidden bg-brand-gray shrink-0">
@@ -70,13 +70,13 @@ const formatPrice = (price: number) => {
       <div class="absolute top-4 right-4 flex flex-col gap-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
         <button 
           @click.stop="toggleFavorite(product)"
-          :class="['w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-colors', isFavorite(product.id) ? 'bg-brand-gold text-white' : 'bg-white text-brand-brown hover:text-brand-gold']"
+          :class="['w-10 h-10 rounded-lg flex items-center justify-center shadow-lg transition-colors', isFavorite(product.id) ? 'bg-brand-gold text-white' : 'bg-white text-brand-brown hover:text-brand-gold']"
         >
           <LucideHeart :size="20" :fill="isFavorite(product.id) ? 'currentColor' : 'none'" />
         </button>
         <button 
           @click.stop="openQuickView" 
-          class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-brown hover:text-brand-gold shadow-lg"
+          class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-brand-brown hover:text-brand-gold shadow-lg"
         >
           <LucideEye :size="20" />
         </button>
@@ -105,7 +105,7 @@ const formatPrice = (price: number) => {
         <div v-if="isQuickViewOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12">
           <div class="absolute inset-0 bg-black/60 backdrop-blur-md" @click.stop="isQuickViewOpen = false"></div>
           
-          <div class="relative w-full max-w-6xl aspect-video bg-black rounded-[2rem] overflow-hidden shadow-2xl flex group/modal">
+          <div class="relative w-full max-w-6xl aspect-video bg-black rounded-lg overflow-hidden shadow-2xl flex group/modal">
             
             <!-- Slider Area -->
             <div class="flex-1 relative bg-neutral-900 overflow-hidden">
@@ -120,10 +120,10 @@ const formatPrice = (price: number) => {
               
               <!-- Controls -->
               <div v-if="product.images.length > 1" class="absolute inset-0 flex items-center justify-between px-6 opacity-0 group-hover/modal:opacity-100 transition-opacity pointer-events-none">
-                <button @click.stop="prevSlide" class="w-14 h-14 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md pointer-events-auto transition-all">
+                <button @click.stop="prevSlide" class="w-14 h-14 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center backdrop-blur-md pointer-events-auto transition-all">
                   <LucideChevronLeft :size="32" />
                 </button>
-                <button @click.stop="nextSlide" class="w-14 h-14 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md pointer-events-auto transition-all">
+                <button @click.stop="nextSlide" class="w-14 h-14 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center backdrop-blur-md pointer-events-auto transition-all">
                   <LucideChevronRight :size="32" />
                 </button>
               </div>
@@ -146,11 +146,11 @@ const formatPrice = (price: number) => {
                   {{ product.description }}
                 </p>
               </div>
-              <button @click="goToProduct" class="w-full bg-brand-brown text-white py-4 rounded-xl font-bold hover:bg-brand-gold transition-all shadow-lg active:scale-95"> ПОДРОБНЕЕ </button>
+              <button @click="goToProduct" class="w-full bg-brand-brown text-white py-4 rounded-lg font-bold hover:bg-brand-gold transition-all shadow-lg active:scale-95"> ПОДРОБНЕЕ </button>
             </div>
 
             <!-- Close Button -->
-            <button @click.stop="isQuickViewOpen = false" class="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-500 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-10">
+            <button @click.stop="isQuickViewOpen = false" class="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-red-500 text-white rounded-lg flex items-center justify-center backdrop-blur-md transition-all z-10">
               <LucideX :size="24" />
             </button>
           </div>

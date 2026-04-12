@@ -14,6 +14,7 @@ import {
 } from 'lucide-vue-next';
 import type { Order } from '@/types';
 import { useNotificationStore } from '@/stores/notifications';
+import { getApiErrorMessage } from '@/api/errors';
 import { downloadFile } from '@/utils/download';
 
 const orders = ref<Order[]>([]);
@@ -59,7 +60,7 @@ const updateStatus = async (id: number, status: string) => {
     notificationStore.show(`Статус заявки #${id} изменен на "${statusMap[status]}"`, 'success');
     fetchOrders();
   } catch (err) {
-    notificationStore.show('Ошибка при обновлении статуса', 'error');
+    notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
 
@@ -70,7 +71,7 @@ const markAsSpam = async (id: number) => {
       notificationStore.show('Заявка помечена как спам', 'info');
       fetchOrders();
     } catch (err) {
-      notificationStore.show('Ошибка', 'error');
+      notificationStore.show(getApiErrorMessage(err), 'error');
     }
   }
 };
@@ -168,7 +169,7 @@ const getStatusClass = (status: string) => {
 
             <!-- 4. Статус -->
             <td class="px-8 py-6">
-              <div :class="['inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter', getStatusClass(o.status)]">
+              <div :class="['inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase', getStatusClass(o.status)]">
                 <component :is="getStatusIcon(o.status)" :size="12" />
                 {{ statusMap[o.status] || o.status }}
               </div>

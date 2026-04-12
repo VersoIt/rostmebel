@@ -2,10 +2,12 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rostmebel/backend/internal/domain/apperror"
 )
 
 func Auth(jwtSecret string) func(http.Handler) http.Handler {
@@ -13,13 +15,13 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				respondUnauthorized(w)
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				respondUnauthorized(w)
 				return
 			}
 
@@ -29,19 +31,33 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 			})
 
 			if err != nil || !token.Valid {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				respondUnauthorized(w)
 				return
 			}
 
 			claims, ok := token.Claims.(jwt.MapClaims)
 			if !ok {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				respondUnauthorized(w)
 				return
 			}
 
-			adminID := int64(claims["sub"].(float64))
+			sub, ok := claims["sub"].(float64)
+			if !ok {
+				respondUnauthorized(w)
+				return
+			}
+
+			adminID := int64(sub)
 			ctx := context.WithValue(r.Context(), "sub", adminID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func respondUnauthorized(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"error": apperror.New(apperror.CodeUnauthorized, "Unauthorized", nil),
+	})
 }

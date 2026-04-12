@@ -22,8 +22,8 @@ func NewOrderRepo(pool *pgxpool.Pool) *OrderRepo {
 func (r *OrderRepo) Create(ctx context.Context, o *order.Order) error {
 	query := `INSERT INTO orders (project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, created_at, updated_at`
-	
-	return r.pool.QueryRow(ctx, query, 
+
+	return r.pool.QueryRow(ctx, query,
 		o.ProjectID, o.ClientName, o.ClientPhone, o.ClientEmail, o.Comment, o.Status, o.IPAddress.String(), o.UserAgent, o.Fingerprint,
 	).Scan(&o.ID, &o.CreatedAt, &o.UpdatedAt)
 }
@@ -34,7 +34,7 @@ func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error)
 		FROM orders o
 		LEFT JOIN projects p ON o.project_id = p.id
 		WHERE o.id = $1`
-	
+
 	var o order.Order
 	var ip string
 	var projectName *string
@@ -42,10 +42,14 @@ func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error)
 		&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows { return nil, nil }
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
-	if projectName != nil { o.ProjectName = *projectName }
+	if projectName != nil {
+		o.ProjectName = *projectName
+	}
 	o.IPAddress = net.ParseIP(ip)
 	return &o, nil
 }
@@ -62,16 +66,24 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 	// Filtered total
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM orders o %s", where)
 	var filteredTotal int64
-	r.pool.QueryRow(ctx, countQuery, args...).Scan(&filteredTotal)
+	if err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&filteredTotal); err != nil {
+		return nil, 0, 0, err
+	}
 
 	// Absolute total
 	var absoluteTotal int64
-	r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders").Scan(&absoluteTotal)
+	if err := r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM orders").Scan(&absoluteTotal); err != nil {
+		return nil, 0, 0, err
+	}
 
 	limit := 20
-	if f.Limit > 0 { limit = f.Limit }
+	if f.Limit > 0 {
+		limit = f.Limit
+	}
 	offset := 0
-	if f.Offset > 0 { offset = f.Offset }
+	if f.Offset > 0 {
+		offset = f.Offset
+	}
 
 	query := fmt.Sprintf(`
 		SELECT o.id, o.project_id, o.client_name, o.client_phone, o.client_email, o.comment, o.status, o.ip_address::text, o.user_agent, o.fingerprint, o.created_at, o.updated_at, p.name
@@ -80,10 +92,12 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 		%s 
 		ORDER BY o.created_at DESC 
 		LIMIT $%d OFFSET $%d`, where, len(args)+1, len(args)+2)
-	
+
 	args = append(args, limit, offset)
 	rows, err := r.pool.Query(ctx, query, args...)
-	if err != nil { return nil, 0, 0, err }
+	if err != nil {
+		return nil, 0, 0, err
+	}
 	defer rows.Close()
 
 	var orders []*order.Order
@@ -95,10 +109,15 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 			&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
 		)
 		if err == nil {
-			if projectName != nil { o.ProjectName = *projectName }
+			if projectName != nil {
+				o.ProjectName = *projectName
+			}
 			o.IPAddress = net.ParseIP(ip)
 			orders = append(orders, &o)
 		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, 0, err
 	}
 	return orders, filteredTotal, absoluteTotal, nil
 }
@@ -125,15 +144,21 @@ func (r *OrderRepo) IsIPBlocked(ctx context.Context, ip net.IP) (bool, error) {
 
 func (r *OrderRepo) MarkAsSpam(ctx context.Context, id int64) error {
 	tx, err := r.pool.Begin(ctx)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer tx.Rollback(ctx)
 
 	var ip string
 	err = tx.QueryRow(ctx, "UPDATE orders SET status = 'spam' WHERE id = $1 RETURNING ip_address::text", id).Scan(&ip)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	_, err = tx.Exec(ctx, "INSERT INTO ip_blocks (ip_address, reason, expires_at) VALUES ($1, 'spam', $2) ON CONFLICT (ip_address) DO UPDATE SET expires_at = $2", ip, time.Now().Add(7*24*time.Hour))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return tx.Commit(ctx)
 }
@@ -149,9 +174,11 @@ func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
 		FROM orders o
 		LEFT JOIN projects p ON o.project_id = p.id
 		ORDER BY o.created_at DESC`
-	
+
 	rows, err := r.pool.Query(ctx, query)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 
 	var orders []*order.Order
@@ -163,10 +190,15 @@ func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
 			&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
 		)
 		if err == nil {
-			if projectName != nil { o.ProjectName = *projectName }
+			if projectName != nil {
+				o.ProjectName = *projectName
+			}
 			o.IPAddress = net.ParseIP(ip)
 			orders = append(orders, &o)
 		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return orders, nil
 }

@@ -43,6 +43,7 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 		r.Post("/orders", oh.CreateOrder)
 		r.Post("/reviews", rh.CreateReview)
 		r.Post("/ai/search", ph.AISearch)
+		r.Post("/uploads/images", ph.UploadImage)
 
 		// Admin Auth
 		r.Post("/admin/auth/login", ah.Login)
@@ -51,7 +52,7 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 		// Protected Admin
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(cfg.JWTSecret))
-			
+
 			r.Post("/admin/auth/logout", ah.Logout)
 			r.Get("/admin/stats", ah.GetStats)
 

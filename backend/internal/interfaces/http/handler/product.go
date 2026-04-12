@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rostmebel/backend/internal/application/product"
+	"github.com/rostmebel/backend/internal/domain/apperror"
 	domProduct "github.com/rostmebel/backend/internal/domain/product"
 	"github.com/rostmebel/backend/internal/interfaces/dto"
 	"github.com/xuri/excelize/v2"
@@ -32,7 +33,11 @@ func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if catID := r.URL.Query().Get("project_category_id"); catID != "" {
-		id, _ := strconv.ParseInt(catID, 10, 64)
+		id, err := strconv.ParseInt(catID, 10, 64)
+		if err != nil {
+			respondWithError(w, invalidQuery("project_category_id", catID))
+			return
+		}
 		filter.ProjectCategoryID = &id
 	}
 	if status := r.URL.Query().Get("status"); status != "" {
@@ -40,19 +45,35 @@ func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 		filter.Status = &s
 	}
 	if minP := r.URL.Query().Get("min_price"); minP != "" {
-		p, _ := strconv.ParseFloat(minP, 64)
+		p, err := strconv.ParseFloat(minP, 64)
+		if err != nil {
+			respondWithError(w, invalidQuery("min_price", minP))
+			return
+		}
 		filter.MinBudget = &p
 	}
 	if maxP := r.URL.Query().Get("max_price"); maxP != "" {
-		p, _ := strconv.ParseFloat(maxP, 64)
+		p, err := strconv.ParseFloat(maxP, 64)
+		if err != nil {
+			respondWithError(w, invalidQuery("max_price", maxP))
+			return
+		}
 		filter.MaxBudget = &p
 	}
 	if limit := r.URL.Query().Get("limit"); limit != "" {
-		l, _ := strconv.Atoi(limit)
+		l, err := strconv.Atoi(limit)
+		if err != nil || l < 1 || l > 10000 {
+			respondWithError(w, invalidQuery("limit", limit))
+			return
+		}
 		filter.Limit = l
 	}
 	if offset := r.URL.Query().Get("offset"); offset != "" {
-		o, _ := strconv.Atoi(offset)
+		o, err := strconv.Atoi(offset)
+		if err != nil || o < 0 {
+			respondWithError(w, invalidQuery("offset", offset))
+			return
+		}
 		filter.Offset = o
 	}
 	filter.Search = r.URL.Query().Get("search")
@@ -61,7 +82,7 @@ func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 
 	projects, total, err := h.useCase.ListProjects(r.Context(), filter)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -83,11 +104,11 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 		// Try slug
 		p, err := h.useCase.GetProjectBySlug(r.Context(), idStr)
 		if err != nil {
-			respondWithError(w, http.StatusInternalServerError, err.Error())
+			respondWithError(w, err)
 			return
 		}
 		if p == nil {
-			respondWithError(w, http.StatusNotFound, "project not found")
+			respondWithError(w, projectNotFound(idStr))
 			return
 		}
 		h.useCase.IncrementViews(r.Context(), p.ID)
@@ -97,11 +118,11 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 
 	p, err := h.useCase.GetProject(r.Context(), id)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 	if p == nil {
-		respondWithError(w, http.StatusNotFound, "project not found")
+		respondWithError(w, projectNotFound(idStr))
 		return
 	}
 	h.useCase.IncrementViews(r.Context(), p.ID)
@@ -111,7 +132,7 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := h.useCase.ListCategories(r.Context())
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -126,13 +147,13 @@ func (h *ProductHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) AISearch(w http.ResponseWriter, r *http.Request) {
 	var req dto.AISearchRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
 	projects, err := h.aiUseCase.Search(r.Context(), req.Query)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -146,46 +167,54 @@ func (h *ProductHandler) AISearch(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("image")
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Не удалось получить файл")
+		respondWithError(w, apperror.New(apperror.CodeUploadFileMissing, "Image file is required", nil))
 		return
 	}
 	defer file.Close()
 
 	if handler.Size > 10<<20 {
-		respondWithError(w, http.StatusBadRequest, "Файл слишком большой")
+		respondWithError(w, apperror.New(apperror.CodeUploadFileTooLarge, "Image file is too large", map[string]any{
+			"max_bytes": 10 << 20,
+		}))
+		return
+	}
+
+	contentType, ext, err := detectImageType(file)
+	if err != nil {
+		respondWithError(w, err)
 		return
 	}
 
 	uploadDir := "./uploads"
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Ошибка сервера")
+		respondWithError(w, err)
 		return
 	}
 
-	ext := filepath.Ext(handler.Filename)
 	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	filePath := filepath.Join(uploadDir, filename)
 
 	dst, err := os.Create(filePath)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Ошибка сервера")
+		respondWithError(w, err)
 		return
 	}
 	defer dst.Close()
 
 	if _, err := io.Copy(dst, file); err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Ошибка сервера")
+		respondWithError(w, err)
 		return
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{
-		"url": "/uploads/" + filename,
+		"url":          "/uploads/" + filename,
+		"content_type": contentType,
 	})
 }
 func (h *ProductHandler) ExportProducts(w http.ResponseWriter, r *http.Request) {
 	projects, _, err := h.useCase.ListProjects(r.Context(), domProduct.ListFilter{Limit: 10000})
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -214,13 +243,15 @@ func (h *ProductHandler) ExportProducts(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", "attachment; filename=projects.xlsx")
-	f.Write(w)
+	if err := f.Write(w); err != nil {
+		respondWithError(w, err)
+	}
 }
 
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateProjectRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -242,7 +273,7 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.useCase.CreateProject(r.Context(), p); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -251,17 +282,25 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		respondWithError(w, apperror.New(apperror.CodeInvalidID, "Invalid project id", map[string]any{"id": idStr}))
+		return
+	}
 
 	var req dto.CreateProjectRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
 	p, err := h.useCase.GetProject(r.Context(), id)
-	if err != nil || p == nil {
-		respondWithError(w, http.StatusNotFound, "project not found")
+	if err != nil {
+		respondWithError(w, err)
+		return
+	}
+	if p == nil {
+		respondWithError(w, projectNotFound(idStr))
 		return
 	}
 
@@ -277,7 +316,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	p.Status = req.Status
 
 	if err := h.useCase.UpdateProject(r.Context(), p); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -286,12 +325,56 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		respondWithError(w, apperror.New(apperror.CodeInvalidID, "Invalid project id", map[string]any{"id": idStr}))
+		return
+	}
 
 	if err := h.useCase.DeleteProject(r.Context(), id); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func invalidQuery(field, value string) error {
+	return apperror.New(apperror.CodeInvalidQuery, "Invalid query parameter", map[string]any{
+		"field": field,
+		"value": value,
+	})
+}
+
+func projectNotFound(id string) error {
+	return apperror.New(apperror.CodeProjectNotFound, "Project not found", map[string]any{
+		"id": id,
+	})
+}
+
+func detectImageType(file io.ReadSeeker) (string, string, error) {
+	buffer := make([]byte, 512)
+	n, err := file.Read(buffer)
+	if err != nil && err != io.EOF {
+		return "", "", err
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return "", "", err
+	}
+
+	contentType := http.DetectContentType(buffer[:n])
+	allowed := map[string]string{
+		"image/jpeg": ".jpg",
+		"image/png":  ".png",
+		"image/webp": ".webp",
+		"image/gif":  ".gif",
+	}
+	ext, ok := allowed[contentType]
+	if !ok {
+		return "", "", apperror.New(apperror.CodeUploadInvalidType, "Unsupported image type", map[string]any{
+			"content_type": contentType,
+			"allowed":      []string{"image/jpeg", "image/png", "image/webp", "image/gif"},
+		})
+	}
+	return contentType, ext, nil
 }

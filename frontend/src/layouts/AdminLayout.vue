@@ -25,7 +25,7 @@ const menuItems = [
     <aside class="w-72 bg-brand-brown text-brand-white flex flex-col fixed inset-y-0 shadow-2xl z-50">
       <div class="p-8 flex items-center gap-3 border-b border-white/5">
         <div class="w-10 h-10 bg-brand-gold rounded-xl flex items-center justify-center text-white font-serif text-2xl">Р</div>
-        <span class="font-serif text-xl tracking-tighter uppercase font-bold">РОСТ <span class="text-brand-gold">Админ</span></span>
+        <span class="font-serif text-xl uppercase font-bold">РОСТ <span class="text-brand-gold">Админ</span></span>
       </div>
 
       <nav class="flex-1 p-6 space-y-2 mt-4">

@@ -12,6 +12,7 @@ import {
   LucideImage
 } from 'lucide-vue-next';
 import { useNotificationStore } from '@/stores/notifications';
+import { getApiErrorMessage } from '@/api/errors';
 
 const reviews = ref<any[]>([]);
 const total = ref(0);
@@ -46,7 +47,7 @@ const moderate = async (id: number, approved: boolean) => {
     notificationStore.show(approved ? 'Отзыв опубликован' : 'Отзыв отклонен', 'success');
     fetchReviews();
   } catch (err) {
-    notificationStore.show('Ошибка модерации', 'error');
+    notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
 
@@ -57,7 +58,7 @@ const deleteReview = async (id: number) => {
       notificationStore.show('Отзыв удален', 'info');
       fetchReviews();
     } catch (err) {
-      notificationStore.show('Ошибка удаления', 'error');
+      notificationStore.show(getApiErrorMessage(err), 'error');
     }
   }
 };

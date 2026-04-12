@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import api from '@/api/client';
+import { getApiErrorMessage } from '@/api/errors';
 import type { TokenPair } from '@/types';
 
 export const useAuthStore = defineStore('auth', {
@@ -19,7 +20,7 @@ export const useAuthStore = defineStore('auth', {
         this.isAuthenticated = true;
         return true;
       } catch (err: any) {
-        this.error = err.response?.data?.error || 'Login failed';
+        this.error = getApiErrorMessage(err);
         return false;
       } finally {
         this.loading = false;

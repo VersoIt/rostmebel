@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import api from '@/api/client';
+import { getApiErrorMessage } from '@/api/errors';
 import type { Product, Category } from '@/types';
 
 export const useProductStore = defineStore('products', {
@@ -18,7 +19,7 @@ export const useProductStore = defineStore('products', {
         this.products = data.items;
         this.total = data.total;
       } catch (err: any) {
-        this.error = err.message;
+        this.error = getApiErrorMessage(err);
       } finally {
         this.loading = false;
       }
@@ -28,7 +29,7 @@ export const useProductStore = defineStore('products', {
         const { data } = await api.get('/categories');
         this.categories = data;
       } catch (err: any) {
-        console.error(err);
+        this.error = getApiErrorMessage(err);
       }
     },
     async aiSearch(query: string) {
@@ -37,8 +38,8 @@ export const useProductStore = defineStore('products', {
         const { data } = await api.post('/ai/search', { query });
         return data as Product[];
       } catch (err: any) {
-        this.error = err.message;
-        return [];
+        this.error = getApiErrorMessage(err);
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -48,7 +49,7 @@ export const useProductStore = defineStore('products', {
         const { data } = await api.get(`/projects/${idOrSlug}`);
         return data as Product;
       } catch (err: any) {
-        console.error(err);
+        this.error = getApiErrorMessage(err);
         return null;
       }
     }

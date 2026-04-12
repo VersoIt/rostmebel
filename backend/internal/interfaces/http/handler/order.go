@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rostmebel/backend/internal/application/order"
+	"github.com/rostmebel/backend/internal/domain/apperror"
 	domOrder "github.com/rostmebel/backend/internal/domain/order"
 	"github.com/rostmebel/backend/internal/interfaces/dto"
 	"github.com/xuri/excelize/v2"
@@ -24,7 +25,7 @@ func NewOrderHandler(useCase *order.UseCase) *OrderHandler {
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateOrderRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -52,7 +53,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.useCase.CreateOrder(r.Context(), o); err != nil {
-		respondWithError(w, http.StatusTooManyRequests, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -73,7 +74,7 @@ func (h *OrderHandler) GetOrders(w http.ResponseWriter, r *http.Request) {
 
 	orders, filteredTotal, absoluteTotal, err := h.useCase.ListOrders(r.Context(), filter)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -91,16 +92,20 @@ func (h *OrderHandler) GetOrders(w http.ResponseWriter, r *http.Request) {
 
 func (h *OrderHandler) UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		respondWithError(w, apperror.New(apperror.CodeInvalidID, "Invalid order id", map[string]any{"id": idStr}))
+		return
+	}
 
 	var req dto.UpdateOrderStatusRequest
 	if err := decodeAndValidate(r, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
 	if err := h.useCase.UpdateOrderStatus(r.Context(), id, req.Status); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -109,10 +114,14 @@ func (h *OrderHandler) UpdateOrderStatus(w http.ResponseWriter, r *http.Request)
 
 func (h *OrderHandler) MarkAsSpam(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		respondWithError(w, apperror.New(apperror.CodeInvalidID, "Invalid order id", map[string]any{"id": idStr}))
+		return
+	}
 
 	if err := h.useCase.MarkAsSpam(r.Context(), id); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -122,7 +131,7 @@ func (h *OrderHandler) MarkAsSpam(w http.ResponseWriter, r *http.Request) {
 func (h *OrderHandler) ExportOrders(w http.ResponseWriter, r *http.Request) {
 	orders, err := h.useCase.ExportOrders(r.Context())
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 		return
 	}
 
@@ -155,6 +164,6 @@ func (h *OrderHandler) ExportOrders(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=orders.xlsx")
 
 	if err := f.Write(w); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, err)
 	}
 }

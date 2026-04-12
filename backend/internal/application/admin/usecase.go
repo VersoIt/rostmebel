@@ -2,18 +2,18 @@ package admin
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rostmebel/backend/internal/domain/admin"
+	"github.com/rostmebel/backend/internal/domain/apperror"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UseCase struct {
-	repo      admin.Repository
-	jwtSecret string
-	accessTTL time.Duration
+	repo       admin.Repository
+	jwtSecret  string
+	accessTTL  time.Duration
 	refreshTTL time.Duration
 }
 
@@ -37,11 +37,11 @@ func (u *UseCase) Login(ctx context.Context, username, password string) (*TokenP
 		return nil, err
 	}
 	if a == nil {
-		return nil, fmt.Errorf("invalid credentials")
+		return nil, apperror.New(apperror.CodeAuthInvalidCredentials, "Invalid credentials", nil)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(a.PasswordHash), []byte(password)); err != nil {
-		return nil, fmt.Errorf("invalid credentials")
+		return nil, apperror.New(apperror.CodeAuthInvalidCredentials, "Invalid credentials", nil)
 	}
 
 	now := time.Now()
@@ -67,18 +67,22 @@ func (u *UseCase) Refresh(ctx context.Context, refreshToken string) (*TokenPair,
 		return []byte(u.jwtSecret), nil
 	})
 	if err != nil || !token.Valid {
-		return nil, fmt.Errorf("invalid refresh token")
+		return nil, apperror.New(apperror.CodeAuthInvalidRefreshToken, "Invalid refresh token", nil)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, apperror.New(apperror.CodeAuthInvalidRefreshToken, "Invalid refresh token claims", nil)
 	}
 
-	adminID := int64(claims["sub"].(float64))
+	sub, ok := claims["sub"].(float64)
+	if !ok {
+		return nil, apperror.New(apperror.CodeAuthInvalidRefreshToken, "Invalid refresh token subject", nil)
+	}
+	adminID := int64(sub)
 	a, err := u.repo.GetByID(ctx, adminID)
 	if err != nil || a == nil || a.RefreshToken == nil || *a.RefreshToken != refreshToken {
-		return nil, fmt.Errorf("invalid refresh token or session expired")
+		return nil, apperror.New(apperror.CodeAuthInvalidRefreshToken, "Invalid refresh token", nil)
 	}
 
 	tokens, err := u.GenerateTokens(adminID)

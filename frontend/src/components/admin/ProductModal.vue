@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { LucideX, LucidePlus, LucideTrash2, LucideUpload, LucideArrowLeft, LucideArrowRight } from 'lucide-vue-next';
 import type { Product, Category } from '@/types';
 import api from '@/api/client';
+import { getApiErrorMessage } from '@/api/errors';
 import { useNotificationStore } from '@/stores/notifications';
 
 const props = defineProps<{
@@ -93,7 +94,7 @@ const handleFileUpload = async (e: Event) => {
     });
     notificationStore.show('Изображение загружено', 'success');
   } catch (err: any) {
-    errorMessage.value = err.response?.data?.error || 'Ошибка при загрузке изображения';
+    errorMessage.value = getApiErrorMessage(err);
     notificationStore.show(errorMessage.value, 'error');
   } finally {
     isUploading.value = false;
@@ -120,7 +121,7 @@ const save = async () => {
     }
     emit('saved');
   } catch (err: any) {
-    errorMessage.value = err.response?.data?.error || 'Ошибка при сохранении';
+    errorMessage.value = getApiErrorMessage(err);
   }
 };
 </script>

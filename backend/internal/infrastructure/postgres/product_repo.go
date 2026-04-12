@@ -129,18 +129,15 @@ func (r *ProductRepo) List(ctx context.Context, f product.ListFilter) ([]*produc
 	if strings.ToUpper(f.SortOrder) == "ASC" {
 		order = "ASC"
 	}
-	sortBy := "id"
-	if f.SortBy != "" {
-		sortBy = f.SortBy
-	}
+	sortBy := projectSortColumn(f.SortBy)
 
 	query := fmt.Sprintf(`
 		SELECT id, project_category_id, name, slug, description, price, price_old, images, specs, ai_tags, status, views_count, orders_count, created_at, updated_at 
 		FROM projects %s 
 		ORDER BY %s %s 
-		LIMIT $%d OFFSET $%d`, 
+		LIMIT $%d OFFSET $%d`,
 		where, sortBy, order, argCount, argCount+1)
-	
+
 	args = append(args, f.Limit, f.Offset)
 
 	rows, err := r.pool.Query(ctx, query, args...)
@@ -168,6 +165,9 @@ func (r *ProductRepo) List(ctx context.Context, f product.ListFilter) ([]*produc
 		}
 		projects = append(projects, &p)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("failed to iterate projects: %w", err)
+	}
 
 	return projects, total, nil
 }
@@ -178,8 +178,8 @@ func (r *ProductRepo) Create(ctx context.Context, p *product.Project) error {
 
 	query := `INSERT INTO projects (project_category_id, name, slug, description, price, price_old, images, specs, ai_tags, status) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, created_at, updated_at`
-	
-	return r.pool.QueryRow(ctx, query, 
+
+	return r.pool.QueryRow(ctx, query,
 		p.ProjectCategoryID, p.Name, p.Slug, p.Description, p.Budget, p.BudgetOld, images, specs, p.AITags, p.Status,
 	).Scan(&p.ID, &p.CreatedAt, &p.UpdatedAt)
 }
@@ -190,8 +190,8 @@ func (r *ProductRepo) Update(ctx context.Context, p *product.Project) error {
 
 	query := `UPDATE projects SET project_category_id = $1, name = $2, slug = $3, description = $4, price = $5, price_old = $6, images = $7, specs = $8, ai_tags = $9, status = $10, updated_at = NOW() 
 			  WHERE id = $11 AND deleted_at IS NULL`
-	
-	_, err := r.pool.Exec(ctx, query, 
+
+	_, err := r.pool.Exec(ctx, query,
 		p.ProjectCategoryID, p.Name, p.Slug, p.Description, p.Budget, p.BudgetOld, images, specs, p.AITags, p.Status, p.ID,
 	)
 	return err
@@ -218,6 +218,9 @@ func (r *ProductRepo) ListCategories(ctx context.Context) ([]*product.Category, 
 			return nil, fmt.Errorf("failed to scan category: %w", err)
 		}
 		categories = append(categories, &c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate categories: %w", err)
 	}
 	return categories, nil
 }
@@ -265,7 +268,7 @@ func (r *ProductRepo) Search(ctx context.Context, query string, limit int) ([]*p
 		WHERE deleted_at IS NULL AND status = 'published' AND search_vector @@ plainto_tsquery('russian', $1)
 		ORDER BY ts_rank(search_vector, plainto_tsquery('russian', $1)) DESC
 		LIMIT $2`
-	
+
 	rows, err := r.pool.Query(ctx, sql, query, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search projects: %w", err)
@@ -287,5 +290,17 @@ func (r *ProductRepo) Search(ctx context.Context, query string, limit int) ([]*p
 		json.Unmarshal(specs, &p.Details)
 		projects = append(projects, &p)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate search results: %w", err)
+	}
 	return projects, nil
+}
+
+func projectSortColumn(sortBy string) string {
+	switch sortBy {
+	case "id", "name", "price", "views_count", "orders_count", "created_at", "updated_at":
+		return sortBy
+	default:
+		return "created_at"
+	}
 }

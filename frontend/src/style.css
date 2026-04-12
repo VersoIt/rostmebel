@@ -2,11 +2,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-cream: #FAF7F2;
-  --color-brand-brown: #2C1810;
-  --color-brand-gold: #C9A84C;
+  --color-brand-cream: #F6F8F7;
+  --color-brand-brown: #17211D;
+  --color-brand-gold: #3E8C76;
   --color-brand-white: #FFFFFF;
-  --color-brand-gray: #F5F5F0;
+  --color-brand-gray: #EDF1EE;
 
   --font-serif: "Playfair Display", serif;
   --font-sans: "Inter", sans-serif;
@@ -28,4 +28,3 @@ button, a {
 .admin-sidebar-link:hover:not(.bg-brand-gold) {
   @apply bg-white/10 text-white;
 }
-

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rostmebel/backend/internal/domain/apperror"
 	"github.com/rostmebel/backend/internal/domain/order"
 	domProduct "github.com/rostmebel/backend/internal/domain/product"
 	"github.com/rostmebel/backend/internal/infrastructure/telegram"
@@ -30,7 +31,9 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 		return err
 	}
 	if blocked {
-		return fmt.Errorf("ваш доступ временно ограничен из-за подозрений в спаме")
+		return apperror.New(apperror.CodeOrderIPBlocked, "Client IP is temporarily blocked", map[string]any{
+			"reason": "spam",
+		})
 	}
 
 	if u.limitEnabled {
@@ -42,9 +45,12 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 		}
 
 		if count >= 5 {
-			return fmt.Errorf("Превышен лимит заявок на сегодня. Пожалуйста, попробуйте завтра.")
+			return apperror.New(apperror.CodeOrderRateLimited, "Order rate limit exceeded", map[string]any{
+				"limit":        5,
+				"window_hours": 24,
+			})
 		}
-		
+
 		defer func() {
 			u.redis.Incr(ctx, key)
 			u.redis.Expire(ctx, key, 24*time.Hour)
@@ -52,7 +58,7 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 	}
 
 	if err := u.repo.Create(ctx, o); err != nil {
-		return fmt.Errorf("failed to save order to DB: %w", err)
+		return apperror.Wrap(err, apperror.CodeInternal, "Failed to create order", nil)
 	}
 
 	// Telegram Notification
@@ -62,7 +68,7 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 			projectName = p.Name
 		}
 	}
-	
+
 	go func() {
 		err := u.tg.SendOrderNotification(o.ClientName, o.ClientPhone, projectName, o.Comment)
 		if err != nil {

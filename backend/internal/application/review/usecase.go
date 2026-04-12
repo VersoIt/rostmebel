@@ -2,11 +2,11 @@ package review
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"github.com/rostmebel/backend/internal/domain/review"
+	"github.com/rostmebel/backend/internal/domain/apperror"
 	"github.com/rostmebel/backend/internal/domain/order"
+	"github.com/rostmebel/backend/internal/domain/review"
 )
 
 type UseCase struct {
@@ -22,7 +22,7 @@ func (u *UseCase) CreateReview(ctx context.Context, clientPhone string, rev *rev
 	// 1. Normalize phone for search
 	cleanPhone := normalizePhone(clientPhone)
 	if cleanPhone == "" {
-		return fmt.Errorf("некорректный номер телефона")
+		return apperror.New(apperror.CodeReviewInvalidPhone, "Invalid client phone", nil)
 	}
 
 	// 2. Find order by phone with status 'done'
@@ -43,13 +43,13 @@ func (u *UseCase) CreateReview(ctx context.Context, clientPhone string, rev *rev
 	}
 
 	if validOrder == nil {
-		return fmt.Errorf("вы не можете оставить отзыв: заказ на данный номер не найден или еще не завершен")
+		return apperror.New(apperror.CodeReviewNotAllowed, "Review is available only for completed orders", nil)
 	}
 
 	// 3. Link review to order and set pending
 	rev.OrderID = validOrder.ID
 	rev.Status = review.StatusPending
-	
+
 	// If project_id not provided, try to take from order
 	if rev.ProjectID == nil && validOrder.ProjectID != nil {
 		rev.ProjectID = validOrder.ProjectID

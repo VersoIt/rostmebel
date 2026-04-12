@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import api from '@/api/client';
+import { getApiErrorMessage } from '@/api/errors';
 import { LucideSend, LucideCheck } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -50,7 +51,7 @@ const handleSubmit = async () => {
       emit('success');
     }, 2000);
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'Произошла ошибка при отправке';
+    error.value = getApiErrorMessage(err);
   } finally {
     isSubmitting.value = false;
   }
@@ -60,7 +61,7 @@ const handleSubmit = async () => {
 <template>
   <div class="relative">
     <div v-if="isSuccess" class="flex flex-col items-center justify-center py-12 text-center">
-      <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+      <div class="w-20 h-20 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mb-6">
         <LucideCheck :size="40" />
       </div>
       <h3 class="text-2xl font-serif text-brand-brown mb-2">Спасибо!</h3>
@@ -77,7 +78,7 @@ const handleSubmit = async () => {
           v-model="form.client_name"
           required
           type="text"
-          class="w-full px-4 py-3 rounded-xl border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
           placeholder="Иван Иванов"
         >
       </div>
@@ -89,7 +90,7 @@ const handleSubmit = async () => {
           @input="formatPhone"
           required
           type="tel"
-          class="w-full px-4 py-3 rounded-xl border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
           placeholder="+7 (___) ___-__-__"
         >
       </div>
@@ -99,7 +100,7 @@ const handleSubmit = async () => {
         <input 
           v-model="form.client_email"
           type="email"
-          class="w-full px-4 py-3 rounded-xl border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
           placeholder="ivan@example.com"
         >
       </div>
@@ -109,7 +110,7 @@ const handleSubmit = async () => {
         <textarea 
           v-model="form.comment"
           rows="3"
-          class="w-full px-4 py-3 rounded-xl border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
           placeholder="Напишите ваши пожелания..."
         ></textarea>
       </div>
@@ -121,7 +122,7 @@ const handleSubmit = async () => {
       <button 
         type="submit"
         :disabled="isSubmitting"
-        class="w-full bg-brand-brown text-white py-4 rounded-xl font-medium hover:bg-brand-gold disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+        class="w-full bg-brand-brown text-white py-4 rounded-lg font-medium hover:bg-brand-gold disabled:opacity-50 transition-all flex items-center justify-center gap-2"
       >
         <LucideSend v-if="!isSubmitting" :size="20" />
         {{ isSubmitting ? 'Отправка...' : 'Отправить заявку' }}
