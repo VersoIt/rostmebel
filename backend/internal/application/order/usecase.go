@@ -70,7 +70,7 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 	}
 
 	go func() {
-		err := u.tg.SendOrderNotification(telegram.OrderNotification{
+		err := u.tg.SendOrderNotification(context.Background(), telegram.OrderNotification{
 			Name:          o.ClientName,
 			Phone:         o.ClientPhone,
 			Product:       projectName,

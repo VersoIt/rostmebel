@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -18,6 +19,7 @@ import (
 	"github.com/rostmebel/backend/internal/config"
 	domAdmin "github.com/rostmebel/backend/internal/domain/admin"
 	"github.com/rostmebel/backend/internal/infrastructure/gemini"
+	"github.com/rostmebel/backend/internal/infrastructure/httpx"
 	"github.com/rostmebel/backend/internal/infrastructure/postgres"
 	"github.com/rostmebel/backend/internal/infrastructure/redis"
 	"github.com/rostmebel/backend/internal/infrastructure/telegram"
@@ -56,8 +58,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	geminiClient := gemini.NewClient(cfg.GeminiAPIKey, cfg.GeminiModel)
-	tgClient := telegram.NewClient(cfg.TelegramToken, cfg.TelegramChatID)
+	proxyHTTPClient, err := httpx.NewHTTPClient(httpx.ClientOptions{
+		Timeout:               30 * time.Second,
+		DialTimeout:           10 * time.Second,
+		KeepAlive:             30 * time.Second,
+		ResponseHeaderTimeout: 15 * time.Second,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   20,
+		MaxConnsPerHost:       50,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		Proxy: &httpx.ProxyConfig{
+			Scheme:   cfg.OutboundProxyScheme,
+			Host:     cfg.OutboundProxyHost,
+			Port:     cfg.OutboundProxyPort,
+			Username: cfg.OutboundProxyUsername,
+			Password: cfg.OutboundProxyPassword,
+		},
+	})
+	if err != nil {
+		log.Error("create proxy http client: %w", err)
+		os.Exit(1)
+	}
+
+	geminiClient := gemini.NewClient(cfg.GeminiAPIKey, cfg.GeminiModel, proxyHTTPClient)
+	tgClient := telegram.NewClient(cfg.TelegramToken, cfg.TelegramChatID, proxyHTTPClient)
 
 	// Repositories
 	productRepo := postgres.NewProductRepo(pool)
