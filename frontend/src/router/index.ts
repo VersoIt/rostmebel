@@ -3,12 +3,12 @@ import { useAuthStore } from '@/stores/auth';
 
 const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(to, _from, savedPosition) {
     if (to.hash) {
       return {
         el: to.hash,
         behavior: 'smooth',
-        top: 100, // Offset for sticky header
+        top: 100,
       };
     }
     if (savedPosition) {
@@ -21,52 +21,52 @@ const router = createRouter({
       path: '/',
       component: () => import('@/layouts/PublicLayout.vue'),
       children: [
-        { 
-          path: '', 
-          name: 'home', 
+        {
+          path: '',
+          name: 'home',
           component: () => import('@/pages/HomePage.vue'),
-          meta: { 
-            title: 'РОСТ Мебель — кухни и корпусная мебель под размер', 
-            description: 'Проектируем, производим и устанавливаем кухни, шкафы, гардеробные и корпусную мебель по Крыму.' 
-          }
+          meta: {
+            title: 'РОСТ Мебель — кухни и корпусная мебель по размеру',
+            description: 'Проектируем, производим и устанавливаем кухни, шкафы, гардеробные и корпусную мебель по Крыму.',
+          },
         },
-        { 
-          path: 'catalog', 
-          name: 'catalog', 
+        {
+          path: 'catalog',
+          name: 'catalog',
           component: () => import('@/pages/CatalogPage.vue'),
-          meta: { 
-            title: 'Портфолио проектов — РОСТ Мебель', 
-            description: 'Смотрите примеры реализованных нами проектов: кухни, гостиные, спальни и другая мебель на заказ с ценами и деталями.' 
-          }
+          meta: {
+            title: 'Проекты — РОСТ Мебель',
+            description: 'Портфолио реализованных кухонь, шкафов и систем хранения с ценами, материалами и деталями.',
+          },
         },
-        { 
-          path: 'product/:id', 
-          name: 'product', 
+        {
+          path: 'product/:id',
+          name: 'product',
           component: () => import('@/pages/ProductPage.vue'),
-          meta: { 
-            title: 'Детали проекта — РОСТ Мебель', 
-            description: 'Подробное описание реализованного проекта мебели на заказ.' 
-          }
+          meta: {
+            title: 'Детали проекта — РОСТ Мебель',
+            description: 'Описание реализованного проекта мебели на заказ: бюджет, материалы, детали и заявка на расчет.',
+          },
         },
-        { 
-          path: 'contact', 
-          name: 'contact', 
+        {
+          path: 'contact',
+          name: 'contact',
           component: () => import('@/pages/ContactPage.vue'),
-          meta: { 
-            title: 'Контакты — РОСТ Мебель', 
-            description: 'Свяжитесь с нами для консультации, предварительного расчета или замера. Работаем по Крыму.' 
-          }
+          meta: {
+            title: 'Контакты — РОСТ Мебель',
+            description: 'Свяжитесь с РОСТ Мебель для консультации, предварительного расчета или замера. Работаем по Крыму.',
+          },
         },
-        { 
-          path: 'favorites', 
-          name: 'favorites', 
+        {
+          path: 'favorites',
+          name: 'favorites',
           component: () => import('@/pages/FavoritesPage.vue'),
-          meta: { 
-            title: 'Избранные идеи — РОСТ Мебель', 
-            description: 'Проекты и идеи мебели, которые вы сохранили для своего будущего интерьера.' 
-          }
+          meta: {
+            title: 'Избранное — РОСТ Мебель',
+            description: 'Сохраненные проекты мебели, к которым можно вернуться перед консультацией.',
+          },
         },
-      ]
+      ],
     },
     {
       path: '/admin/login',
@@ -82,25 +82,29 @@ const router = createRouter({
         { path: 'projects', name: 'admin-projects', component: () => import('@/pages/admin/ProjectsPage.vue') },
         { path: 'orders', name: 'admin-orders', component: () => import('@/pages/admin/OrdersPage.vue') },
         { path: 'reviews', name: 'admin-reviews', component: () => import('@/pages/admin/ReviewsPage.vue') },
-      ]
+      ],
     },
   ],
 });
 
 router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore();
-  
-  if (to.matched.some(record => record.meta.requiresAuth) && !authStore.isAuthenticated) {
+
+  if (to.matched.some((record) => record.meta.requiresAuth) && !authStore.isAuthenticated) {
     next({ name: 'admin-login' });
-  } else if (to.name === 'admin-login' && authStore.isAuthenticated) {
-    next({ name: 'admin' });
-  } else {
-    next();
+    return;
   }
+
+  if (to.name === 'admin-login' && authStore.isAuthenticated) {
+    next({ name: 'admin' });
+    return;
+  }
+
+  next();
 });
 
 router.afterEach((to) => {
-  const defaultTitle = 'РОСТ Мебель — кухни и корпусная мебель под размер';
+  const defaultTitle = 'РОСТ Мебель — кухни и корпусная мебель по размеру';
   const title = (to.meta.title as string) || defaultTitle;
   const description = (to.meta.description as string) || '';
 

@@ -7,22 +7,27 @@ const { favorites } = useFavorites();
 </script>
 
 <template>
-  <div class="bg-brand-cream min-h-screen pt-32 pb-24 px-4">
-    <div class="max-w-7xl mx-auto">
-      <header class="mb-12">
-        <h1 class="font-serif text-5xl text-brand-brown mb-4">Избранное</h1>
-        <p v-if="favorites.length > 0" class="text-brand-brown/60">Проекты, которые вам понравились</p>
+  <div class="min-h-screen bg-brand-cream pt-28">
+    <div class="ui-container ui-section">
+      <header class="mb-10">
+        <p class="ui-eyebrow mb-3">Избранное</p>
+        <h1 class="ui-title-xl">Сохраненные проекты</h1>
+        <p v-if="favorites.length > 0" class="ui-copy-lg mt-4">
+          Проекты, к которым можно вернуться перед расчетом.
+        </p>
       </header>
 
-      <div v-if="favorites.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <ProductCard v-for="p in favorites" :key="p.id" :product="p" />
+      <div v-if="favorites.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ProductCard v-for="product in favorites" :key="product.id" :product="product" />
       </div>
 
-      <div v-else class="text-center py-32 bg-white rounded-3xl border border-dashed border-brand-brown/10">
-        <LucideHeartOff :size="64" class="mx-auto text-brand-brown/10 mb-6" />
-        <h3 class="text-2xl font-serif text-brand-brown mb-2">Здесь пока пусто</h3>
-        <p class="text-brand-brown/40 mb-8">Добавляйте проекты в избранное, чтобы сохранить идеи для вашего интерьера</p>
-        <router-link to="/catalog" class="bg-brand-brown text-white px-8 py-4 rounded-xl font-medium hover:bg-brand-gold transition-colors">
+      <div v-else class="ui-empty py-16">
+        <LucideHeartOff :size="56" class="mx-auto mb-5 text-brand-brown/12" />
+        <h2 class="ui-title-md mb-2">Список пока пуст</h2>
+        <p class="mx-auto mb-6 max-w-md text-brand-brown/55">
+          Сохраняйте проекты из каталога, чтобы быстро вернуться к ним перед консультацией.
+        </p>
+        <router-link to="/catalog" class="ui-button ui-button-primary">
           Смотреть проекты
         </router-link>
       </div>

@@ -8,9 +8,9 @@ const store = useConfirmStore();
 <template>
   <Teleport to="body">
     <transition name="confirm-fade">
-      <div v-if="store.visible" class="fixed inset-0 z-[220] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="store.resolve(false)"></div>
-        <section class="relative w-full max-w-md rounded-lg border border-brand-brown/10 bg-white p-6 shadow-2xl">
+      <div v-if="store.visible" class="ui-modal-backdrop">
+        <div class="absolute inset-0" @click="store.resolve(false)"></div>
+        <section class="ui-modal-panel max-w-md p-6">
           <div class="mb-5 flex items-start gap-4">
             <div
               :class="[
@@ -28,15 +28,15 @@ const store = useConfirmStore();
 
           <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
-              class="rounded-lg border border-brand-brown/10 px-5 py-3 font-semibold text-brand-brown/70 transition hover:bg-brand-gray"
+              class="ui-button ui-button-secondary"
               @click="store.resolve(false)"
             >
               {{ store.cancelLabel }}
             </button>
             <button
               :class="[
-                'rounded-lg px-5 py-3 font-semibold text-white transition',
-                store.tone === 'danger' ? 'bg-red-600 hover:bg-red-700' : 'bg-brand-brown hover:bg-brand-gold'
+                'ui-button',
+                store.tone === 'danger' ? 'ui-button-danger' : 'ui-button-primary'
               ]"
               @click="store.resolve(true)"
             >
@@ -52,7 +52,7 @@ const store = useConfirmStore();
 <style scoped>
 .confirm-fade-enter-active,
 .confirm-fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.18s ease;
 }
 
 .confirm-fade-enter-from,

@@ -2,16 +2,15 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/products';
-import { 
-  LucideCheckCircle, 
-  LucideShieldCheck, 
-  LucideTruck, 
-  LucideSearch, 
-  LucideX,
-  LucideChevronLeft,
+import {
   LucideArrowRight,
+  LucideCheckCircle,
+  LucideChevronLeft,
   LucideMessageSquare,
-  LucideStar
+  LucideSearch,
+  LucideShieldCheck,
+  LucideTruck,
+  LucideX,
 } from 'lucide-vue-next';
 import OrderForm from '@/components/order/OrderForm.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
@@ -31,8 +30,8 @@ const isReviewModalOpen = ref(false);
 const isLightboxOpen = ref(false);
 const reviewListRef = ref<any>(null);
 
-const handleImageError = (e: Event) => {
-  (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+const handleImageError = (event: Event) => {
+  (event.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
 };
 
 const openLightbox = (url: string) => {
@@ -40,43 +39,23 @@ const openLightbox = (url: string) => {
   isLightboxOpen.value = true;
 };
 
-const loadProjectData = async () => {
-  const id = route.params.id as string;
-  const p = await productStore.fetchProduct(id);
-  if (p) {
-    product.value = p;
-    activeImage.value = p.images[0]?.url || PLACEHOLDER_IMAGE;
-    updateSchema(p);
-    document.title = `${p.name} — РОСТ Мебель`;
-    await productStore.fetchProducts({ 
-      project_category_id: p.project_category_id, 
-      limit: 4,
-      status: 'published'
-    });
-    relatedProjects.value = productStore.products.filter(item => item.id !== p.id).slice(0, 3);
-  }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-watch(() => route.params.id, loadProjectData);
-onMounted(loadProjectData);
-
-const updateSchema = (p: Product) => {
+const updateSchema = (item: Product) => {
   const schema = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": p.name,
-    "image": p.images.map(i => i.url),
-    "description": p.description,
-    "offers": {
-      "@type": "Offer",
-      "url": window.location.href,
-      "priceCurrency": "RUB",
-      "price": p.price,
-      "availability": "https://schema.org/InStock",
-      "seller": { "@type": "Organization", "name": "РОСТ Мебель" }
-    }
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    name: item.name,
+    image: item.images.map((image) => image.url),
+    description: item.description,
+    offers: {
+      '@type': 'Offer',
+      url: window.location.href,
+      priceCurrency: 'RUB',
+      price: item.price,
+      availability: 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'РОСТ Мебель' },
+    },
   };
+
   const scriptId = 'schema-product';
   let script = document.getElementById(scriptId) as HTMLScriptElement;
   if (!script) {
@@ -88,14 +67,39 @@ const updateSchema = (p: Product) => {
   script.textContent = JSON.stringify(schema);
 };
 
+const loadProjectData = async () => {
+  const id = route.params.id as string;
+  const loadedProduct = await productStore.fetchProduct(id);
+
+  if (loadedProduct) {
+    product.value = loadedProduct;
+    activeImage.value = loadedProduct.images[0]?.url || PLACEHOLDER_IMAGE;
+    updateSchema(loadedProduct);
+    document.title = `${loadedProduct.name} — РОСТ Мебель`;
+
+    await productStore.fetchProducts({
+      project_category_id: loadedProduct.project_category_id,
+      limit: 4,
+      status: 'published',
+    });
+    relatedProjects.value = productStore.products.filter((item) => item.id !== loadedProduct.id).slice(0, 3);
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+watch(() => route.params.id, loadProjectData);
+onMounted(loadProjectData);
+
 onUnmounted(() => {
-  const script = document.getElementById('schema-product');
-  if (script) script.remove();
+  document.getElementById('schema-product')?.remove();
 });
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('ru-RU', {
-    style: 'currency', currency: 'RUB', maximumFractionDigits: 0,
+    style: 'currency',
+    currency: 'RUB',
+    maximumFractionDigits: 0,
   }).format(price);
 };
 
@@ -106,173 +110,163 @@ const handleReviewSuccess = () => {
 </script>
 
 <template>
-  <div v-if="product" class="bg-white min-h-screen">
-    <!-- Project Header -->
-    <div class="pt-32 pb-12 bg-brand-cream/30">
-      <div class="max-w-7xl mx-auto px-6">
-        <button @click="router.push('/catalog')" class="flex items-center gap-2 text-brand-brown/40 hover:text-brand-gold transition-colors font-bold text-xs uppercase tracking-widest mb-8 group">
-          <LucideChevronLeft :size="16" class="group-hover:-translate-x-1 transition-transform" />
+  <div v-if="product" class="min-h-screen bg-white">
+    <section class="bg-brand-cream pt-28">
+      <div class="ui-container ui-section-tight">
+        <button type="button" class="mb-6 inline-flex items-center gap-2 text-sm font-bold text-brand-brown/50 transition-colors hover:text-brand-gold" @click="router.push('/catalog')">
+          <LucideChevronLeft :size="17" />
           Назад к проектам
         </button>
-        <h1 class="font-serif text-5xl md:text-7xl text-brand-brown mb-4">{{ product.name }}</h1>
-        <div class="flex items-center gap-4">
-          <span class="bg-brand-gold text-brand-brown px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-            {{ productStore.categories.find(c => c.id === product?.project_category_id)?.name || 'Проект' }}
+        <h1 class="ui-title-xl">{{ product.name }}</h1>
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <span class="ui-status bg-brand-gold/10 text-brand-gold ring-brand-gold/20">
+            {{ productStore.categories.find((category) => category.id === product?.project_category_id)?.name || 'Проект' }}
           </span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="max-w-7xl mx-auto px-6 py-20">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
-        <!-- Gallery -->
-        <div class="space-y-8">
-          <div 
-            @click="openLightbox(activeImage)"
-            class="aspect-square rounded-[2.5rem] overflow-hidden bg-brand-gray border border-brand-brown/5 cursor-zoom-in group relative shadow-2xl"
+    <section class="ui-container ui-section grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
+      <div class="space-y-5">
+        <button
+          type="button"
+          class="group relative aspect-square w-full overflow-hidden rounded-lg bg-brand-gray"
+          @click="openLightbox(activeImage)"
+        >
+          <img :src="activeImage" :alt="product.name" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035]" @error="handleImageError">
+          <span class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/12">
+            <LucideSearch :size="40" class="text-white opacity-0 transition-opacity group-hover:opacity-100" />
+          </span>
+        </button>
+
+        <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+          <button
+            v-for="image in product.images"
+            :key="image.url"
+            type="button"
+            :class="[
+              'h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-colors',
+              activeImage === image.url ? 'border-brand-gold' : 'border-transparent opacity-70 hover:opacity-100'
+            ]"
+            @click="activeImage = image.url"
           >
-            <img :src="activeImage" @error="handleImageError" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" :alt="product.name">
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-              <LucideSearch :size="48" class="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </div>
-          <div class="flex gap-4 overflow-x-auto no-scrollbar pb-4">
-            <button 
-              v-for="img in product.images" :key="img.url"
-              @click="activeImage = img.url"
-              :class="['w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all shrink-0 hover:scale-105 shadow-md', activeImage === img.url ? 'border-brand-gold ring-4 ring-brand-gold/10' : 'border-transparent opacity-60 hover:opacity-100']"
-            >
-              <img :src="img.url" @error="handleImageError" class="w-full h-full object-cover">
-            </button>
-          </div>
-        </div>
-
-        <!-- Info -->
-        <div class="flex flex-col">
-          <div class="mb-12">
-            <div class="flex items-center gap-6 mb-8">
-              <div class="flex flex-col">
-                <span class="text-xs text-brand-brown/40 uppercase tracking-[0.2em] font-bold mb-1">Бюджет реализации</span>
-                <span class="text-4xl font-serif text-brand-gold">{{ formatPrice(product.price) }}</span>
-              </div>
-              <div v-if="product.price_old" class="flex flex-col">
-                <span class="text-xs text-brand-brown/40 uppercase tracking-[0.2em] font-bold mb-1">Ориентировочно</span>
-                <span class="text-xl text-brand-brown/20 line-through">{{ formatPrice(product.price_old) }}</span>
-              </div>
-            </div>
-            <p class="text-xl text-brand-brown/70 leading-relaxed font-light">
-              {{ product.description }}
-            </p>
-          </div>
-
-          <!-- Details -->
-          <div class="bg-brand-cream/50 p-10 rounded-[2rem] border border-brand-brown/5 mb-12 shadow-inner">
-            <h3 class="font-serif text-2xl mb-8 flex items-center gap-3">
-              <span class="w-8 h-px bg-brand-gold"></span>
-              Детали проекта
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <div v-for="(value, key) in product.specs" :key="key" class="flex flex-col border-b border-brand-brown/5 pb-4">
-                <span class="text-[10px] text-brand-gold uppercase tracking-[0.2em] font-black mb-1">{{ key }}</span>
-                <span class="text-lg font-bold text-brand-brown">{{ value }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- CTA -->
-          <div class="mt-auto space-y-10">
-            <button 
-              @click="isOrderModalOpen = true"
-              class="w-full bg-brand-brown text-white py-7 rounded-2xl text-xl font-bold hover:bg-brand-gold transition-all shadow-2xl hover:shadow-brand-gold/20 active:scale-[0.98] uppercase tracking-widest"
-            >
-              Хочу такой же проект
-            </button>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
-              <div v-for="b in [
-                { icon: LucideShieldCheck, t: 'Гарантия 2 года' },
-                { icon: LucideTruck, t: 'Монтаж в Крыму' },
-                { icon: LucideCheckCircle, t: 'Технадзор' }
-              ]" :key="b.t" class="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-brand-brown/40">
-                <component :is="b.icon" class="text-brand-gold" :size="18" />
-                {{ b.t }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reviews Section -->
-      <section class="mt-40">
-        <div class="flex items-end justify-between mb-16">
-          <div>
-            <span class="text-brand-gold font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Feedback</span>
-            <h2 class="font-serif text-5xl text-brand-brown mb-2">Отзывы клиентов</h2>
-            <p class="text-brand-brown/60 text-lg">Что говорят те, кто уже живет с нашей мебелью</p>
-          </div>
-          <button 
-            @click="isReviewModalOpen = true"
-            class="flex items-center gap-3 bg-brand-cream text-brand-brown px-8 py-4 rounded-2xl font-bold text-sm hover:bg-brand-gold hover:text-white transition-all group"
-          >
-            <LucideMessageSquare :size="20" />
-            Оставить отзыв
+            <img :src="image.url" class="h-full w-full object-cover" alt="" @error="handleImageError">
           </button>
         </div>
-        
-        <ReviewList ref="reviewListRef" :project-id="product.id" />
-      </section>
+      </div>
 
-      <!-- Related Projects -->
-      <div v-if="relatedProjects.length" class="mt-40">
-        <div class="flex items-end justify-between mb-12">
-          <h2 class="font-serif text-4xl text-brand-brown">Вам может понравиться</h2>
-          <router-link to="/catalog" class="text-brand-gold font-bold text-sm hover:underline flex items-center gap-2 group">
-            Смотреть все
-            <LucideArrowRight :size="18" class="group-hover:translate-x-1 transition-transform" />
-          </router-link>
+      <div class="flex flex-col">
+        <div class="mb-8">
+          <div class="mb-6 flex flex-wrap items-end gap-6">
+            <div>
+              <div class="ui-label-compact">Бюджет реализации</div>
+              <div class="font-serif text-4xl font-bold text-brand-gold">{{ formatPrice(product.price) }}</div>
+            </div>
+            <div v-if="product.price_old">
+              <div class="ui-label-compact">Ориентир</div>
+              <div class="text-xl text-brand-brown/25 line-through">{{ formatPrice(product.price_old) }}</div>
+            </div>
+          </div>
+          <p class="ui-copy-lg">{{ product.description }}</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-          <ProductCard v-for="rp in relatedProjects" :key="rp.id" :product="rp" />
+
+        <div class="ui-card-muted mb-8 p-5 sm:p-6">
+          <h2 class="ui-title-md mb-6">Детали проекта</h2>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div v-for="(value, key) in product.specs" :key="key" class="border-b border-brand-brown/10 pb-3">
+              <div class="ui-label-compact">{{ key }}</div>
+              <div class="font-bold text-brand-brown">{{ value }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-auto space-y-6">
+          <button type="button" class="ui-button ui-button-primary w-full min-h-14 text-base" @click="isOrderModalOpen = true">
+            Рассчитать похожий проект
+          </button>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div
+              v-for="item in [
+                { icon: LucideShieldCheck, text: 'Гарантия 2 года' },
+                { icon: LucideTruck, text: 'Монтаж в Крыму' },
+                { icon: LucideCheckCircle, text: 'Контроль сборки' }
+              ]"
+              :key="item.text"
+              class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-brand-brown/45"
+            >
+              <component :is="item.icon" class="text-brand-gold" :size="18" />
+              {{ item.text }}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Modals -->
+    <section class="ui-container ui-section border-t border-brand-brown/10">
+      <div class="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="ui-eyebrow mb-3">Отзывы</p>
+          <h2 class="ui-title-lg">Что говорят клиенты</h2>
+          <p class="ui-copy mt-3">Публикуем отзывы после модерации и проверки заказа.</p>
+        </div>
+        <button type="button" class="ui-button ui-button-secondary" @click="isReviewModalOpen = true">
+          <LucideMessageSquare :size="19" />
+          Оставить отзыв
+        </button>
+      </div>
+
+      <ReviewList ref="reviewListRef" :project-id="product.id" />
+    </section>
+
+    <section v-if="relatedProjects.length" class="ui-container ui-section border-t border-brand-brown/10">
+      <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <h2 class="ui-title-lg">Похожие проекты</h2>
+        <router-link to="/catalog" class="ui-button ui-button-secondary">
+          Смотреть все
+          <LucideArrowRight :size="18" />
+        </router-link>
+      </div>
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <ProductCard v-for="related in relatedProjects" :key="related.id" :product="related" />
+      </div>
+    </section>
+
     <Teleport to="body">
       <transition name="fade">
-        <div v-if="isOrderModalOpen" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4" @click.self="isOrderModalOpen = false">
-          <div class="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-12 overflow-hidden transform transition-all">
-            <button @click="isOrderModalOpen = false" class="absolute top-8 right-8 text-brand-brown/20 hover:text-brand-brown transition-colors">
-              <LucideX :size="32" />
+        <div v-if="isOrderModalOpen" class="ui-modal-backdrop" @click.self="isOrderModalOpen = false">
+          <section class="ui-modal-panel max-w-lg p-5 sm:p-8">
+            <button type="button" class="absolute right-4 top-4 rounded-lg p-2 text-brand-brown/35 transition-colors hover:bg-brand-gray hover:text-brand-brown" @click="isOrderModalOpen = false">
+              <LucideX :size="24" />
             </button>
-            <h2 class="font-serif text-4xl mb-4 text-brand-brown">Заявка</h2>
-            <p class="text-brand-brown/60 mb-10 font-medium">Обсудим ваш будущий проект?</p>
+            <h2 class="ui-title-md mb-2">Заявка на расчет</h2>
+            <p class="ui-copy mb-6">Обсудим похожий проект и подскажем реалистичный бюджет.</p>
             <OrderForm :project-id="product.id" @success="isOrderModalOpen = false" />
-          </div>
+          </section>
         </div>
       </transition>
     </Teleport>
 
     <Teleport to="body">
       <transition name="fade">
-        <div v-if="isReviewModalOpen" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4" @click.self="isReviewModalOpen = false">
-          <div class="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden transform transition-all max-h-[90vh] overflow-y-auto">
-            <button @click="isReviewModalOpen = false" class="absolute top-8 right-8 text-brand-brown/20 hover:text-brand-brown transition-colors z-10">
-              <LucideX :size="32" />
+        <div v-if="isReviewModalOpen" class="ui-modal-backdrop" @click.self="isReviewModalOpen = false">
+          <section class="ui-modal-panel max-w-2xl">
+            <button type="button" class="absolute right-4 top-4 z-10 rounded-lg p-2 text-brand-brown/35 transition-colors hover:bg-brand-gray hover:text-brand-brown" @click="isReviewModalOpen = false">
+              <LucideX :size="24" />
             </button>
             <ReviewForm :project-id="product.id" @success="handleReviewSuccess" />
-          </div>
+          </section>
         </div>
       </transition>
     </Teleport>
 
     <Teleport to="body">
       <transition name="fade">
-        <div v-if="isLightboxOpen" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-12" @click="isLightboxOpen = false">
-          <button class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors">
-            <LucideX :size="40" />
+        <div v-if="isLightboxOpen" class="ui-modal-backdrop" @click="isLightboxOpen = false">
+          <button type="button" class="absolute right-5 top-5 rounded-lg bg-white/10 p-3 text-white transition-colors hover:bg-white hover:text-brand-brown">
+            <LucideX :size="28" />
           </button>
-          <img :src="activeImage" class="max-w-full max-h-full object-contain shadow-2xl rounded-2xl border border-white/10 transition-all duration-500">
+          <img :src="activeImage" class="z-10 max-h-full max-w-full rounded-lg object-contain shadow-2xl" alt="">
         </div>
       </transition>
     </Teleport>
@@ -280,6 +274,13 @@ const handleReviewSuccess = () => {
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

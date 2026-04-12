@@ -2,10 +2,9 @@
 import { ref } from 'vue';
 import { useProductStore } from '@/stores/products';
 import ProductCard from '@/components/catalog/ProductCard.vue';
-import { LucideSearch, LucideLoader2 } from 'lucide-vue-next';
+import { LucideLoader2, LucideSearch } from 'lucide-vue-next';
 import type { Product } from '@/types';
 import { getApiErrorMessage } from '@/api/errors';
-
 import { useNotificationStore } from '@/stores/notifications';
 
 const productStore = useProductStore();
@@ -18,14 +17,15 @@ const searchFailed = ref(false);
 
 const handleSearch = async () => {
   if (!query.value.trim() || isSearching.value) return;
-  
+
   isSearching.value = true;
   hasSearched.value = true;
   searchFailed.value = false;
+
   try {
     results.value = await productStore.aiSearch(query.value);
     if (results.value.length === 0) {
-      notificationStore.show('Мы не нашли подходящих проектов по вашему описанию. Попробуйте изменить запрос.', 'info');
+      notificationStore.show('Подходящих проектов пока нет. Попробуйте описать задачу иначе.', 'info');
     }
   } catch (err) {
     searchFailed.value = true;
@@ -33,9 +33,9 @@ const handleSearch = async () => {
   } finally {
     isSearching.value = false;
   }
-  
+
   if (results.value.length > 0) {
-    setTimeout(() => {
+    window.setTimeout(() => {
       document.getElementById('ai-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   }
@@ -43,39 +43,42 @@ const handleSearch = async () => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4">
-    <div class="relative group flex flex-col gap-3 sm:block">
-      <input 
-        v-model="query"
-        type="text"
-        placeholder="Например: светлая кухня в стиле лофт до 150 000 руб..."
-        class="w-full pl-14 pr-6 py-5 rounded-lg border-2 border-brand-brown/5 focus:border-brand-gold outline-none text-lg transition-all shadow-lg group-hover:shadow-xl sm:pr-32 sm:py-6 sm:text-xl"
-        @keyup.enter="handleSearch"
-      >
-      <LucideSearch class="absolute left-6 top-7 -translate-y-1/2 text-brand-brown/40 sm:top-1/2" :size="28" />
-      <button 
-        @click="handleSearch"
-        :disabled="isSearching"
-        class="flex items-center justify-center gap-2 rounded-lg bg-brand-brown px-8 py-4 font-medium text-white transition-colors hover:bg-brand-gold disabled:cursor-not-allowed disabled:opacity-50 sm:absolute sm:bottom-3 sm:right-3 sm:top-3 sm:py-0"
-      >
-        <LucideLoader2 v-if="isSearching" class="animate-spin" :size="20" />
-        {{ isSearching ? 'Ищу проекты...' : 'Найти' }}
-      </button>
+  <div class="mx-auto max-w-4xl">
+    <div class="ui-card p-3 sm:p-4">
+      <div class="relative flex flex-col gap-3 sm:block">
+        <input
+          v-model="query"
+          type="text"
+          placeholder="Например: светлая кухня с техникой до 250 000 ₽"
+          class="ui-input min-h-14 pl-12 pr-4 text-base sm:pr-32"
+          @keyup.enter="handleSearch"
+        >
+        <LucideSearch class="absolute left-4 top-7 -translate-y-1/2 text-brand-brown/35 sm:top-1/2" :size="23" />
+        <button
+          type="button"
+          class="ui-button ui-button-primary sm:absolute sm:bottom-2 sm:right-2 sm:top-2"
+          :disabled="isSearching"
+          @click="handleSearch"
+        >
+          <LucideLoader2 v-if="isSearching" class="animate-spin" :size="19" />
+          {{ isSearching ? 'Ищем...' : 'Найти' }}
+        </button>
+      </div>
     </div>
 
-    <div v-if="results.length > 0" id="ai-results" class="mt-20">
-      <div class="flex items-center justify-center gap-2 mb-8">
-        <div class="h-px bg-brand-gold/20 flex-1"></div>
-        <span class="bg-brand-gold text-white text-[10px] font-bold px-3 py-1 rounded-lg uppercase">Персональный подбор ИИ</span>
-        <div class="h-px bg-brand-gold/20 flex-1"></div>
+    <div v-if="results.length > 0" id="ai-results" class="mt-12 motion-fade-up">
+      <div class="mb-7 flex items-center justify-center gap-3">
+        <div class="h-px flex-1 bg-brand-gold/20"></div>
+        <span class="rounded-lg bg-brand-gold px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">Подбор по описанию</span>
+        <div class="h-px flex-1 bg-brand-gold/20"></div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <ProductCard v-for="p in results" :key="p.id" :product="p" />
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ProductCard v-for="product in results" :key="product.id" :product="product" />
       </div>
     </div>
-    
-    <div v-else-if="hasSearched && !searchFailed && !isSearching && query && results.length === 0" class="mt-8 text-center text-brand-brown/40 italic">
-      Проектов с таким описанием пока нет в нашем портфолио
+
+    <div v-else-if="hasSearched && !searchFailed && !isSearching && query" class="ui-empty mt-8">
+      Проектов с таким описанием пока нет в портфолио.
     </div>
   </div>
 </template>

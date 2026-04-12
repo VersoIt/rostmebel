@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { LucideStar, LucideCheckCircle, LucideMessageSquare, LucideX, LucideSearch } from 'lucide-vue-next';
+import { LucideCheckCircle, LucideMessageSquare, LucideSearch, LucideStar, LucideX } from 'lucide-vue-next';
 import api from '@/api/client';
 import type { ReviewResponse } from '@/types';
 import { useNotificationStore } from '@/stores/notifications';
@@ -13,8 +13,6 @@ const props = defineProps<{
 const reviews = ref<ReviewResponse[]>([]);
 const loading = ref(true);
 const notificationStore = useNotificationStore();
-
-// Lightbox state
 const isLightboxOpen = ref(false);
 const activeImage = ref('');
 
@@ -24,10 +22,9 @@ const openLightbox = (url: string) => {
 };
 
 const fetchReviews = async () => {
+  loading.value = true;
   try {
-    const url = props.projectId 
-      ? `/projects/${props.projectId}/reviews` 
-      : '/reviews';
+    const url = props.projectId ? `/projects/${props.projectId}/reviews` : '/reviews';
     const { data } = await api.get(url);
     reviews.value = data;
   } catch (err) {
@@ -43,74 +40,72 @@ defineExpose({ refresh: fetchReviews });
 </script>
 
 <template>
-  <div class="space-y-12">
-    <div v-if="loading" class="flex justify-center py-20">
-      <div class="w-10 h-10 border-4 border-brand-gold border-t-transparent rounded-full animate-spin"></div>
+  <div>
+    <div v-if="loading" class="ui-empty py-16">
+      <div class="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-brand-gold border-t-transparent"></div>
     </div>
 
-    <div v-else-if="reviews.length === 0" class="text-center py-20 bg-brand-cream/20 rounded-[2rem] border border-dashed border-brand-brown/10">
-      <LucideMessageSquare :size="48" class="mx-auto text-brand-brown/10 mb-4" />
-      <p class="text-brand-brown/40 font-medium">Пока нет отзывов. Станьте первым!</p>
+    <div v-else-if="reviews.length === 0" class="ui-empty py-14">
+      <LucideMessageSquare :size="44" class="mx-auto mb-4 text-brand-brown/12" />
+      <p class="font-medium text-brand-brown/45">Отзывов пока нет.</p>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div 
-        v-for="rev in reviews" :key="rev.id"
-        class="bg-white p-10 rounded-[2.5rem] shadow-xl border border-brand-brown/5 flex flex-col hover:shadow-2xl transition-all duration-500"
-      >
-        <div class="flex justify-between items-start mb-8">
-          <div class="flex items-center gap-4">
-            <div class="w-14 h-14 bg-brand-cream rounded-2xl flex items-center justify-center text-brand-gold font-serif text-2xl font-bold">
-              {{ rev.client_name[0] }}
+    <div v-else class="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <article v-for="review in reviews" :key="review.id" class="ui-card p-5">
+        <div class="mb-5 flex items-start justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-gray font-serif text-xl font-bold text-brand-gold">
+              {{ review.client_name?.[0] || '?' }}
             </div>
             <div>
-              <h4 class="font-bold text-brand-brown text-lg">{{ rev.client_name }}</h4>
-              <div class="flex items-center gap-2 text-green-600">
+              <h3 class="font-bold text-brand-brown">{{ review.client_name }}</h3>
+              <div class="mt-1 flex items-center gap-2 text-green-700">
                 <LucideCheckCircle :size="14" />
-                <span class="text-[10px] font-black uppercase tracking-widest">Заказ подтвержден</span>
+                <span class="text-[10px] font-black uppercase tracking-widest">Заказ проверен</span>
               </div>
             </div>
           </div>
           <div class="flex gap-0.5">
-            <LucideStar 
-              v-for="i in 5" :key="i"
+            <LucideStar
+              v-for="i in 5"
+              :key="i"
               :size="16"
-              :class="[ i <= rev.rating ? 'text-brand-gold fill-brand-gold' : 'text-brand-gray fill-brand-gray' ]"
+              :class="[i <= review.rating ? 'fill-brand-gold text-brand-gold' : 'fill-brand-gray text-brand-gray']"
             />
           </div>
         </div>
 
-        <p class="text-brand-brown/70 leading-relaxed mb-8 italic">"{{ rev.comment }}"</p>
+        <p class="mb-5 leading-7 text-brand-brown/70">"{{ review.comment }}"</p>
 
-        <!-- Review Images -->
-        <div v-if="rev.images && rev.images.length > 0" class="flex gap-3 mt-auto pt-6 border-t border-brand-brown/5 overflow-x-auto no-scrollbar">
-          <div 
-            v-for="(img, idx) in rev.images" :key="idx"
-            @click="openLightbox(img.url)"
-            class="relative w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-brand-brown/5 cursor-zoom-in group"
+        <div v-if="review.images?.length" class="mt-auto flex gap-3 overflow-x-auto border-t border-brand-brown/10 pt-4 no-scrollbar">
+          <button
+            v-for="image in review.images"
+            :key="image.url"
+            type="button"
+            class="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-brand-brown/10"
+            @click="openLightbox(image.url)"
           >
-            <img :src="img.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-              <LucideSearch :size="20" class="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </div>
+            <img :src="image.url" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.035]" alt="">
+            <span class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
+              <LucideSearch :size="18" class="text-white opacity-0 transition-opacity group-hover:opacity-100" />
+            </span>
+          </button>
         </div>
-        
-        <div class="mt-6 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-brand-brown/20">
-          <span>{{ new Date(rev.created_at).toLocaleDateString() }}</span>
-          <span v-if="rev.project_name" class="text-brand-gold">{{ rev.project_name }}</span>
+
+        <div class="mt-5 flex items-center justify-between gap-3 text-[11px] font-black uppercase tracking-widest text-brand-brown/25">
+          <span>{{ new Date(review.created_at).toLocaleDateString('ru-RU') }}</span>
+          <span v-if="review.project_name" class="text-brand-gold">{{ review.project_name }}</span>
         </div>
-      </div>
+      </article>
     </div>
 
-    <!-- Review Lightbox -->
     <Teleport to="body">
       <transition name="fade">
-        <div v-if="isLightboxOpen" class="fixed inset-0 z-[250] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-12" @click="isLightboxOpen = false">
-          <button class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors">
-            <LucideX :size="40" />
+        <div v-if="isLightboxOpen" class="ui-modal-backdrop" @click="isLightboxOpen = false">
+          <button type="button" class="absolute right-5 top-5 rounded-lg bg-white/10 p-3 text-white transition-colors hover:bg-white hover:text-brand-brown">
+            <LucideX :size="28" />
           </button>
-          <img :src="activeImage" class="max-w-full max-h-full object-contain shadow-2xl rounded-2xl border border-white/10 transition-all duration-500">
+          <img :src="activeImage" class="z-10 max-h-full max-w-full rounded-lg object-contain shadow-2xl" alt="">
         </div>
       </transition>
     </Teleport>
@@ -118,9 +113,13 @@ defineExpose({ refresh: fetchReviews });
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
 
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

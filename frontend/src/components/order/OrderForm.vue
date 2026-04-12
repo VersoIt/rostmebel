@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import api from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
-import { LucideSend, LucideCheck } from 'lucide-vue-next';
+import { LucideCheck, LucideSend } from 'lucide-vue-next';
 
 const props = defineProps<{
   projectId?: number;
@@ -42,43 +42,41 @@ const form = ref({
   city: '',
   contact_method: 'phone',
   comment: '',
-  website: '', // Honeypot
+  website: '',
 });
-
-const formatPhone = (e: Event) => {
-  const target = e.target as HTMLInputElement;
-  let input = target.value.replace(/\D/g, '');
-  if (input.startsWith('7')) input = input.substring(1);
-  if (input.startsWith('8')) input = input.substring(1);
-  
-  let formatted = '+7 ';
-  if (input.length > 0) formatted += '(' + input.substring(0, 3);
-  if (input.length >= 4) formatted += ') ' + input.substring(3, 6);
-  if (input.length >= 7) formatted += '-' + input.substring(6, 8);
-  if (input.length >= 9) formatted += '-' + input.substring(8, 10);
-  
-  form.value.client_phone = formatted.substring(0, 18);
-};
 
 const isSubmitting = ref(false);
 const isSuccess = ref(false);
 const error = ref('');
 
+const formatPhone = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  let input = target.value.replace(/\D/g, '');
+  if (input.startsWith('7')) input = input.substring(1);
+  if (input.startsWith('8')) input = input.substring(1);
+
+  let formatted = '+7 ';
+  if (input.length > 0) formatted += `(${input.substring(0, 3)}`;
+  if (input.length >= 4) formatted += `) ${input.substring(3, 6)}`;
+  if (input.length >= 7) formatted += `-${input.substring(6, 8)}`;
+  if (input.length >= 9) formatted += `-${input.substring(8, 10)}`;
+
+  form.value.client_phone = formatted.substring(0, 18);
+};
+
 const handleSubmit = async () => {
   isSubmitting.value = true;
   error.value = '';
-  
+
   try {
     await api.post('/orders', {
       ...form.value,
       project_id: props.projectId,
-      fingerprint: btoa(navigator.userAgent), // Basic fingerprint
+      fingerprint: btoa(navigator.userAgent),
     });
     isSuccess.value = true;
-    setTimeout(() => {
-      emit('success');
-    }, 2000);
-  } catch (err: any) {
+    window.setTimeout(() => emit('success'), 1800);
+  } catch (err) {
     error.value = getApiErrorMessage(err);
   } finally {
     isSubmitting.value = false;
@@ -87,78 +85,69 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="relative">
-    <div v-if="isSuccess" class="flex flex-col items-center justify-center py-12 text-center">
-      <div class="w-20 h-20 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mb-6">
-        <LucideCheck :size="40" />
+  <div>
+    <div v-if="isSuccess" class="py-10 text-center">
+      <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-green-50 text-green-600">
+        <LucideCheck :size="34" />
       </div>
-      <h3 class="text-2xl font-serif text-brand-brown mb-2">Спасибо!</h3>
-      <p class="text-brand-brown/60">Ваша заявка успешно отправлена</p>
+      <h3 class="ui-title-md mb-2">Заявка отправлена</h3>
+      <p class="text-brand-brown/60">Свяжемся с вами и уточним детали проекта.</p>
     </div>
 
-    <form v-else @submit.prevent="handleSubmit" class="space-y-6">
-      <!-- Honeypot -->
-      <input v-model="form.website" type="text" name="website" class="hidden">
-      
+    <form v-else class="space-y-5" @submit.prevent="handleSubmit">
+      <input v-model="form.website" type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+
       <div>
-        <label for="order-client-name" class="block text-sm font-medium text-brand-brown/60 mb-2">Имя *</label>
-        <input 
+        <label for="order-client-name" class="ui-label">Имя *</label>
+        <input
           id="order-client-name"
           v-model="form.client_name"
           required
           type="text"
           autocomplete="name"
-          class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
-          placeholder="Иван Иванов"
+          class="ui-input"
+          placeholder="Иван"
         >
       </div>
 
       <div>
-        <label for="order-client-phone" class="block text-sm font-medium text-brand-brown/60 mb-2">Телефон *</label>
-        <input 
+        <label for="order-client-phone" class="ui-label">Телефон *</label>
+        <input
           id="order-client-phone"
           v-model="form.client_phone"
-          @input="formatPhone"
           required
           type="tel"
           autocomplete="tel"
-          class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          class="ui-input"
           placeholder="+7 (___) ___-__-__"
+          @input="formatPhone"
         >
       </div>
 
       <div>
-        <label for="order-client-email" class="block text-sm font-medium text-brand-brown/60 mb-2">Email (необязательно)</label>
-        <input 
+        <label for="order-client-email" class="ui-label">Email</label>
+        <input
           id="order-client-email"
           v-model="form.client_email"
           type="email"
           autocomplete="email"
-          class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          class="ui-input"
           placeholder="ivan@example.com"
         >
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
         <div>
-          <label for="order-project-type" class="block text-sm font-medium text-brand-brown/60 mb-2">Что делаем?</label>
-          <select
-            id="order-project-type"
-            v-model="form.project_type"
-            class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
-          >
+          <label for="order-project-type" class="ui-label">Что делаем?</label>
+          <select id="order-project-type" v-model="form.project_type" class="ui-input">
             <option value="">Выберите вариант</option>
             <option v-for="option in projectTypeOptions" :key="option" :value="option">{{ option }}</option>
           </select>
         </div>
 
         <div>
-          <label for="order-budget-range" class="block text-sm font-medium text-brand-brown/60 mb-2">Ориентир по бюджету</label>
-          <select
-            id="order-budget-range"
-            v-model="form.budget_range"
-            class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
-          >
+          <label for="order-budget-range" class="ui-label">Ориентир по бюджету</label>
+          <select id="order-budget-range" v-model="form.budget_range" class="ui-input">
             <option value="">Пока не знаю</option>
             <option v-for="option in budgetOptions" :key="option" :value="option">{{ option }}</option>
           </select>
@@ -167,51 +156,43 @@ const handleSubmit = async () => {
 
       <div class="grid gap-4 md:grid-cols-2">
         <div>
-          <label for="order-city" class="block text-sm font-medium text-brand-brown/60 mb-2">Город</label>
+          <label for="order-city" class="ui-label">Город</label>
           <input
             id="order-city"
             v-model="form.city"
             type="text"
             autocomplete="address-level2"
-            class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+            class="ui-input"
             placeholder="Симферополь, Ялта..."
           >
         </div>
 
         <div>
-          <label for="order-contact-method" class="block text-sm font-medium text-brand-brown/60 mb-2">Как удобнее связаться?</label>
-          <select
-            id="order-contact-method"
-            v-model="form.contact_method"
-            class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
-          >
+          <label for="order-contact-method" class="ui-label">Как удобнее связаться?</label>
+          <select id="order-contact-method" v-model="form.contact_method" class="ui-input">
             <option v-for="option in contactOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label for="order-comment" class="block text-sm font-medium text-brand-brown/60 mb-2">Комментарий</label>
-        <textarea 
+        <label for="order-comment" class="ui-label">Комментарий</label>
+        <textarea
           id="order-comment"
           v-model="form.comment"
           rows="3"
-          class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          class="ui-input"
           placeholder="Размеры, сроки, адрес объекта, что важно учесть"
         ></textarea>
       </div>
 
-      <div v-if="error" class="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+      <div v-if="error" class="rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-700">
         {{ error }}
       </div>
 
-      <button 
-        type="submit"
-        :disabled="isSubmitting"
-        class="w-full bg-brand-brown text-white py-4 rounded-lg font-medium hover:bg-brand-gold disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-      >
-        <LucideSend v-if="!isSubmitting" :size="20" />
-        {{ isSubmitting ? 'Отправка...' : 'Отправить заявку' }}
+      <button type="submit" :disabled="isSubmitting" class="ui-button ui-button-primary w-full">
+        <LucideSend v-if="!isSubmitting" :size="19" />
+        {{ isSubmitting ? 'Отправляем...' : 'Отправить заявку' }}
       </button>
     </form>
   </div>

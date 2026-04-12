@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { LucideStar, LucideSend, LucideCamera, LucideX, LucideCheckCircle } from 'lucide-vue-next';
+import { LucideCamera, LucideCheckCircle, LucideSend, LucideStar, LucideX } from 'lucide-vue-next';
 import api from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
-import { PLACEHOLDER_IMAGE } from '@/utils/constants';
 
 const props = defineProps<{
   projectId?: number;
@@ -15,22 +14,25 @@ const rating = ref(5);
 const hoverRating = ref(0);
 const comment = ref('');
 const phone = ref('');
-const images = ref<{url: string}[]>([]);
+const images = ref<{ url: string }[]>([]);
 const isUploading = ref(false);
 const isSubmitting = ref(false);
 const isSuccess = ref(false);
 const error = ref('');
 
-const setRating = (val: number) => rating.value = val;
+const setRating = (value: number) => {
+  rating.value = value;
+};
 
-const handleFileUpload = async (e: Event) => {
-  const target = e.target as HTMLInputElement;
+const handleFileUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
   if (!target.files?.length) return;
 
   const formData = new FormData();
   formData.append('image', target.files[0]);
 
   isUploading.value = true;
+  error.value = '';
   try {
     const { data } = await api.post('/uploads/images', formData);
     images.value.push({ url: data.url });
@@ -38,24 +40,27 @@ const handleFileUpload = async (e: Event) => {
     error.value = getApiErrorMessage(err);
   } finally {
     isUploading.value = false;
+    target.value = '';
   }
 };
 
-const formatPhone = (e: any) => {
-  let input = e.target.value.replace(/\D/g, '');
+const formatPhone = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  let input = target.value.replace(/\D/g, '');
   if (input.startsWith('7')) input = input.substring(1);
   if (input.startsWith('8')) input = input.substring(1);
+
   let formatted = '+7 ';
-  if (input.length > 0) formatted += '(' + input.substring(0, 3);
-  if (input.length >= 4) formatted += ') ' + input.substring(3, 6);
-  if (input.length >= 7) formatted += '-' + input.substring(6, 8);
-  if (input.length >= 9) formatted += '-' + input.substring(8, 10);
+  if (input.length > 0) formatted += `(${input.substring(0, 3)}`;
+  if (input.length >= 4) formatted += `) ${input.substring(3, 6)}`;
+  if (input.length >= 7) formatted += `-${input.substring(6, 8)}`;
+  if (input.length >= 9) formatted += `-${input.substring(8, 10)}`;
   phone.value = formatted.substring(0, 18);
 };
 
 const submit = async () => {
   if (!phone.value || !comment.value) {
-    error.value = 'Пожалуйста, заполните все обязательные поля';
+    error.value = 'Заполните телефон и комментарий.';
     return;
   }
 
@@ -67,11 +72,11 @@ const submit = async () => {
       client_phone: phone.value,
       rating: rating.value,
       comment: comment.value,
-      images: images.value
+      images: images.value,
     });
     isSuccess.value = true;
-    setTimeout(() => emit('success'), 2000);
-  } catch (err: any) {
+    window.setTimeout(() => emit('success'), 1800);
+  } catch (err) {
     error.value = getApiErrorMessage(err);
   } finally {
     isSubmitting.value = false;
@@ -80,95 +85,86 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="p-8">
-    <div v-if="isSuccess" class="py-12 text-center">
-      <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-        <LucideCheckCircle :size="40" />
+  <div class="p-5 sm:p-8">
+    <div v-if="isSuccess" class="py-10 text-center">
+      <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-green-50 text-green-600">
+        <LucideCheckCircle :size="34" />
       </div>
-      <h3 class="text-3xl font-serif text-brand-brown mb-2">Отзыв отправлен</h3>
-      <p class="text-brand-brown/60">Благодарим за обратную связь! Отзыв появится на сайте после модерации.</p>
+      <h3 class="ui-title-md mb-2">Отзыв отправлен</h3>
+      <p class="text-brand-brown/60">Спасибо. Отзыв появится на сайте после модерации.</p>
     </div>
 
     <div v-else>
-      <div class="mb-10 text-center">
-        <h3 class="text-3xl font-serif text-brand-brown mb-2">Поделитесь впечатлениями</h3>
-        <p class="text-brand-brown/40 text-sm font-medium">Отзыв могут оставить только клиенты с завершенным заказом</p>
+      <div class="mb-8 text-center">
+        <h3 class="ui-title-md mb-2">Поделитесь впечатлением</h3>
+        <p class="text-sm font-medium text-brand-brown/45">Отзывы публикуются после проверки заказа.</p>
       </div>
 
-      <div class="space-y-8">
-        <!-- Stars -->
+      <div class="space-y-6">
         <div class="flex flex-col items-center gap-3">
-          <span class="text-xs font-black uppercase tracking-widest text-brand-brown/30">Ваша оценка</span>
-          <div class="flex gap-2">
-            <button 
-              v-for="i in 5" :key="i"
+          <span class="ui-label-compact">Оценка</span>
+          <div class="flex gap-1">
+            <button
+              v-for="i in 5"
+              :key="i"
+              type="button"
+              class="rounded-lg p-1 transition-transform hover:scale-105"
               @click="setRating(i)"
               @mouseenter="hoverRating = i"
               @mouseleave="hoverRating = 0"
-              class="transition-all duration-300 transform hover:scale-125"
             >
-              <LucideStar 
-                :size="36" 
-                :class="[ (hoverRating || rating) >= i ? 'text-brand-gold fill-brand-gold' : 'text-brand-gray fill-brand-gray' ]"
+              <LucideStar
+                :size="34"
+                :class="[(hoverRating || rating) >= i ? 'fill-brand-gold text-brand-gold' : 'fill-brand-gray text-brand-gray']"
               />
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label class="block text-[10px] font-black uppercase tracking-widest text-brand-brown/40 mb-2">Номер телефона *</label>
-            <input 
-              v-model="phone"
-              @input="formatPhone"
-              type="tel"
-              placeholder="+7 (___) ___-__-__"
-              class="w-full px-6 py-4 rounded-2xl bg-brand-gray/30 border border-transparent focus:border-brand-gold outline-none font-bold"
-            >
+            <label class="ui-label">Телефон *</label>
+            <input v-model="phone" type="tel" placeholder="+7 (___) ___-__-__" class="ui-input" @input="formatPhone">
           </div>
           <div>
-            <label class="block text-[10px] font-black uppercase tracking-widest text-brand-brown/40 mb-2">Фото готовой мебели</label>
-            <label class="cursor-pointer group flex items-center gap-3 px-6 py-4 rounded-2xl bg-brand-gold/5 border-2 border-dashed border-brand-gold/20 hover:border-brand-gold transition-all">
-              <LucideCamera class="text-brand-gold" :size="20" />
-              <span class="text-sm font-bold text-brand-gold">Добавить фото</span>
+            <label class="ui-label">Фото готовой мебели</label>
+            <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-dashed border-brand-gold/30 bg-brand-gold/5 px-4 py-3 text-brand-gold transition-colors hover:border-brand-gold">
+              <LucideCamera :size="20" />
+              <span class="text-sm font-bold">{{ isUploading ? 'Загружаем...' : 'Добавить фото' }}</span>
               <input type="file" class="hidden" accept="image/*" @change="handleFileUpload">
             </label>
           </div>
         </div>
 
-        <!-- Image Previews -->
-        <div v-if="images.length > 0" class="flex gap-3 overflow-x-auto pb-2">
-          <div v-for="(img, idx) in images" :key="idx" class="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-brand-brown/5">
-            <img :src="img.url" class="w-full h-full object-cover">
-            <button @click="images.splice(idx, 1)" class="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-red-500">
+        <div v-if="images.length > 0 || isUploading" class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+          <div v-for="(image, idx) in images" :key="image.url" class="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-brand-brown/10">
+            <img :src="image.url" class="h-full w-full object-cover" alt="">
+            <button type="button" class="absolute right-1 top-1 rounded-lg bg-black/50 p-1 text-white transition-colors hover:bg-red-600" @click="images.splice(idx, 1)">
               <LucideX :size="12" />
             </button>
           </div>
-          <div v-if="isUploading" class="w-20 h-20 rounded-xl bg-brand-gray/30 flex items-center justify-center animate-pulse">
-            <div class="w-6 h-6 border-2 border-brand-gold border-t-transparent rounded-full animate-spin"></div>
+          <div v-if="isUploading" class="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-brand-gray">
+            <div class="h-6 w-6 animate-spin rounded-full border-2 border-brand-gold border-t-transparent"></div>
           </div>
         </div>
 
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-widest text-brand-brown/40 mb-2">Ваш комментарий *</label>
-          <textarea 
+          <label class="ui-label">Комментарий *</label>
+          <textarea
             v-model="comment"
             rows="4"
-            placeholder="Расскажите о качестве сборки, материалах и сервисе..."
-            class="w-full px-6 py-4 rounded-2xl bg-brand-gray/30 border border-transparent focus:border-brand-gold outline-none font-medium"
+            class="ui-input"
+            placeholder="Что понравилось в проекте, сборке, материалах или сервисе"
           ></textarea>
         </div>
 
-        <div v-if="error" class="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold text-center">
+        <div v-if="error" class="rounded-lg bg-red-50 p-4 text-sm font-semibold text-red-700">
           {{ error }}
         </div>
 
-        <button 
-          @click="submit"
-          :disabled="isSubmitting || isUploading"
-          class="w-full bg-brand-brown text-white py-6 rounded-[2rem] text-lg font-black uppercase tracking-widest hover:bg-brand-gold shadow-2xl transition-all disabled:opacity-50"
-        >
-          {{ isSubmitting ? 'Отправка...' : 'Опубликовать отзыв' }}
+        <button type="button" :disabled="isSubmitting || isUploading" class="ui-button ui-button-primary w-full" @click="submit">
+          <LucideSend v-if="!isSubmitting" :size="19" />
+          {{ isSubmitting ? 'Отправляем...' : 'Отправить отзыв' }}
         </button>
       </div>
     </div>
