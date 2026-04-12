@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/rostmebel/backend/internal/domain/apperror"
+	"github.com/rostmebel/backend/internal/interfaces/dto"
 )
 
 func TestRespondWithErrorUsesStructuredContract(t *testing.T) {
@@ -72,5 +73,58 @@ func TestDecodeAndValidateReturnsFieldMetadata(t *testing.T) {
 	}
 	if fields[0]["field"] != "client_name" || fields[1]["field"] != "client_phone" {
 		t.Fatalf("expected json field names, got %#v", fields)
+	}
+}
+
+func TestDecodeAndValidateReturnsUnknownFieldMetadata(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/projects", strings.NewReader(`{"name":"Project","id":1}`))
+	req.Header.Set("Content-Type", "application/json")
+
+	var body struct {
+		Name string `json:"name"`
+	}
+	err := decodeAndValidate(req, &body)
+	if err == nil {
+		t.Fatal("expected invalid json error")
+	}
+
+	appErr, ok := apperror.From(err)
+	if !ok {
+		t.Fatalf("expected app error, got %T", err)
+	}
+	if appErr.Code != apperror.CodeInvalidJSON {
+		t.Fatalf("expected invalid json code, got %q", appErr.Code)
+	}
+	if appErr.Meta["field"] != "id" || appErr.Meta["reason"] != "unknown_field" {
+		t.Fatalf("expected unknown field metadata, got %#v", appErr.Meta)
+	}
+}
+
+func TestDecodeAndValidateAcceptsProjectUpsertPayload(t *testing.T) {
+	body := `{
+		"project_category_id": 1,
+		"name": "Скандинавская светлая кухня",
+		"slug": "scandi-white-kitchen",
+		"description": "Уютная и функциональная кухня в скандинавском стиле.",
+		"price": 145000,
+		"images": [
+			{"url": "/uploads/kitchen.jpg", "is_main": true}
+		],
+		"specs": {
+			"Материал": "МДФ Эмаль",
+			"Фурнитура": "Hettich"
+		},
+		"ai_tags": "сканди, белая кухня, светлый интерьер",
+		"status": "published"
+	}`
+	req := httptest.NewRequest(http.MethodPut, "/projects/2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	var payload dto.CreateProjectRequest
+	if err := decodeAndValidate(req, &payload); err != nil {
+		t.Fatalf("expected project payload to decode: %v", err)
+	}
+	if payload.Name != "Скандинавская светлая кухня" || len(payload.Images) != 1 {
+		t.Fatalf("unexpected decoded payload: %#v", payload)
 	}
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"reflect"
 	"strings"
@@ -44,7 +45,7 @@ func decodeAndValidate(r *http.Request, v interface{}) error {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(v); err != nil {
-		return apperror.Wrap(err, apperror.CodeInvalidJSON, "Invalid JSON request body", nil)
+		return apperror.Wrap(err, apperror.CodeInvalidJSON, "Invalid JSON request body", jsonDecodeMeta(err))
 	}
 	if err := validate.Struct(v); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
@@ -55,6 +56,42 @@ func decodeAndValidate(r *http.Request, v interface{}) error {
 		return apperror.Wrap(err, apperror.CodeValidationFailed, "Request validation failed", nil)
 	}
 	return nil
+}
+
+func jsonDecodeMeta(err error) map[string]any {
+	if err == nil {
+		return nil
+	}
+
+	const unknownFieldPrefix = `json: unknown field "`
+	if message := err.Error(); strings.HasPrefix(message, unknownFieldPrefix) {
+		field := strings.TrimSuffix(strings.TrimPrefix(message, unknownFieldPrefix), `"`)
+		return map[string]any{
+			"field":  field,
+			"reason": "unknown_field",
+		}
+	}
+
+	var syntaxErr *json.SyntaxError
+	if errors.As(err, &syntaxErr) {
+		return map[string]any{
+			"offset": syntaxErr.Offset,
+			"reason": "syntax_error",
+		}
+	}
+
+	var typeErr *json.UnmarshalTypeError
+	if errors.As(err, &typeErr) {
+		return map[string]any{
+			"field":  typeErr.Field,
+			"value":  typeErr.Value,
+			"reason": "type_mismatch",
+		}
+	}
+
+	return map[string]any{
+		"reason": "malformed_json",
+	}
 }
 
 func validationErrorMeta(validationErrors validator.ValidationErrors) []map[string]string {

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
-import { useProductStore } from '@/stores/products';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   LucideChevronLeft,
   LucideChevronRight,
@@ -11,21 +10,22 @@ import {
   LucideTrash2,
 } from 'lucide-vue-next';
 import ProductModal from '@/components/admin/ProductModal.vue';
-import type { Product, ProjectStatus } from '@/types';
 import api from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
-import { useNotificationStore } from '@/stores/notifications';
 import { useConfirmStore } from '@/stores/confirm';
+import { useNotificationStore } from '@/stores/notifications';
+import { useProductStore } from '@/stores/products';
+import type { Product, ProjectStatus } from '@/types';
 import { downloadFile } from '@/utils/download';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
 
 const productStore = useProductStore();
 const notificationStore = useNotificationStore();
 const confirmStore = useConfirmStore();
+
 const searchQuery = ref('');
 const isModalOpen = ref(false);
 const editingProduct = ref<Product | null>(null);
-
 const currentPage = ref(1);
 const limit = 10;
 
@@ -35,9 +35,11 @@ const statusMap: Record<ProjectStatus, string> = {
   archived: 'Архив',
 };
 
-const fetch = () => {
-  productStore.fetchProducts({
-    search: searchQuery.value,
+const totalPages = computed(() => Math.max(1, Math.ceil(productStore.total / limit)));
+
+const fetchProjects = () => {
+  void productStore.fetchProducts({
+    search: searchQuery.value.trim(),
     limit,
     offset: (currentPage.value - 1) * limit,
   });
@@ -45,10 +47,18 @@ const fetch = () => {
 
 onMounted(async () => {
   await productStore.fetchCategories();
-  fetch();
+  fetchProjects();
 });
 
-watch([searchQuery, currentPage], fetch);
+watch(searchQuery, () => {
+  if (currentPage.value !== 1) {
+    currentPage.value = 1;
+    return;
+  }
+  fetchProjects();
+});
+
+watch(currentPage, fetchProjects);
 
 const openCreate = () => {
   editingProduct.value = null;
@@ -73,7 +83,7 @@ const deleteProduct = async (id: number) => {
   try {
     await api.delete(`/admin/projects/${id}`);
     notificationStore.show('Проект удален', 'info');
-    fetch();
+    fetchProjects();
   } catch (err) {
     notificationStore.show(getApiErrorMessage(err), 'error');
   }
@@ -81,7 +91,7 @@ const deleteProduct = async (id: number) => {
 
 const handleSaved = () => {
   isModalOpen.value = false;
-  fetch();
+  fetchProjects();
 };
 
 const exportProducts = () => {
@@ -111,9 +121,11 @@ const getStatusClass = (status: ProjectStatus) => {
   <div class="space-y-6">
     <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
-        <p class="text-xs font-black uppercase tracking-widest text-brand-gold">Каталог</p>
+        <p class="text-xs font-black uppercase text-brand-gold">Каталог</p>
         <h1 class="mt-1 font-serif text-3xl font-bold leading-tight text-brand-brown sm:text-4xl">Управление проектами</h1>
-        <p class="mt-2 text-sm text-brand-brown/55">Проекты, которые видит клиент в портфолио и AI-поиске.</p>
+        <p class="mt-2 max-w-2xl text-sm text-brand-brown/55">
+          Проекты, которые клиент видит в портфолио, каталоге и AI-поиске.
+        </p>
       </div>
 
       <div class="grid gap-2 sm:grid-cols-2 xl:flex xl:gap-3">
@@ -148,7 +160,11 @@ const getStatusClass = (status: ProjectStatus) => {
       </div>
     </section>
 
-    <section v-if="productStore.products.length" class="space-y-3 xl:hidden" aria-label="Проекты">
+    <section v-if="productStore.loading" class="rounded-lg border border-brand-brown/10 bg-white p-10 text-center text-sm font-semibold text-brand-brown/50">
+      Загружаем проекты...
+    </section>
+
+    <section v-if="!productStore.loading && productStore.products.length" class="space-y-3 xl:hidden" aria-label="Проекты">
       <article
         v-for="product in productStore.products"
         :key="product.id"
@@ -176,11 +192,11 @@ const getStatusClass = (status: ProjectStatus) => {
 
         <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div>
-            <div class="text-[11px] font-black uppercase tracking-widest text-brand-brown/35">Бюджет</div>
+            <div class="text-[11px] font-black uppercase text-brand-brown/35">Бюджет</div>
             <div class="mt-1 font-bold text-brand-brown">{{ formatPrice(product.price) }}</div>
           </div>
           <div>
-            <div class="text-[11px] font-black uppercase tracking-widest text-brand-brown/35">Заявки</div>
+            <div class="text-[11px] font-black uppercase text-brand-brown/35">Заявки</div>
             <div class="mt-1 font-bold text-brand-brown">{{ product.orders_count }}</div>
           </div>
         </div>
@@ -206,10 +222,10 @@ const getStatusClass = (status: ProjectStatus) => {
       </article>
     </section>
 
-    <section v-if="productStore.products.length" class="hidden overflow-hidden rounded-lg border border-brand-brown/10 bg-white shadow-sm xl:block" aria-label="Таблица проектов">
+    <section v-if="!productStore.loading && productStore.products.length" class="hidden overflow-hidden rounded-lg border border-brand-brown/10 bg-white shadow-sm xl:block" aria-label="Таблица проектов">
       <table class="w-full text-left">
         <thead>
-          <tr class="bg-brand-gray/50 text-xs uppercase tracking-widest text-brand-brown/45">
+          <tr class="bg-brand-gray/50 text-xs uppercase text-brand-brown/45">
             <th class="px-6 py-4 font-semibold">Проект</th>
             <th class="px-6 py-4 font-semibold">Категория</th>
             <th class="px-6 py-4 font-semibold">Бюджет</th>
@@ -266,13 +282,16 @@ const getStatusClass = (status: ProjectStatus) => {
     </section>
 
     <section
-      v-if="productStore.products.length === 0"
-      class="rounded-lg border border-dashed border-brand-brown/15 bg-white p-10 text-center text-brand-brown/35"
+      v-if="!productStore.loading && productStore.products.length === 0"
+      class="rounded-lg border border-dashed border-brand-brown/15 bg-white p-10 text-center text-brand-brown/45"
     >
       Проекты не найдены
     </section>
 
-    <section class="flex flex-col gap-3 rounded-lg border border-brand-brown/10 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <section
+      v-if="productStore.total > 0"
+      class="flex flex-col gap-3 rounded-lg border border-brand-brown/10 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+    >
       <span class="text-sm text-brand-brown/50">
         Показано {{ productStore.products.length }} из {{ productStore.total }} проектов
       </span>
@@ -288,12 +307,12 @@ const getStatusClass = (status: ProjectStatus) => {
           <LucideChevronLeft :size="20" />
         </button>
         <div class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-brand-brown px-3 text-sm font-bold text-white">
-          {{ currentPage }}
+          {{ currentPage }} / {{ totalPages }}
         </div>
         <button
           type="button"
           @click="currentPage++"
-          :disabled="currentPage * limit >= productStore.total"
+          :disabled="currentPage >= totalPages"
           class="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-brown/10 bg-white text-brand-brown transition-colors hover:bg-brand-gray disabled:opacity-30"
           aria-label="Следующая страница"
         >
