@@ -27,7 +27,7 @@ const toastIcon = computed(() => {
     leave-from-class="translate-y-0 opacity-100"
     leave-to-class="translate-y-[-100%] opacity-0"
   >
-    <div v-if="store.visible" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+    <div v-if="store.visible" class="fixed top-6 left-1/2 -translate-x-1/2 z-[300] w-full max-w-md px-4">
       <div :class="[
         'flex items-center gap-4 p-4 rounded-lg shadow-2xl border backdrop-blur-md',
         toastClass
