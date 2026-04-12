@@ -59,9 +59,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
+          script_stop: true
           script: |
-            set -euo pipefail
-            cd ${{ secrets.PROJECT_PATH }}
+            set -eu
+            cd "${{ secrets.PROJECT_PATH }}"
 
             git pull --ff-only origin main
             docker compose up --build -d
