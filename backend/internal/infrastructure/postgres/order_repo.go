@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -42,7 +43,7 @@ func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error)
 			COALESCE(o.client_email, ''), COALESCE(o.comment, ''),
 			COALESCE(o.project_type, ''), COALESCE(o.budget_range, ''),
 			COALESCE(o.city, ''), COALESCE(o.contact_method, ''),
-			o.status, o.ip_address::text, COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
+			o.status, host(o.ip_address), COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
 			o.created_at, o.updated_at, p.name
 		FROM orders o
 		LEFT JOIN projects p ON o.project_id = p.id
@@ -65,7 +66,11 @@ func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error)
 	if projectName != nil {
 		o.ProjectName = *projectName
 	}
-	o.IPAddress = net.ParseIP(ip)
+	parsedIP, err := parsePostgresInet(ip)
+	if err != nil {
+		return nil, err
+	}
+	o.IPAddress = parsedIP
 	return &o, nil
 }
 
@@ -105,7 +110,7 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 			COALESCE(o.client_email, ''), COALESCE(o.comment, ''),
 			COALESCE(o.project_type, ''), COALESCE(o.budget_range, ''),
 			COALESCE(o.city, ''), COALESCE(o.contact_method, ''),
-			o.status, o.ip_address::text, COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
+			o.status, host(o.ip_address), COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
 			o.created_at, o.updated_at, p.name
 		FROM orders o
 		LEFT JOIN projects p ON o.project_id = p.id
@@ -136,7 +141,11 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 		if projectName != nil {
 			o.ProjectName = *projectName
 		}
-		o.IPAddress = net.ParseIP(ip)
+		parsedIP, err := parsePostgresInet(ip)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		o.IPAddress = parsedIP
 		orders = append(orders, &o)
 	}
 	if err := rows.Err(); err != nil {
@@ -187,7 +196,12 @@ func (r *OrderRepo) MarkAsSpam(ctx context.Context, id int64) error {
 }
 
 func (r *OrderRepo) UnblockIP(ctx context.Context, ip net.IP) error {
-	_, err := r.pool.Exec(ctx, "DELETE FROM ip_blocks WHERE ip_address = $1", ip.String())
+	ipValue, err := ipParam(ip)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.pool.Exec(ctx, "DELETE FROM ip_blocks WHERE ip_address = $1", ipValue)
 	return err
 }
 
@@ -197,7 +211,7 @@ func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
 			COALESCE(o.client_email, ''), COALESCE(o.comment, ''),
 			COALESCE(o.project_type, ''), COALESCE(o.budget_range, ''),
 			COALESCE(o.city, ''), COALESCE(o.contact_method, ''),
-			o.status, o.ip_address::text, COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
+			o.status, host(o.ip_address), COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
 			o.created_at, o.updated_at, p.name
 		FROM orders o
 		LEFT JOIN projects p ON o.project_id = p.id
@@ -225,11 +239,45 @@ func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
 		if projectName != nil {
 			o.ProjectName = *projectName
 		}
-		o.IPAddress = net.ParseIP(ip)
+		parsedIP, err := parsePostgresInet(ip)
+		if err != nil {
+			return nil, err
+		}
+		o.IPAddress = parsedIP
 		orders = append(orders, &o)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return orders, nil
+}
+
+func parsePostgresInet(value string) (net.IP, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, fmt.Errorf("empty postgres inet value")
+	}
+
+	if ip := net.ParseIP(value); ip != nil {
+		return ip, nil
+	}
+
+	if ip, _, err := net.ParseCIDR(value); err == nil && ip != nil {
+		return ip, nil
+	}
+
+	return nil, fmt.Errorf("invalid postgres inet value %q", value)
+}
+
+func ipParam(ip net.IP) (string, error) {
+	if ip == nil {
+		return "", fmt.Errorf("empty ip address")
+	}
+	if normalized := ip.To4(); normalized != nil {
+		return normalized.String(), nil
+	}
+	if normalized := ip.To16(); normalized != nil {
+		return normalized.String(), nil
+	}
+	return "", fmt.Errorf("invalid ip address %q", ip.String())
 }
