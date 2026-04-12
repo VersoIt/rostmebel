@@ -245,7 +245,7 @@ onUnmounted(() => {
           <div v-for="(step, idx) in [
             { icon: LucideRuler, title: 'Замер', desc: 'Бесплатный выезд дизайнера по всему Крыму для точного обмера.' },
             { icon: LucidePenTool, title: 'Проект', desc: 'Создание фотореалистичного 3D-проекта и подбор материалов.' },
-            { icon: LucideHammer, title: 'Фабрика', desc: 'Изготовление на современном производстве с контролем ОТК.' },
+            { icon: LucideHammer, title: 'Производство', desc: 'Изготовление на современном производстве с контролем ОТК.' },
             { icon: LucideTruck, title: 'Монтаж', desc: 'Профессиональная установка «под ключ» в любой точке полуострова.' }
           ]" :key="idx" class="relative group">
             <div class="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 mx-auto group-hover:bg-brand-gold group-hover:text-white transition-all duration-500 relative z-10 border border-brand-brown/5">
@@ -286,7 +286,7 @@ onUnmounted(() => {
         </div>
         <div>
           <div class="text-brand-gold text-5xl mb-4 font-serif">100%</div>
-          <h3 class="text-2xl mb-2 font-serif text-center">Своя фабрика</h3>
+          <h3 class="text-2xl mb-2 font-serif text-center">Свое производство</h3>
           <p class="text-brand-white/60 text-center">Никаких посредников — полный цикл производства</p>
         </div>
       </div>
