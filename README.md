@@ -509,6 +509,23 @@ ADMIN_USERNAME=
 ADMIN_PASSWORD=
 ```
 
+### Deploy падает на `.git/FETCH_HEAD: Permission denied`
+
+Это означает, что пользователь из `SSH_USER` не владеет проектом на VPS или не может писать в `.git`. Обычно так происходит, если репозиторий когда-то клонировали или обновляли через `root`/`sudo`.
+
+Исправление на VPS:
+
+```bash
+cd /path/to/rostmebel
+sudo chown -R "$(id -un):$(id -gn)" .
+```
+
+Если деплой выполняется отдельным пользователем, подставьте его явно:
+
+```bash
+sudo chown -R deploy:deploy /path/to/rostmebel
+```
+
 ### Контейнеры запущены, но сайт не отвечает
 
 Проверьте:

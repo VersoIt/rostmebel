@@ -62,7 +62,29 @@ jobs:
           script_stop: true
           script: |
             set -eu
-            cd "${{ secrets.PROJECT_PATH }}"
+
+            PROJECT_DIR="${{ secrets.PROJECT_PATH }}"
+            cd "$PROJECT_DIR"
+
+            if [ ! -d .git ]; then
+              echo "PROJECT_PATH is not a Git repository: $PROJECT_DIR"
+              exit 1
+            fi
+
+            if ! touch .git/.deploy-write-test 2>/dev/null; then
+              echo "Deploy user $(id -un) cannot write to $PROJECT_DIR/.git. Trying to repair ownership with sudo."
+              if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+                sudo -n chown -R "$(id -u):$(id -g)" "$PROJECT_DIR"
+              else
+                echo "Cannot repair permissions automatically."
+                echo "Run this once on the VPS:"
+                echo "sudo chown -R $(id -un):$(id -gn) $PROJECT_DIR"
+                exit 1
+              fi
+            fi
+
+            touch .git/.deploy-write-test
+            rm -f .git/.deploy-write-test
 
             git pull --ff-only origin main
             docker compose up --build -d
