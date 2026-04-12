@@ -14,6 +14,7 @@ import {
 } from 'lucide-vue-next';
 import type { Order } from '@/types';
 import { useNotificationStore } from '@/stores/notifications';
+import { useConfirmStore } from '@/stores/confirm';
 import { getApiErrorMessage } from '@/api/errors';
 import { downloadFile } from '@/utils/download';
 
@@ -22,6 +23,7 @@ const total = ref(0);
 const absoluteTotal = ref(0);
 const statusFilter = ref('new');
 const notificationStore = useNotificationStore();
+const confirmStore = useConfirmStore();
 
 const currentPage = ref(1);
 const limit = 10;
@@ -47,7 +49,7 @@ const fetchOrders = async () => {
     total.value = data.total;
     absoluteTotal.value = data.absolute_total;
   } catch (err) {
-    console.error(err);
+    notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
 
@@ -65,14 +67,20 @@ const updateStatus = async (id: number, status: string) => {
 };
 
 const markAsSpam = async (id: number) => {
-  if (confirm('Заблокировать IP и пометить как спам?')) {
-    try {
-      await api.post(`/admin/orders/${id}/spam`);
-      notificationStore.show('Заявка помечена как спам', 'info');
-      fetchOrders();
-    } catch (err) {
-      notificationStore.show(getApiErrorMessage(err), 'error');
-    }
+  const confirmed = await confirmStore.request({
+    title: 'Пометить заявку как спам?',
+    message: 'IP-адрес клиента будет временно заблокирован, а заявка уйдет в раздел спама.',
+    confirmLabel: 'Заблокировать',
+    tone: 'danger',
+  });
+  if (!confirmed) return;
+
+  try {
+    await api.post(`/admin/orders/${id}/spam`);
+    notificationStore.show('Заявка помечена как спам', 'info');
+    fetchOrders();
+  } catch (err) {
+    notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
 

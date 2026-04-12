@@ -19,9 +19,10 @@ type Server struct {
 	port   string
 }
 
-func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.OrderHandler, ah *handler.AdminHandler, rh *handler.ReviewHandler) *Server {
+func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.OrderHandler, ah *handler.AdminHandler, rh *handler.ReviewHandler, hh *handler.HealthHandler) *Server {
 	r := chi.NewRouter()
 
+	r.Use(chiMiddleware.RequestID)
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(chiMiddleware.RealIP)
@@ -33,6 +34,9 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+
+	r.Get("/healthz", hh.Liveness)
+	r.Get("/readyz", hh.Readiness)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public

@@ -1,7 +1,9 @@
 import api from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
+import { useNotificationStore } from '@/stores/notifications';
 
 export async function downloadFile(url: string, filename: string) {
+  const notificationStore = useNotificationStore();
   try {
     const response = await api.get(url, {
       responseType: 'blob',
@@ -20,7 +22,6 @@ export async function downloadFile(url: string, filename: string) {
     link.remove();
     window.URL.revokeObjectURL(downloadUrl);
   } catch (error) {
-    console.error('Download failed:', error);
-    alert(getApiErrorMessage(error));
+    notificationStore.show(getApiErrorMessage(error), 'error');
   }
 }

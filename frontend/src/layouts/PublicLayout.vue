@@ -129,7 +129,7 @@ const isHeaderActive = computed(() => !isHomePage.value || isScrolled.value);
             <span class="font-serif text-2xl uppercase font-black text-brand-brown">РОСТ <span class="text-brand-gold">Мебель</span></span>
           </div>
           <p class="text-brand-brown/60 max-w-sm mb-10 leading-relaxed font-medium">
-            Проектирование и изготовление премиальной мебели по индивидуальным размерам по всему Крыму.
+            Проектирование, производство и монтаж кухонь, шкафов и систем хранения по Крыму.
           </p>
         </div>
         

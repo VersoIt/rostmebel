@@ -12,6 +12,7 @@ import {
   LucideImage
 } from 'lucide-vue-next';
 import { useNotificationStore } from '@/stores/notifications';
+import { useConfirmStore } from '@/stores/confirm';
 import { getApiErrorMessage } from '@/api/errors';
 
 const reviews = ref<any[]>([]);
@@ -19,6 +20,7 @@ const total = ref(0);
 const absoluteTotal = ref(0);
 const statusFilter = ref('pending');
 const notificationStore = useNotificationStore();
+const confirmStore = useConfirmStore();
 const currentPage = ref(1);
 const limit = 10;
 
@@ -34,7 +36,7 @@ const fetchReviews = async () => {
     total.value = data.total;
     absoluteTotal.value = data.absolute_total;
   } catch (err) {
-    console.error(err);
+    notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
 
@@ -52,14 +54,20 @@ const moderate = async (id: number, approved: boolean) => {
 };
 
 const deleteReview = async (id: number) => {
-  if (confirm('Удалить отзыв навсегда?')) {
-    try {
-      await api.delete(`/admin/reviews/${id}`);
-      notificationStore.show('Отзыв удален', 'info');
-      fetchReviews();
-    } catch (err) {
-      notificationStore.show(getApiErrorMessage(err), 'error');
-    }
+  const confirmed = await confirmStore.request({
+    title: 'Удалить отзыв?',
+    message: 'Отзыв будет удален навсегда и исчезнет из истории модерации.',
+    confirmLabel: 'Удалить',
+    tone: 'danger',
+  });
+  if (!confirmed) return;
+
+  try {
+    await api.delete(`/admin/reviews/${id}`);
+    notificationStore.show('Отзыв удален', 'info');
+    fetchReviews();
+  } catch (err) {
+    notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
 </script>

@@ -26,8 +26,8 @@ const router = createRouter({
           name: 'home', 
           component: () => import('@/pages/HomePage.vue'),
           meta: { 
-            title: 'РОСТ Мебель — Премиальная мебель на заказ по индивидуальным размерам', 
-            description: 'Изготовление кухонь, шкафов и авторской мебели на заказ. 15 лет опыта, гарантия качества и уникальный дизайн вашего интерьера.' 
+            title: 'РОСТ Мебель — кухни и корпусная мебель под размер', 
+            description: 'Проектируем, производим и устанавливаем кухни, шкафы, гардеробные и корпусную мебель по Крыму.' 
           }
         },
         { 
@@ -54,7 +54,7 @@ const router = createRouter({
           component: () => import('@/pages/ContactPage.vue'),
           meta: { 
             title: 'Контакты — РОСТ Мебель', 
-            description: 'Свяжитесь с нами для консультации или замера. Мы находимся в Севастополе, работаем по всему Крыму.' 
+            description: 'Свяжитесь с нами для консультации, предварительного расчета или замера. Работаем по Крыму.' 
           }
         },
         { 
@@ -100,7 +100,7 @@ router.beforeEach((to, _from, next) => {
 });
 
 router.afterEach((to) => {
-  const defaultTitle = 'РОСТ Мебель — Премиальная мебель на заказ';
+  const defaultTitle = 'РОСТ Мебель — кухни и корпусная мебель под размер';
   const title = (to.meta.title as string) || defaultTitle;
   const description = (to.meta.description as string) || '';
 

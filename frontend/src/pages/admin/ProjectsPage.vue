@@ -15,11 +15,13 @@ import type { Product } from '@/types';
 import api from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
 import { useNotificationStore } from '@/stores/notifications';
+import { useConfirmStore } from '@/stores/confirm';
 import { downloadFile } from '@/utils/download';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
 
 const productStore = useProductStore();
 const notificationStore = useNotificationStore();
+const confirmStore = useConfirmStore();
 const searchQuery = ref('');
 const isModalOpen = ref(false);
 const editingProduct = ref<Product | null>(null);
@@ -53,13 +55,20 @@ const openEdit = (p: Product) => {
 };
 
 const deleteProduct = async (id: number) => {
-  if (confirm('Вы уверены, что хотите удалить этот проект?')) {
-    try {
-      await api.delete(`/admin/projects/${id}`);
-      fetch();
-    } catch (err) {
-      notificationStore.show(getApiErrorMessage(err), 'error');
-    }
+  const confirmed = await confirmStore.request({
+    title: 'Удалить проект?',
+    message: 'Проект будет скрыт из каталога. Это действие нельзя отменить из интерфейса.',
+    confirmLabel: 'Удалить',
+    tone: 'danger',
+  });
+  if (!confirmed) return;
+
+  try {
+    await api.delete(`/admin/projects/${id}`);
+    notificationStore.show('Проект удален', 'info');
+    fetch();
+  } catch (err) {
+    notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
 

@@ -30,7 +30,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         await api.post('/admin/auth/logout');
       } catch (err) {
-        console.error(err);
+        this.error = getApiErrorMessage(err);
       } finally {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');

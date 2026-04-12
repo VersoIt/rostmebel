@@ -11,9 +11,12 @@ import api from '@/api/client';
 import { useProductStore } from '@/stores/products';
 import ProductModal from '@/components/admin/ProductModal.vue';
 import type { Stats, Product } from '@/types';
+import { useNotificationStore } from '@/stores/notifications';
+import { getApiErrorMessage } from '@/api/errors';
 
 const stats = ref<Stats | null>(null);
 const productStore = useProductStore();
+const notificationStore = useNotificationStore();
 const isModalOpen = ref(false);
 const editingProduct = ref<Product | null>(null);
 
@@ -22,7 +25,7 @@ const fetchStats = async () => {
     const { data } = await api.get('/admin/stats');
     stats.value = data;
   } catch (err) {
-    console.error(err);
+    notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
 

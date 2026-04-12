@@ -1,8 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useNotificationStore } from '@/stores/notifications';
-import { LucideAlertCircle, LucideCheckCircle, LucideX } from 'lucide-vue-next';
+import { LucideAlertCircle, LucideCheckCircle, LucideInfo, LucideX } from 'lucide-vue-next';
 
 const store = useNotificationStore();
+
+const toastClass = computed(() => {
+  if (store.type === 'error') return 'bg-red-50/95 border-red-100 text-red-800';
+  if (store.type === 'success') return 'bg-green-50/95 border-green-100 text-green-800';
+  return 'bg-brand-cream/95 border-brand-brown/10 text-brand-brown';
+});
+
+const toastIcon = computed(() => {
+  if (store.type === 'error') return LucideAlertCircle;
+  if (store.type === 'success') return LucideCheckCircle;
+  return LucideInfo;
+});
 </script>
 
 <template>
@@ -16,10 +29,10 @@ const store = useNotificationStore();
   >
     <div v-if="store.visible" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
       <div :class="[
-        'flex items-center gap-4 p-4 rounded-2xl shadow-2xl border backdrop-blur-md',
-        store.type === 'error' ? 'bg-red-50/90 border-red-100 text-red-800' : 'bg-green-50/90 border-green-100 text-green-800'
+        'flex items-center gap-4 p-4 rounded-lg shadow-2xl border backdrop-blur-md',
+        toastClass
       ]">
-        <component :is="store.type === 'error' ? LucideAlertCircle : LucideCheckCircle" :size="24" />
+        <component :is="toastIcon" :size="24" />
         <p class="flex-1 font-medium text-sm">{{ store.message }}</p>
         <button @click="store.visible = false" class="hover:opacity-50 transition-opacity">
           <LucideX :size="20" />

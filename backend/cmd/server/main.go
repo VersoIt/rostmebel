@@ -6,12 +6,15 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/rostmebel/backend/internal/application/admin"
 	"github.com/rostmebel/backend/internal/application/order"
 	"github.com/rostmebel/backend/internal/application/product"
 	"github.com/rostmebel/backend/internal/application/review"
-	domAdmin "github.com/rostmebel/backend/internal/domain/admin"
 	"github.com/rostmebel/backend/internal/config"
+	domAdmin "github.com/rostmebel/backend/internal/domain/admin"
 	"github.com/rostmebel/backend/internal/infrastructure/gemini"
 	"github.com/rostmebel/backend/internal/infrastructure/postgres"
 	"github.com/rostmebel/backend/internal/infrastructure/redis"
@@ -20,9 +23,6 @@ import (
 	"github.com/rostmebel/backend/internal/interfaces/http/handler"
 	"github.com/rostmebel/backend/pkg/logger"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
@@ -77,9 +77,10 @@ func main() {
 	oh := handler.NewOrderHandler(orderUC)
 	ah := handler.NewAdminHandler(adminUC)
 	rh := handler.NewReviewHandler(reviewUC)
+	hh := handler.NewHealthHandler(pool, rdb)
 
 	// Server
-	srv := http.NewServer(cfg, ph, oh, ah, rh)
+	srv := http.NewServer(cfg, ph, oh, ah, rh, hh)
 
 	if err := srv.Start(ctx); err != nil {
 		log.Error("server error", "error", err)
@@ -101,7 +102,11 @@ func seedAdmin(ctx context.Context, repo domAdmin.Repository, username, password
 
 func runMigrations(databaseURL string) error {
 	m, err := migrate.New("file://migrations", databaseURL)
-	if err != nil { return err }
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange { return err }
+	if err != nil {
+		return err
+	}
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return err
+	}
 	return nil
 }

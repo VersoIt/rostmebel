@@ -73,41 +73,48 @@ const handleSubmit = async () => {
       <input v-model="form.website" type="text" name="website" class="hidden">
       
       <div>
-        <label class="block text-sm font-medium text-brand-brown/60 mb-2">Имя *</label>
+        <label for="order-client-name" class="block text-sm font-medium text-brand-brown/60 mb-2">Имя *</label>
         <input 
+          id="order-client-name"
           v-model="form.client_name"
           required
           type="text"
+          autocomplete="name"
           class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
           placeholder="Иван Иванов"
         >
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-brand-brown/60 mb-2">Телефон *</label>
+        <label for="order-client-phone" class="block text-sm font-medium text-brand-brown/60 mb-2">Телефон *</label>
         <input 
+          id="order-client-phone"
           v-model="form.client_phone"
           @input="formatPhone"
           required
           type="tel"
+          autocomplete="tel"
           class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
           placeholder="+7 (___) ___-__-__"
         >
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-brand-brown/60 mb-2">Email (необязательно)</label>
+        <label for="order-client-email" class="block text-sm font-medium text-brand-brown/60 mb-2">Email (необязательно)</label>
         <input 
+          id="order-client-email"
           v-model="form.client_email"
           type="email"
+          autocomplete="email"
           class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
           placeholder="ivan@example.com"
         >
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-brand-brown/60 mb-2">Комментарий</label>
+        <label for="order-comment" class="block text-sm font-medium text-brand-brown/60 mb-2">Комментарий</label>
         <textarea 
+          id="order-comment"
           v-model="form.comment"
           rows="3"
           class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"

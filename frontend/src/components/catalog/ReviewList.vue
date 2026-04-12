@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue';
 import { LucideStar, LucideCheckCircle, LucideMessageSquare, LucideX, LucideSearch } from 'lucide-vue-next';
 import api from '@/api/client';
 import type { ReviewResponse } from '@/types';
+import { useNotificationStore } from '@/stores/notifications';
+import { getApiErrorMessage } from '@/api/errors';
 
 const props = defineProps<{
   projectId?: number;
@@ -10,6 +12,7 @@ const props = defineProps<{
 
 const reviews = ref<ReviewResponse[]>([]);
 const loading = ref(true);
+const notificationStore = useNotificationStore();
 
 // Lightbox state
 const isLightboxOpen = ref(false);
@@ -28,7 +31,7 @@ const fetchReviews = async () => {
     const { data } = await api.get(url);
     reviews.value = data;
   } catch (err) {
-    console.error(err);
+    notificationStore.show(getApiErrorMessage(err), 'error');
   } finally {
     loading.value = false;
   }
