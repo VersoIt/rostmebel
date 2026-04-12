@@ -7,11 +7,13 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server/main.go
 
-FROM alpine:latest
+FROM alpine:3.22
 WORKDIR /app
+RUN addgroup -S app && adduser -S app -G app
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrations ./migrations
-COPY .env.example .env
+RUN mkdir -p uploads && chown -R app:app /app
+USER app
 
 EXPOSE 8080
 CMD ["./server"]

@@ -10,16 +10,44 @@ const props = defineProps<{
 
 const emit = defineEmits(['success']);
 
+const projectTypeOptions = [
+  'Кухня',
+  'Шкаф или гардеробная',
+  'Мебель для всей квартиры',
+  'Коммерческий объект',
+  'Пока не знаю',
+];
+
+const budgetOptions = [
+  'До 200 000 ₽',
+  '200 000-400 000 ₽',
+  '400 000-700 000 ₽',
+  'От 700 000 ₽',
+  'Нужен расчет',
+];
+
+const contactOptions = [
+  { value: 'phone', label: 'Звонок' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'telegram', label: 'Telegram' },
+  { value: 'email', label: 'Email' },
+];
+
 const form = ref({
   client_name: '',
   client_phone: '',
   client_email: '',
+  project_type: '',
+  budget_range: '',
+  city: '',
+  contact_method: 'phone',
   comment: '',
   website: '', // Honeypot
 });
 
-const formatPhone = (e: any) => {
-  let input = e.target.value.replace(/\D/g, '');
+const formatPhone = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  let input = target.value.replace(/\D/g, '');
   if (input.startsWith('7')) input = input.substring(1);
   if (input.startsWith('8')) input = input.substring(1);
   
@@ -111,6 +139,57 @@ const handleSubmit = async () => {
         >
       </div>
 
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label for="order-project-type" class="block text-sm font-medium text-brand-brown/60 mb-2">Что делаем?</label>
+          <select
+            id="order-project-type"
+            v-model="form.project_type"
+            class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          >
+            <option value="">Выберите вариант</option>
+            <option v-for="option in projectTypeOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="order-budget-range" class="block text-sm font-medium text-brand-brown/60 mb-2">Ориентир по бюджету</label>
+          <select
+            id="order-budget-range"
+            v-model="form.budget_range"
+            class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          >
+            <option value="">Пока не знаю</option>
+            <option v-for="option in budgetOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label for="order-city" class="block text-sm font-medium text-brand-brown/60 mb-2">Город</label>
+          <input
+            id="order-city"
+            v-model="form.city"
+            type="text"
+            autocomplete="address-level2"
+            class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+            placeholder="Симферополь, Ялта..."
+          >
+        </div>
+
+        <div>
+          <label for="order-contact-method" class="block text-sm font-medium text-brand-brown/60 mb-2">Как удобнее связаться?</label>
+          <select
+            id="order-contact-method"
+            v-model="form.contact_method"
+            class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
+          >
+            <option v-for="option in contactOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+      </div>
+
       <div>
         <label for="order-comment" class="block text-sm font-medium text-brand-brown/60 mb-2">Комментарий</label>
         <textarea 
@@ -118,7 +197,7 @@ const handleSubmit = async () => {
           v-model="form.comment"
           rows="3"
           class="w-full px-4 py-3 rounded-lg border border-brand-brown/10 focus:border-brand-gold outline-none bg-brand-gray/30"
-          placeholder="Напишите ваши пожелания..."
+          placeholder="Размеры, сроки, адрес объекта, что важно учесть"
         ></textarea>
       </div>
 

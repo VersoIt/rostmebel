@@ -70,7 +70,16 @@ func (u *UseCase) CreateOrder(ctx context.Context, o *order.Order) error {
 	}
 
 	go func() {
-		err := u.tg.SendOrderNotification(o.ClientName, o.ClientPhone, projectName, o.Comment)
+		err := u.tg.SendOrderNotification(telegram.OrderNotification{
+			Name:          o.ClientName,
+			Phone:         o.ClientPhone,
+			Product:       projectName,
+			Comment:       o.Comment,
+			ProjectType:   o.ProjectType,
+			BudgetRange:   o.BudgetRange,
+			City:          o.City,
+			ContactMethod: o.ContactMethod,
+		})
 		if err != nil {
 			fmt.Printf("TELEGRAM ERROR: %v\n", err)
 		}
@@ -88,16 +97,37 @@ func (u *UseCase) ListOrders(ctx context.Context, f order.ListFilter) ([]*order.
 }
 
 func (u *UseCase) UpdateOrderStatus(ctx context.Context, id int64, status order.OrderStatus) error {
-	// If restoring from spam, unblock IP
 	oldOrder, err := u.repo.GetByID(ctx, id)
-	if err == nil && oldOrder != nil && oldOrder.Status == order.StatusSpam && status != order.StatusSpam {
-		u.repo.UnblockIP(ctx, oldOrder.IPAddress)
+	if err != nil {
+		return err
+	}
+	if oldOrder == nil {
+		return apperror.New(apperror.CodeOrderNotFound, "Order not found", map[string]any{
+			"id": id,
+		})
+	}
+
+	// If restoring from spam, unblock IP.
+	if oldOrder.Status == order.StatusSpam && status != order.StatusSpam {
+		if err := u.repo.UnblockIP(ctx, oldOrder.IPAddress); err != nil {
+			return err
+		}
 	}
 
 	return u.repo.UpdateStatus(ctx, id, status)
 }
 
 func (u *UseCase) MarkAsSpam(ctx context.Context, id int64) error {
+	oldOrder, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if oldOrder == nil {
+		return apperror.New(apperror.CodeOrderNotFound, "Order not found", map[string]any{
+			"id": id,
+		})
+	}
+
 	return u.repo.MarkAsSpam(ctx, id)
 }
 

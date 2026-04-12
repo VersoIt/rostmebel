@@ -19,7 +19,7 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 				return
 			}
 
-			parts := strings.Split(authHeader, " ")
+			parts := strings.Fields(authHeader)
 			if len(parts) != 2 || parts[0] != "Bearer" {
 				respondUnauthorized(w)
 				return
@@ -28,7 +28,7 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 			tokenString := parts[1]
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				return []byte(jwtSecret), nil
-			})
+			}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 
 			if err != nil || !token.Valid {
 				respondUnauthorized(w)
@@ -46,6 +46,11 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 				respondUnauthorized(w)
 				return
 			}
+			tokenType, ok := claims["typ"].(string)
+			if !ok || tokenType != "access" {
+				respondUnauthorized(w)
+				return
+			}
 
 			adminID := int64(sub)
 			ctx := context.WithValue(r.Context(), "sub", adminID)
@@ -55,7 +60,7 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 }
 
 func respondUnauthorized(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusUnauthorized)
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"error": apperror.New(apperror.CodeUnauthorized, "Unauthorized", nil),

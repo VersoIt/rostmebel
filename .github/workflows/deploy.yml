@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,14 +21,14 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
+            set -euo pipefail
             cd ${{ secrets.PROJECT_PATH }}
-            
-            # 1. Подтягиваем изменения
-            git pull origin main
-            
-            # 2. Собираем и запускаем в фоне
-            # Используем --build для пересборки при изменениях в коде
+
+            git pull --ff-only origin main
             docker compose up --build -d
-            
-            # 3. Чистим старые образы, чтобы не забивать место
+
+            docker compose ps
+            docker compose exec -T backend wget -qO- http://localhost:8080/readyz >/dev/null
+            docker compose exec -T frontend wget -qO- http://127.0.0.1/healthz >/dev/null
+
             docker image prune -f

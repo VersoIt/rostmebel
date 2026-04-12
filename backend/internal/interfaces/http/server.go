@@ -26,6 +26,8 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(chiMiddleware.RealIP)
+	r.Use(chiMiddleware.RequestSize(12 << 20))
+	r.Use(chiMiddleware.Timeout(30 * time.Second))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   cfg.AllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},

@@ -17,6 +17,7 @@ const (
 	CodeUploadInvalidType       = "UPLOAD_INVALID_TYPE"
 	CodeOrderIPBlocked          = "ORDER_IP_BLOCKED"
 	CodeOrderRateLimited        = "ORDER_RATE_LIMITED"
+	CodeOrderNotFound           = "ORDER_NOT_FOUND"
 	CodeReviewInvalidPhone      = "REVIEW_INVALID_PHONE"
 	CodeReviewNotAllowed        = "REVIEW_NOT_ALLOWED"
 )

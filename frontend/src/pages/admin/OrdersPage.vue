@@ -36,6 +36,22 @@ const statusMap: Record<string, string> = {
   'spam': 'Спам'
 };
 
+const contactMethodMap: Record<string, string> = {
+  phone: 'Звонок',
+  whatsapp: 'WhatsApp',
+  telegram: 'Telegram',
+  email: 'Email',
+};
+
+const briefItems = (order: Order) => {
+  return [
+    order.project_type,
+    order.budget_range,
+    order.city,
+    contactMethodMap[order.contact_method] || order.contact_method,
+  ].filter(Boolean);
+};
+
 const fetchOrders = async () => {
   try {
     const params: any = { 
@@ -118,27 +134,28 @@ const getStatusClass = (status: string) => {
         <h1 class="font-serif text-4xl text-brand-brown mb-2">Заявки клиентов</h1>
         <p class="text-brand-brown/40">Всего заявок в системе: {{ absoluteTotal }}</p>
       </div>
-      <button @click="exportExcel" class="bg-brand-brown text-white px-6 py-3 rounded-xl font-medium hover:bg-brand-gold transition-all flex items-center gap-2 shadow-lg">
+      <button @click="exportExcel" class="bg-brand-brown text-white px-6 py-3 rounded-lg font-medium hover:bg-brand-gold transition-all flex items-center gap-2 shadow-lg">
         <LucideDownload :size="20" />
         Экспорт EXCEL
       </button>
     </div>
 
     <!-- Status Filters -->
-    <div class="flex gap-2 mb-8 bg-white p-1.5 rounded-2xl border border-brand-brown/5 w-fit shadow-sm overflow-x-auto max-w-full">
+    <div class="flex gap-2 mb-8 bg-white p-1.5 rounded-lg border border-brand-brown/5 w-fit shadow-sm overflow-x-auto max-w-full">
       <button 
         v-for="s in ['new', 'processing', 'done', 'rejected', 'spam', 'all']" 
         :key="s"
         @click="statusFilter = s; currentPage = 1"
-        :class="['px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest transition-all whitespace-nowrap', statusFilter === s ? 'bg-brand-brown text-white shadow-md' : 'text-brand-brown/40 hover:bg-brand-gray']"
+        :class="['px-6 py-2.5 rounded-lg text-sm font-bold uppercase tracking-widest transition-all whitespace-nowrap', statusFilter === s ? 'bg-brand-brown text-white shadow-md' : 'text-brand-brown/40 hover:bg-brand-gray']"
       >
         {{ s === 'all' ? 'Все' : (statusMap[s] || s) }}
       </button>
     </div>
 
     <!-- Table -->
-    <div class="bg-white rounded-3xl shadow-sm border border-brand-brown/5 overflow-hidden">
-      <table class="w-full text-left border-collapse">
+    <div class="bg-white rounded-lg shadow-sm border border-brand-brown/5 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-[980px] w-full text-left border-collapse">
         <thead>
           <tr class="bg-brand-gray/20 text-brand-brown/40 text-xs uppercase tracking-widest">
             <th class="px-8 py-4 font-semibold">Клиент</th>
@@ -158,6 +175,15 @@ const getStatusClass = (status: string) => {
                 {{ o.client_name }}
               </div>
               <div class="text-sm text-brand-brown/60 mt-1 max-w-xs italic line-clamp-1">"{{ o.comment || 'Без комментария' }}"</div>
+              <div v-if="briefItems(o).length" class="mt-3 flex flex-wrap gap-2">
+                <span
+                  v-for="item in briefItems(o)"
+                  :key="item"
+                  class="rounded-lg bg-brand-gray px-2.5 py-1 text-[11px] font-semibold text-brand-brown/60"
+                >
+                  {{ item }}
+                </span>
+              </div>
             </td>
 
             <!-- 2. Проект -->
@@ -173,6 +199,9 @@ const getStatusClass = (status: string) => {
             <td class="px-8 py-6">
               <div class="font-medium text-brand-brown whitespace-nowrap">{{ o.client_phone }}</div>
               <div class="text-xs text-brand-brown/40">{{ o.client_email || 'email не указан' }}</div>
+              <div v-if="o.contact_method" class="mt-1 text-[10px] uppercase tracking-widest text-brand-gold">
+                {{ contactMethodMap[o.contact_method] || o.contact_method }}
+              </div>
             </td>
 
             <!-- 4. Статус -->
@@ -231,7 +260,8 @@ const getStatusClass = (status: string) => {
             </td>
           </tr>
         </tbody>
-      </table>
+        </table>
+      </div>
       
       <div v-if="orders.length === 0" class="p-20 text-center text-brand-brown/20 italic">
         Заявок с таким статусом не найдено

@@ -20,17 +20,30 @@ func NewOrderRepo(pool *pgxpool.Pool) *OrderRepo {
 }
 
 func (r *OrderRepo) Create(ctx context.Context, o *order.Order) error {
-	query := `INSERT INTO orders (project_id, client_name, client_phone, client_email, comment, status, ip_address, user_agent, fingerprint) 
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, created_at, updated_at`
+	query := `
+		INSERT INTO orders (
+			project_id, client_name, client_phone, client_email, comment,
+			project_type, budget_range, city, contact_method,
+			status, ip_address, user_agent, fingerprint
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		RETURNING id, created_at, updated_at`
 
 	return r.pool.QueryRow(ctx, query,
-		o.ProjectID, o.ClientName, o.ClientPhone, o.ClientEmail, o.Comment, o.Status, o.IPAddress.String(), o.UserAgent, o.Fingerprint,
+		o.ProjectID, o.ClientName, o.ClientPhone, o.ClientEmail, o.Comment,
+		o.ProjectType, o.BudgetRange, o.City, o.ContactMethod,
+		o.Status, o.IPAddress.String(), o.UserAgent, o.Fingerprint,
 	).Scan(&o.ID, &o.CreatedAt, &o.UpdatedAt)
 }
 
 func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error) {
 	query := `
-		SELECT o.id, o.project_id, o.client_name, o.client_phone, o.client_email, o.comment, o.status, o.ip_address::text, o.user_agent, o.fingerprint, o.created_at, o.updated_at, p.name
+		SELECT o.id, o.project_id, o.client_name, o.client_phone,
+			COALESCE(o.client_email, ''), COALESCE(o.comment, ''),
+			COALESCE(o.project_type, ''), COALESCE(o.budget_range, ''),
+			COALESCE(o.city, ''), COALESCE(o.contact_method, ''),
+			o.status, o.ip_address::text, COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
+			o.created_at, o.updated_at, p.name
 		FROM orders o
 		LEFT JOIN projects p ON o.project_id = p.id
 		WHERE o.id = $1`
@@ -39,7 +52,9 @@ func (r *OrderRepo) GetByID(ctx context.Context, id int64) (*order.Order, error)
 	var ip string
 	var projectName *string
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
+		&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone,
+		&o.ClientEmail, &o.Comment, &o.ProjectType, &o.BudgetRange, &o.City, &o.ContactMethod,
+		&o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -86,7 +101,12 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 	}
 
 	query := fmt.Sprintf(`
-		SELECT o.id, o.project_id, o.client_name, o.client_phone, o.client_email, o.comment, o.status, o.ip_address::text, o.user_agent, o.fingerprint, o.created_at, o.updated_at, p.name
+		SELECT o.id, o.project_id, o.client_name, o.client_phone,
+			COALESCE(o.client_email, ''), COALESCE(o.comment, ''),
+			COALESCE(o.project_type, ''), COALESCE(o.budget_range, ''),
+			COALESCE(o.city, ''), COALESCE(o.contact_method, ''),
+			o.status, o.ip_address::text, COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
+			o.created_at, o.updated_at, p.name
 		FROM orders o
 		LEFT JOIN projects p ON o.project_id = p.id
 		%s 
@@ -106,15 +126,18 @@ func (r *OrderRepo) List(ctx context.Context, f order.ListFilter) ([]*order.Orde
 		var ip string
 		var projectName *string
 		err := rows.Scan(
-			&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
+			&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone,
+			&o.ClientEmail, &o.Comment, &o.ProjectType, &o.BudgetRange, &o.City, &o.ContactMethod,
+			&o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
 		)
-		if err == nil {
-			if projectName != nil {
-				o.ProjectName = *projectName
-			}
-			o.IPAddress = net.ParseIP(ip)
-			orders = append(orders, &o)
+		if err != nil {
+			return nil, 0, 0, err
 		}
+		if projectName != nil {
+			o.ProjectName = *projectName
+		}
+		o.IPAddress = net.ParseIP(ip)
+		orders = append(orders, &o)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, 0, 0, err
@@ -150,7 +173,7 @@ func (r *OrderRepo) MarkAsSpam(ctx context.Context, id int64) error {
 	defer tx.Rollback(ctx)
 
 	var ip string
-	err = tx.QueryRow(ctx, "UPDATE orders SET status = 'spam' WHERE id = $1 RETURNING ip_address::text", id).Scan(&ip)
+	err = tx.QueryRow(ctx, "UPDATE orders SET status = 'spam', updated_at = NOW() WHERE id = $1 RETURNING ip_address::text", id).Scan(&ip)
 	if err != nil {
 		return err
 	}
@@ -170,7 +193,12 @@ func (r *OrderRepo) UnblockIP(ctx context.Context, ip net.IP) error {
 
 func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
 	query := `
-		SELECT o.id, o.project_id, o.client_name, o.client_phone, o.client_email, o.comment, o.status, o.ip_address::text, o.user_agent, o.fingerprint, o.created_at, o.updated_at, p.name
+		SELECT o.id, o.project_id, o.client_name, o.client_phone,
+			COALESCE(o.client_email, ''), COALESCE(o.comment, ''),
+			COALESCE(o.project_type, ''), COALESCE(o.budget_range, ''),
+			COALESCE(o.city, ''), COALESCE(o.contact_method, ''),
+			o.status, o.ip_address::text, COALESCE(o.user_agent, ''), COALESCE(o.fingerprint, ''),
+			o.created_at, o.updated_at, p.name
 		FROM orders o
 		LEFT JOIN projects p ON o.project_id = p.id
 		ORDER BY o.created_at DESC`
@@ -187,15 +215,18 @@ func (r *OrderRepo) Export(ctx context.Context) ([]*order.Order, error) {
 		var ip string
 		var projectName *string
 		err := rows.Scan(
-			&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone, &o.ClientEmail, &o.Comment, &o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
+			&o.ID, &o.ProjectID, &o.ClientName, &o.ClientPhone,
+			&o.ClientEmail, &o.Comment, &o.ProjectType, &o.BudgetRange, &o.City, &o.ContactMethod,
+			&o.Status, &ip, &o.UserAgent, &o.Fingerprint, &o.CreatedAt, &o.UpdatedAt, &projectName,
 		)
-		if err == nil {
-			if projectName != nil {
-				o.ProjectName = *projectName
-			}
-			o.IPAddress = net.ParseIP(ip)
-			orders = append(orders, &o)
+		if err != nil {
+			return nil, err
 		}
+		if projectName != nil {
+			o.ProjectName = *projectName
+		}
+		o.IPAddress = net.ParseIP(ip)
+		orders = append(orders, &o)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

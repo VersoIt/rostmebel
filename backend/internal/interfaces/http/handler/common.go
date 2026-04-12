@@ -24,7 +24,7 @@ func init() {
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, _ := json.Marshal(payload)
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	w.Write(response)
 }
@@ -86,7 +86,8 @@ func statusForError(err *apperror.Error) int {
 	case apperror.CodeOrderIPBlocked,
 		apperror.CodeReviewNotAllowed:
 		return http.StatusForbidden
-	case apperror.CodeProjectNotFound:
+	case apperror.CodeProjectNotFound,
+		apperror.CodeOrderNotFound:
 		return http.StatusNotFound
 	case apperror.CodeOrderRateLimited:
 		return http.StatusTooManyRequests

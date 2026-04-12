@@ -41,6 +41,10 @@ export interface Order {
   client_phone: string;
   client_email: string;
   comment: string;
+  project_type: string;
+  budget_range: string;
+  city: string;
+  contact_method: string;
   status: OrderStatus;
   created_at: string;
   updated_at: string;

@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -28,6 +30,7 @@ import (
 func main() {
 	cfg := config.Load()
 	log := logger.New(cfg.AppEnv)
+	warnUnsafeProductionConfig(cfg, log)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -63,7 +66,10 @@ func main() {
 	reviewRepo := postgres.NewReviewRepo(pool)
 
 	// Seed first admin
-	seedAdmin(ctx, adminRepo, cfg.AdminUsername, cfg.AdminPassword)
+	if err := seedAdmin(ctx, adminRepo, cfg.AdminUsername, cfg.AdminPassword); err != nil {
+		log.Error("failed to seed admin", "error", err)
+		os.Exit(1)
+	}
 
 	// UseCases
 	productUC := product.NewUseCase(productRepo)
@@ -87,17 +93,20 @@ func main() {
 	}
 }
 
-func seedAdmin(ctx context.Context, repo domAdmin.Repository, username, password string) {
+func seedAdmin(ctx context.Context, repo domAdmin.Repository, username, password string) error {
 	a, err := repo.GetByUsername(ctx, username)
 	if err != nil || a != nil {
-		return
+		return err
 	}
-	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
 	newAdmin := &domAdmin.Admin{
 		Username:     username,
 		PasswordHash: string(hash),
 	}
-	repo.Create(ctx, newAdmin)
+	return repo.Create(ctx, newAdmin)
 }
 
 func runMigrations(databaseURL string) error {
@@ -109,4 +118,16 @@ func runMigrations(databaseURL string) error {
 		return err
 	}
 	return nil
+}
+
+func warnUnsafeProductionConfig(cfg *config.Config, log *slog.Logger) {
+	if cfg.AppEnv != "production" {
+		return
+	}
+	if cfg.JWTSecret == "" || cfg.JWTSecret == "default-secret" || len(cfg.JWTSecret) < 32 {
+		log.Warn("JWT_SECRET is weak for production; rotate it to a long random value")
+	}
+	if strings.EqualFold(cfg.AdminUsername, "admin") && cfg.AdminPassword == "admin" {
+		log.Warn("default admin credentials are unsafe for production")
+	}
 }

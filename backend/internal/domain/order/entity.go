@@ -17,19 +17,23 @@ const (
 )
 
 type Order struct {
-	ID          int64       `json:"id"`
-	ProjectID   *int64      `json:"project_id"`
-	ProjectName string      `json:"project_name,omitempty"` // Added for admin view
-	ClientName  string      `json:"client_name"`
-	ClientPhone string      `json:"client_phone"`
-	ClientEmail string      `json:"client_email"`
-	Comment     string      `json:"comment"`
-	Status      OrderStatus `json:"status"`
-	IPAddress   net.IP      `json:"ip_address"`
-	UserAgent   string      `json:"user_agent"`
-	Fingerprint string      `json:"fingerprint"`
-	CreatedAt   time.Time   `json:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at"`
+	ID            int64       `json:"id"`
+	ProjectID     *int64      `json:"project_id"`
+	ProjectName   string      `json:"project_name,omitempty"` // Added for admin view
+	ClientName    string      `json:"client_name"`
+	ClientPhone   string      `json:"client_phone"`
+	ClientEmail   string      `json:"client_email"`
+	Comment       string      `json:"comment"`
+	ProjectType   string      `json:"project_type"`
+	BudgetRange   string      `json:"budget_range"`
+	City          string      `json:"city"`
+	ContactMethod string      `json:"contact_method"`
+	Status        OrderStatus `json:"status"`
+	IPAddress     net.IP      `json:"ip_address"`
+	UserAgent     string      `json:"user_agent"`
+	Fingerprint   string      `json:"fingerprint"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
 }
 
 type Repository interface {
