@@ -5,14 +5,18 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rostmebel/backend/internal/domain/product"
 	"github.com/rostmebel/backend/internal/infrastructure/gemini"
-	"log/slog"
 )
+
+const aiFallbackLimit = 12
 
 type AIUseCase struct {
 	repo   product.Repository
@@ -72,6 +76,7 @@ func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Projec
 	for _, c := range cats {
 		catMap[c.ID] = c.Name
 	}
+	candidatePool := filterByRequestedCategory(query, uniqueCandidates, catMap)
 
 	// 3. Simplify candidates for Gemini with CATEGORY NAME
 	type simpleProj struct {
@@ -81,8 +86,8 @@ func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Projec
 		Budget   float64 `json:"budget"`
 		Tags     string  `json:"tags"`
 	}
-	simpleProjects := make([]simpleProj, len(uniqueCandidates))
-	for i, p := range uniqueCandidates {
+	simpleProjects := make([]simpleProj, len(candidatePool))
+	for i, p := range candidatePool {
 		catName := "Прочее"
 		if p.ProjectCategoryID != nil {
 			catName = catMap[*p.ProjectCategoryID]
@@ -97,12 +102,16 @@ func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Projec
 	}
 
 	productsJSON, _ := json.Marshal(simpleProjects)
-	
+
 	// 4. Gemini selects the BEST 8
 	ids, err := u.gemini.SearchProducts(ctx, query, string(productsJSON))
 	if err != nil {
-		u.logger.Warn("Gemini API error, using candidates as fallback", "error", err)
-		return uniqueCandidates, nil
+		if errors.Is(err, gemini.ErrDisabled) {
+			u.logger.Info("Gemini search disabled, using candidates as fallback")
+		} else {
+			u.logger.Warn("Gemini API error, using candidates as fallback", "error", err)
+		}
+		return limitProjects(candidatePool, aiFallbackLimit), nil
 	}
 
 	u.logger.Info("Gemini returned project IDs", "ids", ids)
@@ -114,7 +123,7 @@ func (u *AIUseCase) Search(ctx context.Context, query string) ([]*product.Projec
 	var results []*product.Project
 	for _, id := range ids {
 		p, err := u.repo.GetByID(ctx, id)
-		if err == nil && p != nil && p.Status == product.StatusPublished {
+		if err == nil && p != nil && p.Status == product.StatusPublished && matchesRequestedCategory(query, p, catMap) {
 			results = append(results, p)
 		}
 	}
@@ -135,4 +144,54 @@ func hashQuery(query string) string {
 
 func ptr[T any](v T) *T {
 	return &v
+}
+
+func limitProjects(projects []*product.Project, limit int) []*product.Project {
+	if limit <= 0 || len(projects) <= limit {
+		return projects
+	}
+	return projects[:limit]
+}
+
+func filterByRequestedCategory(query string, projects []*product.Project, categories map[int64]string) []*product.Project {
+	needle := requestedCategoryNeedle(query)
+	if needle == "" {
+		return projects
+	}
+
+	filtered := make([]*product.Project, 0, len(projects))
+	for _, project := range projects {
+		if projectMatchesCategory(project, categories, needle) {
+			filtered = append(filtered, project)
+		}
+	}
+	if len(filtered) == 0 {
+		return projects
+	}
+	return filtered
+}
+
+func matchesRequestedCategory(query string, project *product.Project, categories map[int64]string) bool {
+	needle := requestedCategoryNeedle(query)
+	return needle == "" || projectMatchesCategory(project, categories, needle)
+}
+
+func requestedCategoryNeedle(query string) string {
+	query = strings.ToLower(query)
+	switch {
+	case strings.Contains(query, "кух"):
+		return "кух"
+	case strings.Contains(query, "шкаф"), strings.Contains(query, "гардероб"):
+		return "шкаф"
+	default:
+		return ""
+	}
+}
+
+func projectMatchesCategory(project *product.Project, categories map[int64]string, needle string) bool {
+	if project == nil || project.ProjectCategoryID == nil {
+		return false
+	}
+	categoryName := strings.ToLower(categories[*project.ProjectCategoryID])
+	return strings.Contains(categoryName, needle)
 }

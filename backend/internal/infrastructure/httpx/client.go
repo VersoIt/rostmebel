@@ -39,7 +39,7 @@ type ProxyConfig struct {
 }
 
 func (p ProxyConfig) Enabled() bool {
-	return strings.TrimSpace(p.Host) != "" && p.Port != ""
+	return strings.TrimSpace(p.Host) != "" && strings.TrimSpace(p.Port) != ""
 }
 
 func (p ProxyConfig) URL() (*url.URL, error) {
@@ -53,14 +53,14 @@ func (p ProxyConfig) URL() (*url.URL, error) {
 	}
 
 	switch scheme {
-	case "http", "https", "socks5":
+	case "http", "https", "socks5", "socks5h":
 	default:
 		return nil, fmt.Errorf("unsupported proxy scheme %q", p.Scheme)
 	}
 
 	u := &url.URL{
 		Scheme: scheme,
-		Host:   fmt.Sprintf("%s:%s", strings.TrimSpace(p.Host), p.Port),
+		Host:   net.JoinHostPort(strings.TrimSpace(p.Host), strings.TrimSpace(p.Port)),
 	}
 
 	if p.Username != "" {
@@ -155,7 +155,7 @@ func NewHTTPClient(opts ClientOptions) (*http.Client, error) {
 		switch proxyURL.Scheme {
 		case "http", "https":
 			transport.Proxy = http.ProxyURL(proxyURL)
-		case "socks5":
+		case "socks5", "socks5h":
 			socksDialer, err := newSOCKS5Dialer(proxyURL, dialer)
 			if err != nil {
 				return nil, fmt.Errorf("build socks5 dialer: %w", err)

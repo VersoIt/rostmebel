@@ -58,7 +58,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	proxyHTTPClient, err := httpx.NewHTTPClient(httpx.ClientOptions{
+	outboundHTTPClient, err := httpx.NewHTTPClient(httpx.ClientOptions{
 		Timeout:               30 * time.Second,
 		DialTimeout:           10 * time.Second,
 		KeepAlive:             30 * time.Second,
@@ -78,12 +78,17 @@ func main() {
 		},
 	})
 	if err != nil {
-		log.Error("create proxy http client: %w", err)
+		log.Error("failed to create outbound http client", "error", err)
 		os.Exit(1)
 	}
 
-	geminiClient := gemini.NewClient(cfg.GeminiAPIKey, cfg.GeminiModel, proxyHTTPClient)
-	tgClient := telegram.NewClient(cfg.TelegramToken, cfg.TelegramChatID, proxyHTTPClient)
+	geminiClient := gemini.NewClientWithOptions(gemini.ClientOptions{
+		APIKey:         cfg.GeminiAPIKey,
+		Model:          cfg.GeminiModel,
+		FallbackModels: cfg.GeminiFallbackModels,
+		HTTPClient:     outboundHTTPClient,
+	})
+	tgClient := telegram.NewClient(cfg.TelegramToken, cfg.TelegramChatID, outboundHTTPClient)
 
 	// Repositories
 	productRepo := postgres.NewProductRepo(pool)
