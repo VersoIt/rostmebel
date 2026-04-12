@@ -35,7 +35,7 @@ func Load() *Config {
 	return &Config{
 		AppEnv:                getEnv("ENV", "development"),
 		Port:                  getEnv("PORT", "8080"),
-		DatabaseURL:           getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/rostmebel?sslmode=disable"),
+		DatabaseURL:           getEnv("DATABASE_URL", "postgres://user:password@localhost:55432/rostmebel?sslmode=disable"),
 		RedisURL:              getEnv("REDIS_URL", "localhost:6379"),
 		RedisPassword:         getEnv("REDIS_PASSWORD", ""),
 		GeminiAPIKey:          getEnv("GEMINI_API_KEY", ""),

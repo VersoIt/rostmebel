@@ -150,6 +150,7 @@ docker compose down -v
 | `TELEGRAM_TOKEN` | Нет | пусто | Токен Telegram-бота для уведомлений. |
 | `TELEGRAM_CHAT_ID` | Нет | пусто | Chat ID, куда отправлять уведомления. |
 | `ORDER_LIMIT_ENABLED` | Нет | `true` | Включает серверные лимиты на отправку заявок. |
+| `POSTGRES_HOST_PORT` | Нет | `55432` | Host-порт PostgreSQL для локального доступа с машины разработчика. Внутри Docker backend использует `postgres:5432`. |
 | `OUTBOUND_PROXY_SCHEME` | Нет | `http` | Схема outbound-прокси: `http`, `https`, `socks5`, `socks5h`. |
 | `OUTBOUND_PROXY_HOST` | Нет | пусто | Host прокси. Если host или port пустые, прокси выключен. |
 | `OUTBOUND_PROXY_PORT` | Нет | пусто | Port прокси. |
@@ -162,7 +163,7 @@ docker compose down -v
 | --- | --- | --- |
 | `ENV` | `development` | Режим приложения. В Docker Compose установлен `production`. |
 | `PORT` | `8080` | Порт backend внутри контейнера или локального процесса. |
-| `DATABASE_URL` | `postgres://user:password@localhost:5432/rostmebel?sslmode=disable` | Подключение к PostgreSQL. |
+| `DATABASE_URL` | `postgres://user:password@localhost:55432/rostmebel?sslmode=disable` | Подключение к PostgreSQL при локальном запуске backend вне Docker. |
 | `REDIS_URL` | `localhost:6379` | Адрес Redis. |
 | `REDIS_PASSWORD` | пусто | Пароль Redis, если используется. |
 | `JWT_ACCESS_TTL` | `15m` | Время жизни access token. |
@@ -310,6 +311,8 @@ Frontend должен ориентироваться на `error.code` и `error
 ```bash
 docker compose up -d postgres redis
 ```
+
+Если backend запускается локально вне Docker, используйте `localhost:55432` для PostgreSQL, если не меняли `POSTGRES_HOST_PORT`.
 
 Запуск backend локально:
 

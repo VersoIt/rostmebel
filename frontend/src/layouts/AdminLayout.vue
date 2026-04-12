@@ -1,75 +1,142 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { 
-  LucideLayoutDashboard, 
-  LucidePackage, 
-  LucideClipboardList, 
-  LucideLogOut, 
+import {
+  LucideClipboardList,
   LucideExternalLink,
-  LucideMessageSquare
+  LucideLayoutDashboard,
+  LucideLogOut,
+  LucideMessageSquare,
+  LucidePackage,
 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
+const route = useRoute();
 
 const menuItems = [
-  { name: 'Дашборд', icon: LucideLayoutDashboard, to: '/admin' },
-  { name: 'Проекты', icon: LucidePackage, to: '/admin/projects' },
-  { name: 'Заявки', icon: LucideClipboardList, to: '/admin/orders' },
-  { name: 'Отзывы', icon: LucideMessageSquare, to: '/admin/reviews' },
+  { name: 'Дашборд', shortName: 'Обзор', icon: LucideLayoutDashboard, to: '/admin' },
+  { name: 'Проекты', shortName: 'Проекты', icon: LucidePackage, to: '/admin/projects' },
+  { name: 'Заявки', shortName: 'Заявки', icon: LucideClipboardList, to: '/admin/orders' },
+  { name: 'Отзывы', shortName: 'Отзывы', icon: LucideMessageSquare, to: '/admin/reviews' },
 ];
+
+const isActive = (path: string) => {
+  if (path === '/admin') {
+    return route.path === '/admin';
+  }
+  return route.path === path || route.path.startsWith(`${path}/`);
+};
+
+const currentPage = computed(() => {
+  return menuItems.find((item) => isActive(item.to))?.name || 'Админка';
+});
+
+const logout = () => {
+  authStore.logout();
+};
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-brand-gray/30">
-    <!-- Sidebar -->
-    <aside class="w-72 bg-brand-brown text-brand-white flex flex-col fixed inset-y-0 shadow-2xl z-50">
-      <div class="p-8 flex items-center gap-3 border-b border-white/5">
-        <div class="w-10 h-10 bg-brand-gold rounded-xl flex items-center justify-center text-white font-serif text-2xl">Р</div>
-        <span class="font-serif text-xl uppercase font-bold">РОСТ <span class="text-brand-gold">Админ</span></span>
+  <div class="min-h-screen bg-brand-gray/40 text-brand-brown">
+    <aside class="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col bg-brand-brown text-brand-white shadow-2xl lg:flex">
+      <div class="flex items-center gap-3 border-b border-white/10 p-6">
+        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold font-serif text-2xl font-bold text-white">
+          Р
+        </div>
+        <div>
+          <div class="font-serif text-xl font-bold uppercase leading-none">РОСТ</div>
+          <div class="mt-1 text-xs font-bold uppercase tracking-widest text-brand-gold">Админ-панель</div>
+        </div>
       </div>
 
-      <nav class="flex-1 p-6 space-y-2 mt-4">
-        <router-link 
-          v-for="item in menuItems" 
+      <nav class="flex-1 space-y-2 p-4">
+        <router-link
+          v-for="item in menuItems"
           :key="item.name"
           :to="item.to"
-          v-slot="{ isExactActive, navigate }"
-          custom
+          class="admin-sidebar-link flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all"
+          :class="[
+            isActive(item.to)
+              ? 'bg-brand-gold text-brand-brown shadow-lg shadow-brand-gold/20'
+              : 'text-white/65 hover:bg-white/10 hover:text-white',
+          ]"
         >
-          <div 
-            @click="navigate"
-            class="admin-sidebar-link flex items-center gap-4 px-6 py-4 rounded-xl transition-all group cursor-pointer"
-            :class="[
-              isExactActive 
-                ? 'bg-brand-gold !text-brand-brown font-semibold shadow-lg shadow-brand-gold/20' 
-                : 'hover:bg-white/5 text-white/60 hover:text-white'
-            ]"
-          >
-            <component :is="item.icon" :size="20" />
-            {{ item.name }}
-          </div>
+          <component :is="item.icon" :size="20" />
+          {{ item.name }}
         </router-link>
       </nav>
 
-      <div class="p-6 space-y-2 border-t border-white/5">
-        <a href="/" target="_blank" class="flex items-center gap-4 px-6 py-4 rounded-xl text-white/40 hover:text-brand-gold hover:bg-white/5 transition-all group">
+      <div class="space-y-2 border-t border-white/10 p-4">
+        <a
+          href="/"
+          target="_blank"
+          class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-brand-gold"
+        >
           <LucideExternalLink :size="20" />
           На сайт
         </a>
-        <button 
-          @click="authStore.logout()"
-          class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/5 transition-all group"
+        <button
+          type="button"
+          @click="logout"
+          class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-semibold text-white/55 transition-all hover:bg-red-500/10 hover:text-red-300"
         >
-          <LucideLogOut :size="20" class="group-hover:-translate-x-1 transition-transform" />
+          <LucideLogOut :size="20" />
           Выйти
         </button>
       </div>
     </aside>
 
-    <!-- Content -->
-    <main class="flex-1 ml-72 p-12">
+    <header class="sticky top-0 z-40 border-b border-brand-brown/10 bg-white/95 backdrop-blur lg:hidden">
+      <div class="flex items-center justify-between gap-3 px-4 py-3">
+        <div class="min-w-0">
+          <div class="text-[11px] font-black uppercase tracking-widest text-brand-gold">РОСТ Админ</div>
+          <div class="truncate font-serif text-xl font-bold text-brand-brown">{{ currentPage }}</div>
+        </div>
+
+        <div class="flex shrink-0 items-center gap-2">
+          <a
+            href="/"
+            target="_blank"
+            class="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-brown/10 bg-brand-gray/60 text-brand-brown transition-colors hover:bg-brand-brown hover:text-white"
+            aria-label="Открыть сайт"
+          >
+            <LucideExternalLink :size="18" />
+          </a>
+          <button
+            type="button"
+            @click="logout"
+            class="flex h-10 w-10 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-600 transition-colors hover:bg-red-600 hover:text-white"
+            aria-label="Выйти"
+          >
+            <LucideLogOut :size="18" />
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="min-h-screen px-4 pb-28 pt-6 sm:px-6 lg:ml-72 lg:p-10 xl:p-12">
       <router-view />
     </main>
+
+    <nav class="fixed inset-x-0 bottom-0 z-50 border-t border-brand-brown/10 bg-white/95 px-2 pt-2 shadow-[0_-12px_30px_rgba(23,33,29,0.08)] backdrop-blur lg:hidden">
+      <div class="grid grid-cols-4 gap-1 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+        <router-link
+          v-for="item in menuItems"
+          :key="item.name"
+          :to="item.to"
+          class="flex h-14 flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-bold transition-all"
+          :class="[
+            isActive(item.to)
+              ? 'bg-brand-brown text-white shadow-lg shadow-brand-brown/15'
+              : 'text-brand-brown/55 hover:bg-brand-gray hover:text-brand-brown',
+          ]"
+        >
+          <component :is="item.icon" :size="19" />
+          <span class="leading-none">{{ item.shortName }}</span>
+        </router-link>
+      </div>
+    </nav>
   </div>
 </template>
 

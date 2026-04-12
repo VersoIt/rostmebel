@@ -85,37 +85,40 @@ const getAreaPath = () => {
 </script>
 
 <template>
-  <div class="space-y-12">
-    <div class="flex items-center justify-between">
-      <h1 class="font-serif text-4xl text-brand-brown">Обзор системы</h1>
-      <div class="text-sm font-bold text-brand-brown/40 uppercase tracking-widest">
+  <div class="space-y-6 lg:space-y-8">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="text-xs font-black uppercase tracking-widest text-brand-gold">Админ-панель</p>
+        <h1 class="mt-1 font-serif text-3xl font-bold text-brand-brown sm:text-4xl">Обзор системы</h1>
+      </div>
+      <div class="text-sm font-bold uppercase tracking-widest text-brand-brown/40">
         {{ new Date().toLocaleDateString('ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
       </div>
     </div>
     
     <!-- Top Stats -->
-    <div v-if="stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-      <div class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm">
-        <span class="text-brand-brown/40 uppercase tracking-widest text-xs font-semibold mb-2 block">Всего проектов</span>
+    <div v-if="stats" class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-lg border border-brand-brown/10 bg-white p-5 shadow-sm sm:p-6">
+        <span class="mb-2 block text-xs font-semibold uppercase tracking-widest text-brand-brown/40">Всего проектов</span>
         <div class="text-4xl font-serif text-brand-brown">{{ stats.projects_count }}</div>
       </div>
-      <div class="bg-brand-gold p-8 rounded-3xl shadow-xl shadow-brand-gold/20">
-        <span class="text-brand-brown/60 uppercase tracking-widest text-xs font-semibold mb-2 block">Заявки сегодня</span>
+      <div class="rounded-lg bg-brand-gold p-5 shadow-xl shadow-brand-gold/20 sm:p-6">
+        <span class="mb-2 block text-xs font-semibold uppercase tracking-widest text-brand-brown/60">Заявки сегодня</span>
         <div class="text-4xl font-serif text-brand-brown">{{ stats.new_orders_today }}</div>
       </div>
-      <div class="bg-white p-8 rounded-3xl border border-brand-brown/5 shadow-sm">
-        <span class="text-brand-brown/40 uppercase tracking-widest text-xs font-semibold mb-2 block">Всего заявок</span>
+      <div class="rounded-lg border border-brand-brown/10 bg-white p-5 shadow-sm sm:p-6">
+        <span class="mb-2 block text-xs font-semibold uppercase tracking-widest text-brand-brown/40">Всего заявок</span>
         <div class="text-4xl font-serif text-brand-brown">{{ stats.total_orders }}</div>
       </div>
-      <div class="bg-brand-brown p-8 rounded-3xl shadow-xl">
-        <span class="text-white/40 uppercase tracking-widest text-xs font-semibold mb-2 block">Успешных сделок</span>
+      <div class="rounded-lg bg-brand-brown p-5 shadow-xl sm:p-6">
+        <span class="mb-2 block text-xs font-semibold uppercase tracking-widest text-white/40">Успешных сделок</span>
         <div class="text-4xl font-serif text-brand-gold">{{ stats.success_rate.toFixed(0) }}%</div>
       </div>
     </div>
 
     <!-- Chart Section -->
-    <div v-if="stats?.orders_by_day && stats.orders_by_day.length > 0" class="bg-white p-10 rounded-[2.5rem] border border-brand-brown/5 shadow-sm">
-      <div class="flex items-center justify-between mb-10">
+    <div v-if="stats?.orders_by_day && stats.orders_by_day.length > 0" class="rounded-lg border border-brand-brown/10 bg-white p-4 shadow-sm sm:p-6">
+      <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 class="font-serif text-2xl text-brand-brown">Активность заявок</h3>
           <p class="text-brand-brown/40 text-sm font-medium">Динамика за последние 30 дней</p>
@@ -126,7 +129,7 @@ const getAreaPath = () => {
         </div>
       </div>
 
-      <div class="relative w-full">
+      <div class="relative w-full overflow-x-auto">
         <svg :viewBox="`0 0 ${chartWidth} ${chartHeight}`" class="w-full h-auto overflow-visible">
           <defs>
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -162,16 +165,16 @@ const getAreaPath = () => {
     </div>
 
     <!-- MAIN OPERATIONAL SECTION -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:gap-6">
       
       <!-- 1. Latest Leads (Left - 8 columns) -->
-      <div class="lg:col-span-8 bg-white rounded-[2.5rem] border border-brand-brown/5 shadow-sm overflow-hidden flex flex-col">
-        <div class="p-8 border-b border-brand-brown/5 bg-brand-gray/10 flex items-center justify-between">
+      <div class="flex flex-col overflow-hidden rounded-lg border border-brand-brown/10 bg-white shadow-sm xl:col-span-8">
+        <div class="flex items-center justify-between gap-4 border-b border-brand-brown/10 bg-brand-gray/20 p-4 sm:p-6">
           <div>
             <h3 class="font-serif text-2xl">Свежие заявки</h3>
-            <p class="text-brand-brown/40 text-sm font-medium">Требуют первичной обработки</p>
+            <p class="text-sm font-medium text-brand-brown/40">Требуют первичной обработки</p>
           </div>
-          <router-link to="/admin/orders" class="text-brand-gold font-bold text-xs uppercase tracking-widest hover:underline flex items-center gap-2">
+          <router-link to="/admin/orders" class="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-brand-gold hover:underline">
             Все заявки <LucideChevronRight :size="16" />
           </router-link>
         </div>
@@ -180,23 +183,23 @@ const getAreaPath = () => {
           <div v-if="stats?.recent_orders.length" class="divide-y divide-brand-brown/5">
             <div 
               v-for="order in stats.recent_orders" :key="order.id"
-              class="p-6 hover:bg-brand-gray/5 transition-colors flex items-center justify-between group"
+              class="group flex items-center justify-between gap-4 p-4 transition-colors hover:bg-brand-gray/30 sm:p-5"
             >
-              <div class="flex items-center gap-6">
-                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+              <div class="flex min-w-0 items-center gap-4">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <LucideClock :size="24" />
                 </div>
-                <div>
-                  <div class="font-bold text-brand-brown">{{ order.client_name }}</div>
-                  <div class="text-xs text-brand-gold font-bold uppercase tracking-widest">{{ order.project_name }}</div>
+                <div class="min-w-0">
+                  <div class="truncate font-bold text-brand-brown">{{ order.client_name }}</div>
+                  <div class="truncate text-xs font-bold uppercase tracking-widest text-brand-gold">{{ order.project_name }}</div>
                 </div>
               </div>
-              <div class="flex items-center gap-8">
+              <div class="flex shrink-0 items-center gap-3">
                 <div class="text-right hidden md:block">
                   <div class="text-sm font-medium text-brand-brown/60">{{ new Date(order.created_at).toLocaleDateString() }}</div>
                   <div class="text-[10px] text-brand-brown/30 font-bold uppercase">{{ new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</div>
                 </div>
-                <router-link to="/admin/orders" class="p-3 bg-brand-brown text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-brand-gold">
+                <router-link to="/admin/orders" class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-brown text-white transition-all hover:bg-brand-gold lg:opacity-0 lg:group-hover:opacity-100">
                   <LucideChevronRight :size="20" />
                 </router-link>
               </div>
@@ -209,17 +212,17 @@ const getAreaPath = () => {
       </div>
 
       <!-- 2. Priority Tasks (Right - 4 columns) -->
-      <div class="lg:col-span-4 space-y-8">
+      <div class="space-y-4 xl:col-span-4">
         <!-- Review Task -->
         <div 
           :class="[
-            'p-8 rounded-[2.5rem] border transition-all duration-500 flex flex-col justify-between h-full',
+            'flex h-full flex-col justify-between rounded-lg border p-5 transition-all duration-500 sm:p-6',
             stats?.pending_reviews_count ? 'bg-brand-gold border-brand-gold text-brand-brown shadow-xl shadow-brand-gold/20' : 'bg-white border-brand-brown/5 text-brand-brown opacity-60'
           ]"
         >
           <div>
-            <LucideMessageSquare class="mb-6" :size="40" />
-            <h3 class="font-serif text-3xl mb-4 leading-tight">Модерация отзывов</h3>
+            <LucideMessageSquare class="mb-5" :size="36" />
+            <h3 class="mb-4 font-serif text-2xl leading-tight sm:text-3xl">Модерация отзывов</h3>
             <p v-if="stats?.pending_reviews_count" class="font-bold mb-8">
               У вас {{ stats.pending_reviews_count }} новых отзывов, ждущих публикации на сайте.
             </p>
@@ -230,7 +233,7 @@ const getAreaPath = () => {
           <router-link 
             to="/admin/reviews" 
             :class="[
-              'w-full py-4 rounded-2xl font-black uppercase tracking-widest text-center transition-all',
+              'w-full rounded-lg py-3 text-center font-black uppercase tracking-widest transition-all',
               stats?.pending_reviews_count ? 'bg-brand-brown text-white hover:bg-black shadow-lg' : 'bg-brand-gray text-brand-brown/40 pointer-events-none'
             ]"
           >
@@ -239,7 +242,7 @@ const getAreaPath = () => {
         </div>
 
         <!-- Popular Project Quick Look -->
-        <div class="bg-white p-8 rounded-[2.5rem] border border-brand-brown/5 shadow-sm">
+        <div class="rounded-lg border border-brand-brown/10 bg-white p-5 shadow-sm sm:p-6">
           <div class="flex items-center gap-4 mb-6">
             <LucidePackage class="text-brand-gold" :size="24" />
             <h4 class="font-bold text-brand-brown">ТОП проект</h4>

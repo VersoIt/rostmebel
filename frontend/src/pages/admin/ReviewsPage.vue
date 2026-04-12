@@ -1,36 +1,56 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import api from '@/api/client';
-import { 
-  LucideCheckCircle, 
-  LucideXCircle, 
-  LucideTrash2, 
-  LucideStar,
-  LucideClock,
+import {
+  LucideCheckCircle,
   LucideChevronLeft,
   LucideChevronRight,
-  LucideImage
+  LucideImage,
+  LucideStar,
+  LucideTrash2,
+  LucideXCircle,
 } from 'lucide-vue-next';
+import type { ReviewResponse } from '@/types';
 import { useNotificationStore } from '@/stores/notifications';
 import { useConfirmStore } from '@/stores/confirm';
 import { getApiErrorMessage } from '@/api/errors';
 
-const reviews = ref<any[]>([]);
+type ReviewStatus = ReviewResponse['status'];
+type StatusFilter = ReviewStatus | 'all';
+
+const reviews = ref<ReviewResponse[]>([]);
 const total = ref(0);
 const absoluteTotal = ref(0);
-const statusFilter = ref('pending');
+const statusFilter = ref<StatusFilter>('pending');
 const notificationStore = useNotificationStore();
 const confirmStore = useConfirmStore();
 const currentPage = ref(1);
 const limit = 10;
 
+const statusOptions: Array<{ key: StatusFilter; label: string }> = [
+  { key: 'pending', label: 'На проверке' },
+  { key: 'approved', label: 'Опубликованы' },
+  { key: 'rejected', label: 'Отклонены' },
+  { key: 'all', label: 'Все' },
+];
+
+const statusMap: Record<ReviewStatus, string> = {
+  pending: 'На проверке',
+  approved: 'Опубликован',
+  rejected: 'Отклонен',
+};
+
 const fetchReviews = async () => {
   try {
-    const params: any = { 
-      limit, 
-      offset: (currentPage.value - 1) * limit 
+    const params: Record<string, string | number> = {
+      limit,
+      offset: (currentPage.value - 1) * limit,
     };
-    if (statusFilter.value !== 'all') params.status = statusFilter.value;
+
+    if (statusFilter.value !== 'all') {
+      params.status = statusFilter.value;
+    }
+
     const { data } = await api.get('/admin/reviews', { params });
     reviews.value = data.items;
     total.value = data.total;
@@ -42,6 +62,11 @@ const fetchReviews = async () => {
 
 onMounted(fetchReviews);
 watch([statusFilter, currentPage], fetchReviews);
+
+const setStatusFilter = (status: StatusFilter) => {
+  statusFilter.value = status;
+  currentPage.value = 1;
+};
 
 const moderate = async (id: number, approved: boolean) => {
   try {
@@ -60,6 +85,7 @@ const deleteReview = async (id: number) => {
     confirmLabel: 'Удалить',
     tone: 'danger',
   });
+
   if (!confirmed) return;
 
   try {
@@ -70,113 +96,168 @@ const deleteReview = async (id: number) => {
     notificationStore.show(getApiErrorMessage(err), 'error');
   }
 };
+
+const formatDate = (value: string) => {
+  return new Date(value).toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getStatusClass = (status: ReviewStatus) => {
+  if (status === 'approved') return 'bg-green-50 text-green-700 ring-green-100';
+  if (status === 'rejected') return 'bg-red-50 text-red-700 ring-red-100';
+  return 'bg-yellow-50 text-yellow-700 ring-yellow-100';
+};
 </script>
 
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-12">
-      <div>
-        <h1 class="font-serif text-4xl text-brand-brown mb-2">Модерация отзывов</h1>
-        <p class="text-brand-brown/40">Всего отзывов в системе: {{ absoluteTotal }}</p>
-      </div>
-    </div>
+  <div class="space-y-6">
+    <section>
+      <p class="text-xs font-black uppercase tracking-widest text-brand-gold">Доверие и репутация</p>
+      <h1 class="mt-1 font-serif text-3xl font-bold leading-tight text-brand-brown sm:text-4xl">Модерация отзывов</h1>
+      <p class="mt-2 text-sm text-brand-brown/55">Всего отзывов в системе: {{ absoluteTotal }}</p>
+    </section>
 
-    <div class="flex gap-2 mb-8 bg-white p-1.5 rounded-2xl border border-brand-brown/5 w-fit shadow-sm">
-      <button 
-        v-for="s in [
-          { k: 'pending', l: 'На проверке' },
-          { k: 'approved', l: 'Опубликованы' },
-          { k: 'rejected', l: 'Отклонены' },
-          { k: 'all', l: 'Все' }
-        ]" :key="s.k"
-        @click="statusFilter = s.k; currentPage = 1"
-        :class="['px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest transition-all', statusFilter === s.k ? 'bg-brand-brown text-white shadow-md' : 'text-brand-brown/40 hover:bg-brand-gray']"
+    <section class="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 no-scrollbar" aria-label="Фильтр отзывов по статусу">
+      <div class="flex min-w-max gap-2 rounded-lg border border-brand-brown/10 bg-white p-1.5 shadow-sm">
+        <button
+          v-for="status in statusOptions"
+          :key="status.key"
+          type="button"
+          @click="setStatusFilter(status.key)"
+          :class="[
+            'rounded-lg px-4 py-2.5 text-xs font-black uppercase tracking-widest transition-all',
+            statusFilter === status.key
+              ? 'bg-brand-brown text-white shadow-md'
+              : 'text-brand-brown/45 hover:bg-brand-gray hover:text-brand-brown',
+          ]"
+        >
+          {{ status.label }}
+        </button>
+      </div>
+    </section>
+
+    <section v-if="reviews.length" class="space-y-3" aria-label="Отзывы">
+      <article
+        v-for="review in reviews"
+        :key="review.id"
+        class="rounded-lg border border-brand-brown/10 bg-white p-4 shadow-sm transition-all hover:shadow-md sm:p-5"
       >
-        {{ s.l }}
-      </button>
-    </div>
-
-    <div class="space-y-6">
-      <div 
-        v-for="rev in reviews" :key="rev.id"
-        class="bg-white p-8 rounded-3xl shadow-sm border border-brand-brown/5 flex flex-col md:flex-row gap-8 items-start hover:shadow-md transition-all"
-      >
-        <!-- Client Info -->
-        <div class="md:w-1/4 space-y-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-brand-cream rounded-xl flex items-center justify-center text-brand-gold font-bold">
-              {{ rev.client_name ? rev.client_name[0] : '?' }}
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex gap-0.5">
+                <LucideStar
+                  v-for="i in 5"
+                  :key="i"
+                  :size="16"
+                  :class="[i <= review.rating ? 'fill-brand-gold text-brand-gold' : 'fill-brand-gray text-brand-gray']"
+                />
+              </div>
+              <span :class="['rounded-full px-2.5 py-1 text-[11px] font-black uppercase ring-1', getStatusClass(review.status)]">
+                {{ statusMap[review.status] }}
+              </span>
+              <span class="text-xs text-brand-brown/40">{{ formatDate(review.created_at) }}</span>
             </div>
-            <div>
-              <div class="font-bold text-brand-brown">{{ rev.client_name }}</div>
-              <div class="text-[10px] uppercase font-black text-brand-brown/20 tracking-widest">Клиент</div>
+
+            <div class="mt-3">
+              <h2 class="font-bold text-brand-brown">{{ review.client_name }}</h2>
+              <p class="text-sm font-semibold text-brand-gold">{{ review.project_name || 'Общий отзыв' }}</p>
+            </div>
+
+            <p class="mt-4 leading-7 text-brand-brown/70">
+              "{{ review.comment }}"
+            </p>
+
+            <div v-if="review.images?.length" class="mt-4 flex flex-wrap gap-2">
+              <a
+                v-for="image in review.images"
+                :key="image.url"
+                :href="image.url"
+                target="_blank"
+                class="block h-16 w-16 overflow-hidden rounded-lg border border-brand-brown/10 bg-brand-gray"
+                aria-label="Открыть фото отзыва"
+              >
+                <img :src="image.url" class="h-full w-full object-cover" alt="">
+              </a>
+            </div>
+            <div v-else class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-brand-brown/35">
+              <LucideImage :size="15" />
+              Без фотографий
             </div>
           </div>
-          <div class="p-4 bg-brand-gray/30 rounded-2xl">
-            <div class="text-[10px] uppercase font-black text-brand-brown/40 mb-1">Проект</div>
-            <div class="text-sm font-bold text-brand-brown">{{ rev.project_name || 'Общий отзыв' }}</div>
+
+          <div class="grid gap-2 sm:grid-cols-3 lg:w-44 lg:grid-cols-1">
+            <button
+              v-if="review.status !== 'approved'"
+              type="button"
+              @click="moderate(review.id, true)"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm font-bold text-green-700 transition-all hover:bg-green-600 hover:text-white"
+            >
+              <LucideCheckCircle :size="17" />
+              Опубликовать
+            </button>
+            <button
+              v-if="review.status !== 'rejected'"
+              type="button"
+              @click="moderate(review.id, false)"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-yellow-50 px-3 py-2 text-sm font-bold text-yellow-700 transition-all hover:bg-yellow-600 hover:text-white"
+            >
+              <LucideXCircle :size="17" />
+              Отклонить
+            </button>
+            <button
+              type="button"
+              @click="deleteReview(review.id)"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-bold text-red-700 transition-all hover:bg-red-600 hover:text-white"
+            >
+              <LucideTrash2 :size="17" />
+              Удалить
+            </button>
           </div>
         </div>
+      </article>
+    </section>
 
-        <!-- Content -->
-        <div class="flex-1 space-y-4">
-          <div class="flex items-center gap-4">
-            <div class="flex gap-0.5">
-              <LucideStar 
-                v-for="i in 5" :key="i"
-                :size="16"
-                :class="[ i <= rev.rating ? 'text-brand-gold fill-brand-gold' : 'text-brand-gray fill-brand-gray' ]"
-              />
-            </div>
-            <span class="text-xs text-brand-brown/30">{{ new Date(rev.created_at).toLocaleString() }}</span>
-          </div>
-          <p class="text-brand-brown/70 leading-relaxed italic">"{{ rev.comment }}"</p>
-          
-          <div v-if="rev.images?.length" class="flex gap-2">
-            <div v-for="img in rev.images" :key="img.url" class="w-16 h-16 rounded-lg overflow-hidden border border-brand-brown/5">
-              <img :src="img.url" class="w-full h-full object-cover">
-            </div>
-          </div>
-        </div>
+    <section
+      v-if="reviews.length === 0"
+      class="rounded-lg border border-dashed border-brand-brown/15 bg-white p-10 text-center text-brand-brown/35"
+    >
+      Отзывы не найдены
+    </section>
 
-        <!-- Actions -->
-        <div class="flex md:flex-col gap-3">
-          <button 
-            v-if="rev.status !== 'approved'"
-            @click="moderate(rev.id, true)"
-            class="p-3 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-all shadow-sm" title="Опубликовать"
-          >
-            <LucideCheckCircle :size="20" />
-          </button>
-          <button 
-            v-if="rev.status !== 'rejected'"
-            @click="moderate(rev.id, false)"
-            class="p-3 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition-all shadow-sm" title="Отклонить"
-          >
-            <LucideXCircle :size="20" />
-          </button>
-          <button 
-            @click="deleteReview(rev.id)"
-            class="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all shadow-sm" title="Удалить навсегда"
-          >
-            <LucideTrash2 :size="20" />
-          </button>
+    <section class="flex flex-col gap-3 rounded-lg border border-brand-brown/10 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <span class="text-sm text-brand-brown/50">
+        Показано {{ reviews.length }} из {{ total }} в текущем фильтре
+      </span>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          @click="currentPage--"
+          :disabled="currentPage === 1"
+          class="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-brown/10 bg-white text-brand-brown transition-colors hover:bg-brand-gray disabled:opacity-30"
+          aria-label="Предыдущая страница"
+        >
+          <LucideChevronLeft :size="20" />
+        </button>
+        <div class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-brand-brown px-3 text-sm font-bold text-white">
+          {{ currentPage }}
         </div>
+        <button
+          type="button"
+          @click="currentPage++"
+          :disabled="currentPage * limit >= total"
+          class="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-brown/10 bg-white text-brand-brown transition-colors hover:bg-brand-gray disabled:opacity-30"
+          aria-label="Следующая страница"
+        >
+          <LucideChevronRight :size="20" />
+        </button>
       </div>
-
-      <div v-if="reviews.length === 0" class="py-20 text-center bg-white rounded-3xl border border-dashed border-brand-brown/10 text-brand-brown/20 italic">
-        Отзывов не найдено
-      </div>
-
-      <!-- Pagination -->
-      <div class="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-brand-brown/5">
-        <span class="text-sm text-brand-brown/40">Показано {{ reviews.length }} из {{ total }} в текущем фильтре</span>
-        <div class="flex gap-2">
-          <button @click="currentPage--" :disabled="currentPage === 1" class="p-2 rounded-lg bg-brand-gray/50 disabled:opacity-30"><LucideChevronLeft :size="20"/></button>
-          <div class="px-4 py-2 bg-brand-brown text-white rounded-lg font-bold">{{ currentPage }}</div>
-          <button @click="currentPage++" :disabled="currentPage * limit >= total" class="p-2 rounded-lg bg-brand-gray/50 disabled:opacity-30"><LucideChevronRight :size="20"/></button>
-        </div>
-      </div>
-    </div>
+    </section>
   </div>
 </template>
