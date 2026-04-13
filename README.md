@@ -151,6 +151,7 @@ docker compose down -v
 | `TELEGRAM_CHAT_ID` | Нет | пусто | Chat ID, куда отправлять уведомления. |
 | `ORDER_LIMIT_ENABLED` | Нет | `true` | Включает серверные лимиты на отправку заявок. |
 | `POSTGRES_HOST_PORT` | Нет | `55432` | Host-порт PostgreSQL для локального доступа с машины разработчика. Внутри Docker backend использует `postgres:5432`. |
+| `PUBLIC_SITE_URL` | Нет | `https://rostmebel.shop` | Канонический публичный домен сайта для sitemap, robots.txt, canonical URL, Open Graph и JSON-LD. В production должен совпадать с реальным HTTPS-доменом. |
 | `OUTBOUND_PROXY_SCHEME` | Нет | `http` | Схема outbound-прокси: `http`, `https`, `socks5`, `socks5h`. |
 | `OUTBOUND_PROXY_HOST` | Нет | пусто | Host прокси. Если host или port пустые, прокси выключен. |
 | `OUTBOUND_PROXY_PORT` | Нет | пусто | Port прокси. |

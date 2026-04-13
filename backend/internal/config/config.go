@@ -21,6 +21,7 @@ type Config struct {
 	AdminUsername         string
 	AdminPassword         string
 	AllowedOrigins        []string
+	PublicSiteURL         string
 	TelegramToken         string
 	TelegramChatID        string
 	OrderLimitEnabled     bool
@@ -47,6 +48,7 @@ func Load() *Config {
 		AdminUsername:         getEnv("ADMIN_USERNAME", "admin"),
 		AdminPassword:         getEnv("ADMIN_PASSWORD", "admin"),
 		AllowedOrigins:        getListEnv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:80"),
+		PublicSiteURL:         strings.TrimRight(getEnv("PUBLIC_SITE_URL", "https://rostmebel.shop"), "/"),
 		TelegramToken:         getEnv("TELEGRAM_TOKEN", ""),
 		TelegramChatID:        getEnv("TELEGRAM_CHAT_ID", ""),
 		OrderLimitEnabled:     getEnv("ORDER_LIMIT_ENABLED", "true") == "true",

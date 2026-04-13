@@ -256,13 +256,15 @@ const getAreaPath = () => {
 
     </div>
 
-    <ProductModal 
-      v-if="isModalOpen" 
-      :product="editingProduct" 
-      :categories="productStore.categories"
-      @close="isModalOpen = false" 
-      @saved="handleSaved" 
-    />
+    <Transition name="admin-modal" appear>
+      <ProductModal
+        v-if="isModalOpen"
+        :product="editingProduct"
+        :categories="productStore.categories"
+        @close="isModalOpen = false"
+        @saved="handleSaved"
+      />
+    </Transition>
   </div>
 </template>
 

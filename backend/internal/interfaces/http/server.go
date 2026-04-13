@@ -39,6 +39,8 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 
 	r.Get("/healthz", hh.Liveness)
 	r.Get("/readyz", hh.Readiness)
+	r.Get("/robots.txt", ph.Robots)
+	r.Get("/sitemap.xml", ph.Sitemap)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import type { Component } from 'vue';
 import api from '@/api/client';
 import {
@@ -42,6 +42,7 @@ const confirmStore = useConfirmStore();
 
 const currentPage = ref(1);
 const limit = 10;
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit)));
 
 const statusOptions: StatusFilter[] = ['new', 'processing', 'done', 'rejected', 'spam', 'all'];
 
@@ -508,12 +509,12 @@ const runOrderAction = (order: Order, action: OrderAction) => {
           <LucideChevronLeft :size="20" />
         </button>
         <div class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-brand-brown px-3 text-sm font-bold text-white">
-          {{ currentPage }}
+          {{ currentPage }} / {{ totalPages }}
         </div>
         <button
           type="button"
           @click="currentPage++"
-          :disabled="currentPage * limit >= total"
+          :disabled="currentPage >= totalPages"
           class="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-brown/10 bg-white text-brand-brown transition-colors hover:bg-brand-gray disabled:opacity-30"
           aria-label="Следующая страница"
         >

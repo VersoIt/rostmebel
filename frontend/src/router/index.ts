@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { setPageSeo } from '@/utils/seo';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -26,8 +27,9 @@ const router = createRouter({
           name: 'home',
           component: () => import('@/pages/HomePage.vue'),
           meta: {
-            title: 'РОСТ Мебель — кухни и корпусная мебель по размеру',
-            description: 'Проектируем, производим и устанавливаем кухни, шкафы, гардеробные и корпусную мебель по Крыму.',
+            title: 'РОСТ Мебель — кухни и корпусная мебель по размеру в Крыму',
+            description: 'Кухни, шкафы, гардеробные и системы хранения по размеру: проект, производство, доставка и монтаж по Крыму.',
+            canonicalPath: '/',
           },
         },
         {
@@ -35,8 +37,9 @@ const router = createRouter({
           name: 'catalog',
           component: () => import('@/pages/CatalogPage.vue'),
           meta: {
-            title: 'Проекты — РОСТ Мебель',
-            description: 'Портфолио реализованных кухонь, шкафов и систем хранения с ценами, материалами и деталями.',
+            title: 'Проекты кухонь и корпусной мебели — РОСТ Мебель',
+            description: 'Портфолио реализованных кухонь, шкафов и систем хранения: фотографии, бюджеты, материалы и детали проектов.',
+            canonicalPath: '/catalog',
           },
         },
         {
@@ -45,7 +48,7 @@ const router = createRouter({
           component: () => import('@/pages/ProductPage.vue'),
           meta: {
             title: 'Детали проекта — РОСТ Мебель',
-            description: 'Описание реализованного проекта мебели на заказ: бюджет, материалы, детали и заявка на расчет.',
+            description: 'Карточка реализованного проекта мебели на заказ: фотографии, бюджет, материалы, детали и заявка на расчет.',
           },
         },
         {
@@ -54,7 +57,8 @@ const router = createRouter({
           component: () => import('@/pages/ContactPage.vue'),
           meta: {
             title: 'Контакты — РОСТ Мебель',
-            description: 'Свяжитесь с РОСТ Мебель для консультации, предварительного расчета или замера. Работаем по Крыму.',
+            description: 'Контакты РОСТ Мебель: консультация, предварительный расчет, замер, доставка и монтаж мебели по Крыму.',
+            canonicalPath: '/contact',
           },
         },
         {
@@ -64,6 +68,8 @@ const router = createRouter({
           meta: {
             title: 'Избранное — РОСТ Мебель',
             description: 'Сохраненные проекты мебели, к которым можно вернуться перед консультацией.',
+            canonicalPath: '/favorites',
+            robots: 'noindex,nofollow',
           },
         },
       ],
@@ -72,11 +78,12 @@ const router = createRouter({
       path: '/admin/login',
       name: 'admin-login',
       component: () => import('@/pages/admin/LoginPage.vue'),
+      meta: { robots: 'noindex,nofollow' },
     },
     {
       path: '/admin',
       component: () => import('@/layouts/AdminLayout.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, robots: 'noindex,nofollow' },
       children: [
         { path: '', name: 'admin', component: () => import('@/pages/admin/DashboardPage.vue') },
         { path: 'projects', name: 'admin-projects', component: () => import('@/pages/admin/ProjectsPage.vue') },
@@ -104,21 +111,12 @@ router.beforeEach((to, _from, next) => {
 });
 
 router.afterEach((to) => {
-  const defaultTitle = 'РОСТ Мебель — кухни и корпусная мебель по размеру';
-  const title = (to.meta.title as string) || defaultTitle;
-  const description = (to.meta.description as string) || '';
-
-  document.title = title;
-
-  const metaDesc = document.querySelector('meta[name="description"]');
-  if (metaDesc) {
-    metaDesc.setAttribute('content', description);
-  } else {
-    const meta = document.createElement('meta');
-    meta.name = 'description';
-    meta.content = description;
-    document.head.appendChild(meta);
-  }
+  setPageSeo({
+    title: to.meta.title as string | undefined,
+    description: to.meta.description as string | undefined,
+    path: (to.meta.canonicalPath as string | undefined) || to.path,
+    robots: (to.meta.robots as string | undefined) || 'index,follow',
+  });
 });
 
 export default router;

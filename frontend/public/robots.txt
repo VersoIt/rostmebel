@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/*
 
-Sitemap: https://rostmebel.ru/sitemap.xml
+Sitemap: https://rostmebel.shop/sitemap.xml

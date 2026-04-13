@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -18,12 +20,103 @@ import (
 )
 
 type ProductHandler struct {
-	useCase   *product.UseCase
-	aiUseCase *product.AIUseCase
+	useCase       *product.UseCase
+	aiUseCase     *product.AIUseCase
+	publicSiteURL string
 }
 
-func NewProductHandler(useCase *product.UseCase, aiUseCase *product.AIUseCase) *ProductHandler {
-	return &ProductHandler{useCase: useCase, aiUseCase: aiUseCase}
+func NewProductHandler(useCase *product.UseCase, aiUseCase *product.AIUseCase, publicSiteURL string) *ProductHandler {
+	return &ProductHandler{
+		useCase:       useCase,
+		aiUseCase:     aiUseCase,
+		publicSiteURL: strings.TrimRight(publicSiteURL, "/"),
+	}
+}
+
+type sitemapURLSet struct {
+	XMLName xml.Name     `xml:"urlset"`
+	Xmlns   string       `xml:"xmlns,attr"`
+	URLs    []sitemapURL `xml:"url"`
+}
+
+type sitemapURL struct {
+	Loc        string `xml:"loc"`
+	LastMod    string `xml:"lastmod,omitempty"`
+	ChangeFreq string `xml:"changefreq,omitempty"`
+	Priority   string `xml:"priority,omitempty"`
+}
+
+func (h *ProductHandler) Robots(w http.ResponseWriter, r *http.Request) {
+	baseURL := h.siteURL(r)
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	_, _ = fmt.Fprintf(w, "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\n\nSitemap: %s/sitemap.xml\n", baseURL)
+}
+
+func (h *ProductHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
+	status := domProduct.StatusPublished
+	projects, _, err := h.useCase.ListProjects(r.Context(), domProduct.ListFilter{
+		Status:    &status,
+		Limit:     10000,
+		SortBy:    "updated_at",
+		SortOrder: "DESC",
+	})
+	if err != nil {
+		respondWithError(w, err)
+		return
+	}
+
+	baseURL := h.siteURL(r)
+	today := time.Now().UTC().Format("2006-01-02")
+	urls := []sitemapURL{
+		{Loc: baseURL + "/", LastMod: today, ChangeFreq: "weekly", Priority: "1.0"},
+		{Loc: baseURL + "/catalog", LastMod: today, ChangeFreq: "weekly", Priority: "0.8"},
+		{Loc: baseURL + "/contact", LastMod: today, ChangeFreq: "monthly", Priority: "0.6"},
+	}
+
+	for _, project := range projects {
+		path := fmt.Sprintf("/product/%d", project.ID)
+		if project.Slug != "" {
+			path = "/product/" + project.Slug
+		}
+
+		lastMod := project.UpdatedAt.UTC().Format("2006-01-02")
+		if project.UpdatedAt.IsZero() {
+			lastMod = today
+		}
+
+		urls = append(urls, sitemapURL{
+			Loc:        baseURL + path,
+			LastMod:    lastMod,
+			ChangeFreq: "monthly",
+			Priority:   "0.7",
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(xml.Header))
+	_ = xml.NewEncoder(w).Encode(sitemapURLSet{
+		Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
+		URLs:  urls,
+	})
+}
+
+func (h *ProductHandler) siteURL(r *http.Request) string {
+	if h.publicSiteURL != "" {
+		return h.publicSiteURL
+	}
+
+	scheme := r.Header.Get("X-Forwarded-Proto")
+	if scheme == "" {
+		scheme = "https"
+	}
+
+	host := r.Host
+	if forwardedHost := r.Header.Get("X-Forwarded-Host"); forwardedHost != "" {
+		host = forwardedHost
+	}
+
+	return strings.TrimRight(scheme+"://"+host, "/")
 }
 
 func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {

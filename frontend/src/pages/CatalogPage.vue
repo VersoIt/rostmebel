@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/products';
 import ProductCard from '@/components/catalog/ProductCard.vue';
 import { LucideArrowRight, LucideFilterX, LucideLoader2, LucideSearch } from 'lucide-vue-next';
+import { absoluteUrl, removeJsonLd, setJsonLd } from '@/utils/seo';
 
 const productStore = useProductStore();
 const route = useRoute();
@@ -11,6 +12,24 @@ const router = useRouter();
 
 const selectedCategory = ref(route.query.category?.toString() || '');
 const searchQuery = ref('');
+
+const updateCatalogSchema = () => {
+  setJsonLd('schema-catalog', {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Проекты кухонь и корпусной мебели',
+    url: absoluteUrl('/catalog'),
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: productStore.products.map((product, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: absoluteUrl(`/product/${product.slug || product.id}`),
+        name: product.name,
+      })),
+    },
+  });
+};
 
 const fetch = async () => {
   const params: Record<string, string | number> = { status: 'published' };
@@ -25,11 +44,16 @@ const fetch = async () => {
   }
 
   await productStore.fetchProducts(params);
+  updateCatalogSchema();
 };
 
 onMounted(async () => {
   await productStore.fetchCategories();
   await fetch();
+});
+
+onUnmounted(() => {
+  removeJsonLd('schema-catalog');
 });
 
 const selectCategory = async (slug: string) => {

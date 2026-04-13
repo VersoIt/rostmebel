@@ -16,6 +16,7 @@ import {
   LucideTruck,
 } from 'lucide-vue-next';
 import type { Product } from '@/types';
+import { buildBusinessSchema, removeJsonLd, setJsonLd } from '@/utils/seo';
 
 const productStore = useProductStore();
 const hits = ref<Product[]>([]);
@@ -84,6 +85,8 @@ const process = [
 ];
 
 onMounted(async () => {
+  setJsonLd('schema-business', buildBusinessSchema());
+
   await productStore.fetchProducts({
     limit: 6,
     sort_by: 'views_count',
@@ -99,6 +102,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (heroInterval) window.clearInterval(heroInterval);
+  removeJsonLd('schema-business');
 });
 </script>
 

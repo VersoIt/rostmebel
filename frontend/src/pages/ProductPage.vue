@@ -18,6 +18,7 @@ import ReviewForm from '@/components/catalog/ReviewForm.vue';
 import ReviewList from '@/components/catalog/ReviewList.vue';
 import type { Product } from '@/types';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
+import { absoluteUrl, compactDescription, removeJsonLd, setJsonLd, setPageSeo } from '@/utils/seo';
 
 const route = useRoute();
 const router = useRouter();
@@ -40,15 +41,29 @@ const openLightbox = (url: string) => {
 };
 
 const updateSchema = (item: Product) => {
+  const productPath = `/product/${item.slug || item.id}`;
+  const categoryName = productStore.categories.find((category) => category.id === item.project_category_id)?.name || 'Мебель по размеру';
+  const image = item.images[0]?.url || PLACEHOLDER_IMAGE;
+
+  setPageSeo({
+    title: `${item.name} — РОСТ Мебель`,
+    description: compactDescription(item.description || `Проект ${item.name}: фотографии, бюджет, материалы и заявка на расчет.`),
+    path: productPath,
+    image,
+    imageAlt: item.name,
+    type: 'product',
+  });
+
   const schema = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
     name: item.name,
-    image: item.images.map((image) => image.url),
+    image: (item.images.length ? item.images : [{ url: PLACEHOLDER_IMAGE }]).map((imageItem) => absoluteUrl(imageItem.url)),
     description: item.description,
+    category: categoryName,
     offers: {
       '@type': 'Offer',
-      url: window.location.href,
+      url: absoluteUrl(productPath),
       priceCurrency: 'RUB',
       price: item.price,
       availability: 'https://schema.org/InStock',
@@ -56,26 +71,44 @@ const updateSchema = (item: Product) => {
     },
   };
 
-  const scriptId = 'schema-product';
-  let script = document.getElementById(scriptId) as HTMLScriptElement;
-  if (!script) {
-    script = document.createElement('script');
-    script.id = scriptId;
-    script.type = 'application/ld+json';
-    document.head.appendChild(script);
-  }
-  script.textContent = JSON.stringify(schema);
+  setJsonLd('schema-product', schema);
+  setJsonLd('schema-product-breadcrumbs', {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Главная',
+        item: absoluteUrl('/'),
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Проекты',
+        item: absoluteUrl('/catalog'),
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: item.name,
+        item: absoluteUrl(productPath),
+      },
+    ],
+  });
 };
 
 const loadProjectData = async () => {
   const id = route.params.id as string;
+  if (!productStore.categories.length) {
+    await productStore.fetchCategories();
+  }
   const loadedProduct = await productStore.fetchProduct(id);
 
   if (loadedProduct) {
     product.value = loadedProduct;
     activeImage.value = loadedProduct.images[0]?.url || PLACEHOLDER_IMAGE;
     updateSchema(loadedProduct);
-    document.title = `${loadedProduct.name} — РОСТ Мебель`;
 
     await productStore.fetchProducts({
       project_category_id: loadedProduct.project_category_id,
@@ -92,7 +125,8 @@ watch(() => route.params.id, loadProjectData);
 onMounted(loadProjectData);
 
 onUnmounted(() => {
-  document.getElementById('schema-product')?.remove();
+  removeJsonLd('schema-product');
+  removeJsonLd('schema-product-breadcrumbs');
 });
 
 const formatPrice = (price: number) => {

@@ -16,6 +16,8 @@ const { toggleFavorite, isFavorite } = useFavorites();
 const isQuickViewOpen = ref(false);
 const activeSlideIdx = ref(0);
 const slideDirection = ref<'next' | 'prev'>('next');
+const touchStartX = ref(0);
+const touchStartY = ref(0);
 
 const imageCount = () => props.product.images.length;
 
@@ -30,6 +32,30 @@ const prevSlide = () => {
   if (imageCount() > 1) {
     slideDirection.value = 'prev';
     activeSlideIdx.value = (activeSlideIdx.value - 1 + imageCount()) % imageCount();
+  }
+};
+
+const handleTouchStart = (event: TouchEvent) => {
+  if (imageCount() < 2) return;
+  const touch = event.changedTouches[0];
+  touchStartX.value = touch.clientX;
+  touchStartY.value = touch.clientY;
+};
+
+const handleTouchEnd = (event: TouchEvent) => {
+  if (imageCount() < 2) return;
+  const touch = event.changedTouches[0];
+  const deltaX = touch.clientX - touchStartX.value;
+  const deltaY = touch.clientY - touchStartY.value;
+
+  if (Math.abs(deltaX) < 44 || Math.abs(deltaX) < Math.abs(deltaY) * 1.15) {
+    return;
+  }
+
+  if (deltaX < 0) {
+    nextSlide();
+  } else {
+    prevSlide();
   }
 };
 
@@ -113,7 +139,11 @@ const formatPrice = (price: number) => {
 
           <section class="ui-modal-panel z-10 max-w-6xl overflow-hidden bg-white">
             <div class="grid grid-cols-1 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_340px]">
-              <div class="relative aspect-[4/3] min-h-[320px] overflow-hidden bg-brand-gray sm:aspect-video lg:aspect-auto lg:min-h-[560px]">
+              <div
+                class="relative aspect-[4/3] min-h-[320px] touch-pan-y overflow-hidden bg-brand-gray sm:aspect-video lg:aspect-auto lg:min-h-[560px]"
+                @touchstart.passive="handleTouchStart"
+                @touchend.passive="handleTouchEnd"
+              >
                 <transition :name="slideDirection === 'next' ? 'slide-next' : 'slide-prev'">
                   <img
                     :key="activeSlideIdx"

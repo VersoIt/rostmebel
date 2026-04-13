@@ -259,9 +259,9 @@ const projectStatuses: ProjectStatus[] = ['published', 'draft', 'archived'];
 </script>
 
 <template>
-  <div class="fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4">
+  <div class="admin-modal-root fixed inset-0 z-[220] flex items-center justify-center p-2 sm:p-4">
     <div class="absolute inset-0 bg-brand-brown/80 backdrop-blur-sm" @click="emit('close')"></div>
-    <div class="relative flex max-h-[calc(100vh-1rem)] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl sm:max-h-[90vh]">
+    <div class="admin-modal-panel relative flex max-h-[calc(100vh-1rem)] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl sm:max-h-[90vh]">
       <header class="flex shrink-0 items-center justify-between gap-4 border-b border-brand-brown/10 p-4 sm:p-6">
         <div>
           <p class="text-xs font-black uppercase text-brand-gold">Каталог</p>

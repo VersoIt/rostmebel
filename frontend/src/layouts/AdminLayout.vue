@@ -117,7 +117,7 @@ const logout = () => {
       </div>
     </header>
 
-    <main class="min-h-screen px-4 pb-28 pt-6 sm:px-6 lg:ml-72 lg:p-10 xl:p-12">
+    <main class="min-h-screen px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 lg:ml-72 lg:p-10 xl:p-12">
       <router-view />
     </main>
 

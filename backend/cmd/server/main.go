@@ -110,7 +110,7 @@ func main() {
 	reviewUC := review.NewUseCase(reviewRepo, orderRepo)
 
 	// Handlers
-	ph := handler.NewProductHandler(productUC, aiUC)
+	ph := handler.NewProductHandler(productUC, aiUC, cfg.PublicSiteURL)
 	oh := handler.NewOrderHandler(orderUC)
 	ah := handler.NewAdminHandler(adminUC)
 	rh := handler.NewReviewHandler(reviewUC)
