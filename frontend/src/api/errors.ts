@@ -35,7 +35,7 @@ const messages: Record<string, string> = {
   PROJECT_NOT_FOUND: 'Проект не найден или был снят с публикации.',
   UPLOAD_FILE_MISSING: 'Выберите изображение для загрузки.',
   UPLOAD_INVALID_TYPE: 'Загрузите изображение в формате JPG, PNG, WebP или GIF.',
-  ORDER_IP_BLOCKED: 'Заявки с этого адреса временно ограничены. Напишите нам напрямую в WhatsApp или Telegram.',
+  ORDER_IP_BLOCKED: 'Заявки с этого адреса временно ограничены. Напишите нам напрямую в WhatsApp, Telegram или MAX.',
   ORDER_RATE_LIMITED: 'Слишком много заявок за сутки. Напишите нам напрямую или попробуйте позже.',
   ORDER_NOT_FOUND: 'Заявка не найдена. Обновите список и попробуйте еще раз.',
   REVIEW_INVALID_PHONE: 'Укажите корректный номер телефона.',

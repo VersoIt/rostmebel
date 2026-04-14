@@ -20,6 +20,7 @@ import { useNotificationStore } from '@/stores/notifications';
 import { useConfirmStore } from '@/stores/confirm';
 import { getApiErrorMessage } from '@/api/errors';
 import { downloadFile } from '@/utils/download';
+import { contactMethodLabels } from '@/utils/orderOptions';
 
 type StatusFilter = OrderStatus | 'all';
 
@@ -54,19 +55,12 @@ const statusMap: Record<OrderStatus, string> = {
   spam: 'Спам',
 };
 
-const contactMethodMap: Record<string, string> = {
-  phone: 'Звонок',
-  whatsapp: 'WhatsApp',
-  telegram: 'Telegram',
-  email: 'Email',
-};
-
 const briefItems = (order: Order) => {
   return [
     order.project_type,
     order.budget_range,
     order.city,
-    contactMethodMap[order.contact_method] || order.contact_method,
+    contactMethodLabels[order.contact_method] || order.contact_method,
   ].filter(Boolean);
 };
 
@@ -448,7 +442,7 @@ const runOrderAction = (order: Order, action: OrderAction) => {
                 </a>
                 <div class="text-xs text-brand-brown/45">{{ order.client_email || 'email не указан' }}</div>
                 <div v-if="order.contact_method" class="mt-1 text-[10px] font-black uppercase tracking-widest text-brand-gold">
-                  {{ contactMethodMap[order.contact_method] || order.contact_method }}
+                  {{ contactMethodLabels[order.contact_method] || order.contact_method }}
                 </div>
               </td>
 

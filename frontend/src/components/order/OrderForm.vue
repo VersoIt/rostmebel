@@ -2,6 +2,8 @@
 import { ref } from 'vue';
 import api from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
+import { budgetOptions, contactOptions, projectTypeOptions } from '@/utils/orderOptions';
+import { formatRussianPhone } from '@/utils/phone';
 import { LucideCheck, LucideSend } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -9,29 +11,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['success']);
-
-const projectTypeOptions = [
-  'Кухня',
-  'Шкаф или гардеробная',
-  'Мебель для всей квартиры',
-  'Коммерческий объект',
-  'Пока не знаю',
-];
-
-const budgetOptions = [
-  'До 200 000 ₽',
-  '200 000-400 000 ₽',
-  '400 000-700 000 ₽',
-  'От 700 000 ₽',
-  'Нужен расчет',
-];
-
-const contactOptions = [
-  { value: 'phone', label: 'Звонок' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'telegram', label: 'Telegram' },
-  { value: 'email', label: 'Email' },
-];
 
 const form = ref({
   client_name: '',
@@ -51,17 +30,7 @@ const error = ref('');
 
 const formatPhone = (event: Event) => {
   const target = event.target as HTMLInputElement;
-  let input = target.value.replace(/\D/g, '');
-  if (input.startsWith('7')) input = input.substring(1);
-  if (input.startsWith('8')) input = input.substring(1);
-
-  let formatted = '+7 ';
-  if (input.length > 0) formatted += `(${input.substring(0, 3)}`;
-  if (input.length >= 4) formatted += `) ${input.substring(3, 6)}`;
-  if (input.length >= 7) formatted += `-${input.substring(6, 8)}`;
-  if (input.length >= 9) formatted += `-${input.substring(8, 10)}`;
-
-  form.value.client_phone = formatted.substring(0, 18);
+  form.value.client_phone = formatRussianPhone(target.value);
 };
 
 const handleSubmit = async () => {
@@ -182,7 +151,7 @@ const handleSubmit = async () => {
           v-model="form.comment"
           rows="3"
           class="ui-input"
-          placeholder="Размеры, сроки, адрес объекта, что важно учесть"
+          placeholder="Размеры, сроки, адрес объекта, нужна ли техника для кухни"
         ></textarea>
       </div>
 

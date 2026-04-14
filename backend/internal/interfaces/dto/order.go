@@ -15,7 +15,7 @@ type CreateOrderRequest struct {
 	ProjectType   string `json:"project_type" validate:"omitempty,max=80"`
 	BudgetRange   string `json:"budget_range" validate:"omitempty,max=80"`
 	City          string `json:"city" validate:"omitempty,max=120"`
-	ContactMethod string `json:"contact_method" validate:"omitempty,oneof=phone whatsapp telegram email"`
+	ContactMethod string `json:"contact_method" validate:"omitempty,oneof=phone whatsapp telegram max email"`
 	Fingerprint   string `json:"fingerprint"`
 	Website       string `json:"website"` // Honeypot
 }

@@ -10,8 +10,17 @@ test.describe('public site smoke', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /Кухни и корпусная мебель/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Кухни и мебель по размеру/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Посмотреть проекты/i })).toBeVisible();
+    await expect(page.getByText(/Расчет за минуту/i).first()).toBeVisible();
+
+    const quickActions = page.getByRole('navigation', { name: /Быстрые действия/i });
+    if (testInfo.project.name === 'mobile') {
+      await expect(quickActions).toBeVisible();
+      await expect(quickActions.getByRole('link', { name: /Расчет/i })).toBeVisible();
+    } else {
+      await expect(quickActions).toBeHidden();
+    }
 
     const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     expect(hasHorizontalOverflow).toBe(false);
@@ -24,7 +33,14 @@ test.describe('public site smoke', () => {
     await page.goto('/contact');
 
     await expect(page.getByRole('heading', { name: /Обсудим мебель/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Получить консультацию/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Рассчитать проект/i })).toBeVisible();
+    await expect(page.getByText(/Расчет за минуту/i)).toBeVisible();
+
+    await page.getByRole('button', { name: /Дальше/i }).click();
+    await page.getByRole('button', { name: /Нужен расчет/i }).click();
+    await page.getByRole('button', { name: /Дальше/i }).click();
+    await expect(page.getByLabel(/Город или район/i)).toBeVisible();
+    await page.getByRole('button', { name: /Дальше/i }).click();
     await expect(page.getByLabel(/Имя/i)).toBeVisible();
     await expect(page.getByLabel(/Телефон/i)).toBeVisible();
 

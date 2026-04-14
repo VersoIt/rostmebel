@@ -3,17 +3,12 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useProductStore } from '@/stores/products';
 import AISearchPanel from '@/components/ai/AISearchPanel.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
+import QuoteQuiz from '@/components/order/QuoteQuiz.vue';
 import {
   LucideArrowRight,
   LucideCheckCircle2,
-  LucideHammer,
-  LucideLayers,
   LucideMapPin,
-  LucideMessageSquare,
-  LucidePenTool,
-  LucideRuler,
   LucideShieldCheck,
-  LucideTruck,
 } from 'lucide-vue-next';
 import type { Product } from '@/types';
 import { buildBusinessSchema, removeJsonLd, setJsonLd } from '@/utils/seo';
@@ -31,64 +26,32 @@ const currentHeroIndex = ref(0);
 let heroInterval: number | undefined;
 
 const proof = [
-  { value: '15+', label: 'лет делаем корпусную мебель' },
+  { value: '15+', label: 'лет в мебели' },
   { value: '2 года', label: 'гарантия по договору' },
-  { value: 'Крым', label: 'замер, доставка и монтаж' },
+  { value: '1 смета', label: 'мебель, техника, монтаж' },
 ];
 
-const services = [
-  {
-    icon: LucideRuler,
-    title: 'Замер без догадок',
-    text: 'Проверяем стены, углы, выводы воды, розетки и технику до сметы, чтобы проект не пришлось переделывать на монтаже.',
-  },
-  {
-    icon: LucidePenTool,
-    title: 'Проект и смета',
-    text: 'Фиксируем материалы, фурнитуру, наполнение, сроки и состав работ до запуска производства.',
-  },
-  {
-    icon: LucideHammer,
-    title: 'Собственное производство',
-    text: 'Делаем кухни, шкафы, гардеробные и мебель для всего объекта без лишних посредников.',
-  },
-  {
-    icon: LucideTruck,
-    title: 'Монтаж под ключ',
-    text: 'Привозим, собираем, регулируем фасады и сдаем мебель в рабочем состоянии.',
-  },
+const highlights = [
+  'Смета до запуска',
+  'Карты розеток и выводов',
+  'Подбор техники',
+  'Производство и монтаж',
 ];
 
-const scopes = [
-  {
-    title: 'Кухни',
-    text: 'Планировка, фасады, столешница, фурнитура, подсветка, техника и монтаж в одной смете.',
-    items: ['3D-проект', 'карта розеток', 'сборка и регулировка'],
-  },
-  {
-    title: 'Системы хранения',
-    text: 'Шкафы, гардеробные, прихожие и постирочные под реальные вещи, проходы и привычки семьи.',
-    items: ['наполнение', 'раздвижные системы', 'защита стен и пола'],
-  },
-  {
-    title: 'Мебель для объекта',
-    text: 'Комплектуем квартиру, дом или коммерческое помещение в едином стиле и бюджете.',
-    items: ['единый менеджер', 'график поставок', 'контроль качества'],
-  },
-];
-
-const process = [
-  { title: 'Бриф', text: 'Уточняем задачу, бюджет, технику, сроки и сценарии хранения.' },
-  { title: 'Замер', text: 'Снимаем размеры, проверяем ограничения и готовим техническую основу.' },
-  { title: 'Производство', text: 'Согласованный проект уходит в цех, закупку и контроль комплектации.' },
-  { title: 'Монтаж', text: 'Устанавливаем, регулируем фурнитуру и сдаем готовый результат.' },
+const applianceItems = [
+  'варочные поверхности',
+  'духовые шкафы',
+  'вытяжки',
+  'посудомоечные машины',
+  'холодильники',
+  'мойки и смесители',
 ];
 
 onMounted(async () => {
   setJsonLd('schema-business', buildBusinessSchema());
 
   await productStore.fetchProducts({
-    limit: 6,
+    limit: 3,
     sort_by: 'views_count',
     sort_order: 'desc',
     status: 'published',
@@ -108,7 +71,7 @@ onUnmounted(() => {
 
 <template>
   <div class="bg-brand-cream text-brand-brown">
-    <section class="relative flex min-h-[calc(100svh-96px)] items-end overflow-hidden bg-neutral-950 pb-12 pt-28">
+    <section class="relative flex min-h-[86svh] items-end overflow-hidden bg-neutral-950 pb-10 pt-28 lg:pb-12">
       <div class="absolute inset-0">
         <div
           v-for="(img, idx) in heroImages"
@@ -118,23 +81,23 @@ onUnmounted(() => {
         >
           <img :src="img" class="h-full w-full object-cover" alt="Кухня и корпусная мебель РОСТ Мебель">
         </div>
-        <div class="absolute inset-0 bg-gradient-to-r from-black/78 via-black/42 to-black/10"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/48 to-black/18"></div>
         <div class="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-brand-cream to-transparent"></div>
       </div>
 
       <div class="ui-container relative z-10">
-        <div class="max-w-3xl text-white motion-fade-up">
-          <div class="mb-5 inline-flex items-center gap-2 rounded-lg border border-white/20 bg-black/22 px-3 py-2 text-sm">
+        <div class="max-w-4xl text-white motion-fade-up">
+          <div class="mb-5 inline-flex items-center gap-2 rounded-lg border border-white/20 bg-black/22 px-3 py-2 text-sm backdrop-blur">
             <LucideMapPin :size="16" class="text-brand-gold" />
             Работаем по Крыму: замер, доставка, монтаж
           </div>
 
-          <h1 class="font-serif text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          <h1 class="max-w-3xl font-serif text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
             Кухни и корпусная мебель по размеру
           </h1>
 
           <p class="mt-5 max-w-2xl text-lg leading-8 text-white/82">
-            Проектируем, производим и устанавливаем мебель без разрыва между красивой картинкой и реальным монтажом. Смета, материалы и сроки фиксируются до запуска.
+            Проект, производство, техника и установка в одной понятной смете. Сразу проверяем размеры, розетки, материалы и сроки.
           </p>
 
           <div class="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -142,37 +105,38 @@ onUnmounted(() => {
               Посмотреть проекты
               <LucideArrowRight :size="18" />
             </router-link>
-            <router-link to="/contact" class="ui-button border border-white/30 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
+            <a href="#quote-quiz" class="ui-button border border-white/30 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
               Получить расчет
-            </router-link>
+            </a>
           </div>
         </div>
 
-        <div class="mt-10 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-          <div v-for="item in proof" :key="item.label" class="rounded-lg border border-white/14 bg-black/24 p-4 text-white backdrop-blur">
-            <div class="font-serif text-3xl">{{ item.value }}</div>
-            <div class="mt-1 text-sm text-white/70">{{ item.label }}</div>
+        <div class="mt-9 grid max-w-4xl grid-cols-3 gap-2 sm:gap-3">
+          <div v-for="item in proof" :key="item.label" class="rounded-lg border border-white/14 bg-black/24 p-3 text-white backdrop-blur sm:p-4">
+            <div class="font-serif text-2xl leading-none sm:text-3xl">{{ item.value }}</div>
+            <div class="mt-2 text-xs leading-4 text-white/70 sm:text-sm">{{ item.label }}</div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="ui-section-tight">
-      <div class="ui-container grid grid-cols-1 gap-4 md:grid-cols-4">
-        <article v-for="service in services" :key="service.title" class="ui-card ui-card-hover p-5 motion-fade-up">
-          <component :is="service.icon" class="mb-5 text-brand-gold" :size="28" />
-          <h2 class="ui-title-md">{{ service.title }}</h2>
-          <p class="ui-copy mt-3">{{ service.text }}</p>
-        </article>
+    <section class="border-b border-brand-brown/10 bg-white">
+      <div class="ui-container grid grid-cols-1 gap-3 py-7 sm:grid-cols-2 lg:grid-cols-4">
+        <div v-for="item in highlights" :key="item" class="flex items-center gap-3 text-sm font-bold text-brand-brown">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gold/10 text-brand-gold">
+            <LucideCheckCircle2 :size="17" />
+          </span>
+          {{ item }}
+        </div>
       </div>
     </section>
 
     <section id="projects-grid" class="ui-section">
       <div class="ui-container">
-        <div class="mb-9 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div class="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p class="ui-eyebrow mb-3">Портфолио</p>
-            <h2 class="ui-title-lg">Проекты, которые уже собраны и работают</h2>
+            <h2 class="ui-title-lg">Несколько проектов, чтобы быстро понять уровень</h2>
           </div>
           <router-link to="/catalog" class="ui-button ui-button-secondary">
             Все проекты
@@ -180,8 +144,8 @@ onUnmounted(() => {
           </router-link>
         </div>
 
-        <div v-if="hits.length" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <ProductCard v-for="product in hits.slice(0, 6)" :key="product.id" :product="product" />
+        <div v-if="hits.length" class="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <ProductCard v-for="product in hits" :key="product.id" :product="product" />
         </div>
         <div v-else class="ui-empty">
           Проекты появятся после публикации в админке.
@@ -190,88 +154,74 @@ onUnmounted(() => {
     </section>
 
     <section class="bg-white">
-      <div class="ui-container ui-section grid grid-cols-1 gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+      <div class="ui-container grid grid-cols-1 gap-8 py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <div>
-          <p class="ui-eyebrow mb-3">Под ключ</p>
-          <h2 class="ui-title-lg">Понятный состав работ вместо общих обещаний</h2>
-          <p class="ui-copy-lg mt-5">
-            Сразу собираем состав проекта, зоны ответственности и точки контроля, чтобы смета не расползалась после запуска.
+          <p class="ui-eyebrow mb-3">Техника для кухни</p>
+          <h2 class="ui-title-lg">Комплектуем кухню техникой сразу в проекте</h2>
+          <p class="ui-copy-lg mt-4">
+            Подбираем технику вместе с мебелью, чтобы размеры, розетки, вентиляция, фасады и посадочные места сошлись до запуска производства.
           </p>
+          <a href="#quote-quiz" class="ui-button ui-button-primary mt-6">
+            Посчитать кухню
+            <LucideArrowRight :size="18" />
+          </a>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <article v-for="scope in scopes" :key="scope.title" class="ui-card p-5">
-            <LucideLayers class="mb-5 text-brand-gold" :size="28" />
-            <h3 class="ui-title-md">{{ scope.title }}</h3>
-            <p class="ui-copy mt-3">{{ scope.text }}</p>
-            <ul class="mt-5 space-y-3">
-              <li v-for="item in scope.items" :key="item" class="flex items-center gap-2 text-sm font-semibold text-brand-brown/78">
-                <LucideCheckCircle2 :size="16" class="text-brand-gold" />
-                {{ item }}
-              </li>
-            </ul>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="ui-section">
-      <div class="ui-container grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1fr] lg:items-center">
-        <div class="grid grid-cols-2 gap-3">
-          <img src="/assets/images/hero-2.jpg" class="aspect-[4/5] w-full rounded-lg object-cover" alt="Проект кухни с деревянными фасадами">
-          <img src="/assets/images/interior-1.jpg" class="mt-8 aspect-[4/5] w-full rounded-lg object-cover" alt="Интерьер с корпусной мебелью">
-        </div>
-
-        <div>
-          <p class="ui-eyebrow mb-3">Процесс</p>
-          <h2 class="ui-title-lg">Четыре шага, где каждый следующий опирается на проверенные данные</h2>
-          <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <article v-for="(step, idx) in process" :key="step.title" class="ui-card p-5">
-              <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-brown font-bold text-white">
-                {{ idx + 1 }}
-              </div>
-              <h3 class="ui-title-md">{{ step.title }}</h3>
-              <p class="ui-copy mt-3">{{ step.text }}</p>
-            </article>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-[0.8fr_1fr]">
+          <img src="/assets/images/tech-drawing.jpg" class="h-full min-h-64 rounded-lg object-cover" alt="Технический проект кухни">
+          <div class="grid content-center gap-2">
+            <div
+              v-for="item in applianceItems"
+              :key="item"
+              class="flex items-center gap-3 border-b border-brand-brown/10 py-3 text-sm font-semibold text-brand-brown/75"
+            >
+              <LucideCheckCircle2 :size="18" class="text-brand-gold" />
+              {{ item }}
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <section id="ai-search" class="bg-white">
-      <div class="ui-container ui-section">
-        <div class="mx-auto mb-9 max-w-3xl text-center">
-          <p class="ui-eyebrow mb-3">Подбор по описанию</p>
-          <h2 class="ui-title-lg">Опишите задачу обычными словами</h2>
+      <div class="ui-container grid grid-cols-1 gap-8 py-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+        <div>
+          <p class="ui-eyebrow mb-3">Быстрый подбор</p>
+          <h2 class="ui-title-lg">Не хочется листать каталог?</h2>
           <p class="ui-copy-lg mt-4">
-            Например: светлая кухня с техникой, высокий шкаф под хранение, бюджет до 250 000 ₽.
+            Опишите задачу одной фразой. Например: светлая кухня с техникой до 250 000 ₽.
           </p>
         </div>
         <AISearchPanel />
       </div>
     </section>
 
-    <section class="ui-section">
+    <section id="quote-quiz" class="scroll-mt-28 py-10 sm:py-12">
       <div class="ui-container">
-        <div class="grid grid-cols-1 gap-8 rounded-lg bg-brand-brown p-6 text-white md:grid-cols-[1fr_auto] md:items-center lg:p-8">
-          <div>
+        <div class="grid grid-cols-1 gap-7 rounded-lg bg-brand-brown p-5 text-white lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:p-8">
+          <div class="lg:pr-4">
             <div class="mb-4 flex items-center gap-3 text-brand-gold">
               <LucideShieldCheck :size="22" />
-              <span class="font-semibold">Посчитаем ваш объект</span>
+              <span class="font-semibold">Посчитаем без долгих созвонов</span>
             </div>
-            <h2 class="font-serif text-3xl font-bold leading-tight sm:text-4xl">Пришлите планировку или вызовите замерщика</h2>
+            <h2 class="font-serif text-3xl font-bold leading-tight sm:text-4xl">Ответьте на 4 вопроса и получите следующий шаг по проекту</h2>
             <p class="mt-4 max-w-2xl leading-8 text-white/72">
-              Подскажем реалистичный бюджет, сроки и слабые места планировки до того, как вы вложитесь в материалы.
+              Подскажем реалистичный бюджет, сроки и слабые места планировки до того, как вы вложитесь в материалы, технику и ремонт.
             </p>
-          </div>
-          <div class="flex flex-col gap-3 sm:flex-row md:flex-col">
-            <router-link to="/contact" class="ui-button ui-button-accent">
-              <LucideMessageSquare :size="18" />
-              Оставить заявку
-            </router-link>
-            <a href="tel:+79787631603" class="ui-button border border-white/20 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
-              Позвонить
+
+            <div class="mt-6 grid gap-3 text-sm font-semibold text-white/72 sm:grid-cols-3">
+              <div class="rounded-lg border border-white/10 bg-white/5 p-3">Размеры и техника</div>
+              <div class="rounded-lg border border-white/10 bg-white/5 p-3">Бюджет и сроки</div>
+              <div class="rounded-lg border border-white/10 bg-white/5 p-3">Замер по Крыму</div>
+            </div>
+
+            <a href="tel:+79787631603" class="ui-button mt-6 border border-white/20 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
+              Позвонить: +7 (978) 763-16-03
             </a>
+          </div>
+
+          <div class="rounded-lg bg-white p-4 text-brand-brown shadow-2xl shadow-black/20 sm:p-5">
+            <QuoteQuiz initial-project-type="Кухня с техникой" />
           </div>
         </div>
       </div>

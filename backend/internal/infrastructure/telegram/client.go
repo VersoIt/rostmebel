@@ -119,6 +119,8 @@ func contactMethodLabel(method string) string {
 		return "WhatsApp"
 	case "telegram":
 		return "Telegram"
+	case "max":
+		return "MAX"
 	case "email":
 		return "Email"
 	default:

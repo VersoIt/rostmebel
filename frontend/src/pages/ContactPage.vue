@@ -10,7 +10,9 @@ import {
   LucidePlus,
   LucideSend,
 } from 'lucide-vue-next';
-import OrderForm from '@/components/order/OrderForm.vue';
+import QuoteQuiz from '@/components/order/QuoteQuiz.vue';
+
+const maxMessengerUrl = 'https://max.ru';
 
 const faqs = ref([
   {
@@ -26,6 +28,11 @@ const faqs = ref([
   {
     q: 'Вы даете чертежи для ремонта?',
     a: 'Да. Для кухни готовим карты розеток, выводов воды, подсветки и примыканий, чтобы строители подготовили помещение под мебель.',
+    isOpen: false,
+  },
+  {
+    q: 'Можно заказать кухню вместе с техникой?',
+    a: 'Да. Можем заложить технику в проект и смету: варочную поверхность, духовой шкаф, вытяжку, посудомойку, холодильник, мойку и смеситель. Так проще сразу проверить размеры, розетки и посадочные места.',
     isOpen: false,
   },
 ]);
@@ -77,7 +84,7 @@ const toggleFaq = (idx: number) => {
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <a href="https://wa.me/79787631603" class="ui-card ui-card-hover flex items-center justify-between p-5">
               <span>
                 <span class="block text-sm text-brand-brown/55">WhatsApp</span>
@@ -91,6 +98,13 @@ const toggleFaq = (idx: number) => {
                 <span class="mt-1 block font-semibold">Открыть чат</span>
               </span>
               <LucideSend class="text-brand-gold" :size="24" />
+            </a>
+            <a :href="maxMessengerUrl" target="_blank" rel="noopener noreferrer" class="ui-card ui-card-hover flex items-center justify-between p-5">
+              <span>
+                <span class="block text-sm text-brand-brown/55">MAX</span>
+                <span class="mt-1 block font-semibold">Открыть</span>
+              </span>
+              <LucideMessageCircle class="text-brand-gold" :size="24" />
             </a>
           </div>
 
@@ -109,15 +123,15 @@ const toggleFaq = (idx: number) => {
           </div>
         </div>
 
-        <div class="lg:sticky lg:top-28">
+        <div id="quote-quiz" class="scroll-mt-28 lg:sticky lg:top-28">
           <div class="ui-card p-5 sm:p-8">
-            <p class="ui-eyebrow mb-3">Заявка</p>
-            <h2 class="ui-title-md">Получить консультацию</h2>
+            <p class="ui-eyebrow mb-3">Быстрый старт</p>
+            <h2 class="ui-title-md">Рассчитать проект</h2>
             <p class="ui-copy mt-3">
-              Ответим, какой формат работ подойдет, и подскажем ориентир по бюджету до встречи.
+              Четыре коротких шага: поймем задачу, бюджет, город и удобный способ связи.
             </p>
             <div class="mt-6">
-              <OrderForm />
+              <QuoteQuiz />
             </div>
           </div>
         </div>

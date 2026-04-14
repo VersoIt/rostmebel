@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4322';
+const chromeExecutablePath = process.env.PLAYWRIGHT_CHROME_PATH;
 
 export default defineConfig({
   testDir: './tests',
@@ -11,6 +12,7 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
+    launchOptions: chromeExecutablePath ? { executablePath: chromeExecutablePath } : undefined,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

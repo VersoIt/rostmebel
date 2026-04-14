@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/products';
 import {
@@ -12,7 +12,7 @@ import {
   LucideTruck,
   LucideX,
 } from 'lucide-vue-next';
-import OrderForm from '@/components/order/OrderForm.vue';
+import QuoteQuiz from '@/components/order/QuoteQuiz.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
 import ReviewForm from '@/components/catalog/ReviewForm.vue';
 import ReviewList from '@/components/catalog/ReviewList.vue';
@@ -30,6 +30,31 @@ const isOrderModalOpen = ref(false);
 const isReviewModalOpen = ref(false);
 const isLightboxOpen = ref(false);
 const reviewListRef = ref<any>(null);
+
+const quoteProjectType = computed(() => {
+  if (!product.value) return 'Пока не знаю';
+
+  const haystack = [
+    product.value.name,
+    product.value.description,
+    product.value.ai_tags,
+    ...Object.values(product.value.specs || {}),
+  ].join(' ').toLowerCase();
+
+  if (haystack.includes('кух')) {
+    return haystack.includes('техник') ? 'Кухня с техникой' : 'Кухня';
+  }
+
+  if (haystack.includes('шкаф') || haystack.includes('гардероб')) {
+    return 'Шкаф или гардеробная';
+  }
+
+  if (haystack.includes('коммер') || haystack.includes('офис') || haystack.includes('салон')) {
+    return 'Коммерческий объект';
+  }
+
+  return 'Пока не знаю';
+});
 
 const handleImageError = (event: Event) => {
   (event.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
@@ -269,13 +294,13 @@ const handleReviewSuccess = () => {
     <Teleport to="body">
       <transition name="fade">
         <div v-if="isOrderModalOpen" class="ui-modal-backdrop" @click.self="isOrderModalOpen = false">
-          <section class="ui-modal-panel max-w-lg p-5 sm:p-8">
+          <section class="ui-modal-panel max-w-2xl p-5 sm:p-8">
             <button type="button" class="absolute right-4 top-4 rounded-lg p-2 text-brand-brown/35 transition-colors hover:bg-brand-gray hover:text-brand-brown" @click="isOrderModalOpen = false">
               <LucideX :size="24" />
             </button>
             <h2 class="ui-title-md mb-2">Заявка на расчет</h2>
             <p class="ui-copy mb-6">Обсудим похожий проект и подскажем реалистичный бюджет.</p>
-            <OrderForm :project-id="product.id" @success="isOrderModalOpen = false" />
+            <QuoteQuiz :project-id="product.id" :initial-project-type="quoteProjectType" @success="isOrderModalOpen = false" />
           </section>
         </div>
       </transition>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { LucideChevronLeft, LucideChevronRight, LucideEye, LucideHeart, LucideX } from 'lucide-vue-next';
 import type { Product } from '@/types';
@@ -18,6 +18,38 @@ const activeSlideIdx = ref(0);
 const slideDirection = ref<'next' | 'prev'>('next');
 const touchStartX = ref(0);
 const touchStartY = ref(0);
+
+const productTags = computed(() => {
+  return (props.product.ai_tags || '')
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+});
+
+const sellingPoints = computed(() => {
+  const specEntries = Object.entries(props.product.specs || {});
+  const haystack = [
+    props.product.description,
+    props.product.ai_tags,
+    ...specEntries.map(([, value]) => value),
+  ].join(' ').toLowerCase();
+  const points: string[] = [];
+  const material = specEntries.find(([key]) => /материал|фасад/i.test(key))?.[1];
+  const style = specEntries.find(([key]) => /стиль/i.test(key))?.[1];
+
+  if (/техник|вароч|духов|посуд|холод|вытяж/i.test(haystack)) {
+    points.push('Техника в проекте');
+  }
+  if (material) points.push(material);
+  if (style) points.push(style);
+  if (productTags.value[0]) points.push(productTags.value[0]);
+
+  return Array.from(new Set(points)).slice(0, 3);
+});
+
+const priceLabel = computed(() => {
+  return props.product.price > 0 ? 'Ориентир бюджета' : 'После расчета';
+});
 
 const imageCount = () => props.product.images.length;
 
@@ -119,16 +151,30 @@ const formatPrice = (price: number) => {
 
     <div class="flex flex-1 flex-col p-5">
       <div class="mb-2 text-xs font-bold uppercase tracking-widest text-brand-brown/40">
-        {{ product.ai_tags?.split(',')[0]?.trim() || 'Проект' }}
+        {{ productTags[0] || 'Проект по размеру' }}
       </div>
       <h3 class="line-clamp-2 font-serif text-xl font-bold text-brand-brown transition-colors group-hover:text-brand-gold">
         {{ product.name }}
       </h3>
-      <div class="mt-auto flex flex-wrap items-baseline gap-3 pt-5">
-        <span class="text-xl font-semibold text-brand-brown">{{ formatPrice(product.price) }}</span>
-        <span v-if="product.price_old" class="text-sm text-brand-brown/30 line-through">
-          {{ formatPrice(product.price_old) }}
+
+      <div v-if="sellingPoints.length" class="mt-4 flex flex-wrap gap-2">
+        <span
+          v-for="point in sellingPoints"
+          :key="point"
+          class="rounded-lg bg-brand-gray px-2.5 py-1 text-[11px] font-bold text-brand-brown/60"
+        >
+          {{ point }}
         </span>
+      </div>
+
+      <div class="mt-auto pt-5">
+        <div class="mb-1 text-[11px] font-black uppercase tracking-widest text-brand-brown/35">{{ priceLabel }}</div>
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="text-xl font-semibold text-brand-brown">{{ formatPrice(product.price) }}</span>
+          <span v-if="product.price_old" class="text-sm text-brand-brown/30 line-through">
+            {{ formatPrice(product.price_old) }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -168,7 +214,16 @@ const formatPrice = (price: number) => {
                 <div class="mb-auto">
                   <div class="ui-eyebrow mb-3">Быстрый просмотр</div>
                   <h3 class="ui-title-md mb-4">{{ product.name }}</h3>
-                  <div class="mb-5 text-2xl font-semibold text-brand-brown">{{ formatPrice(product.price) }}</div>
+                  <div class="mb-2 text-2xl font-semibold text-brand-brown">{{ formatPrice(product.price) }}</div>
+                  <div v-if="sellingPoints.length" class="mb-5 flex flex-wrap gap-2">
+                    <span
+                      v-for="point in sellingPoints"
+                      :key="point"
+                      class="rounded-lg bg-brand-gray px-2.5 py-1 text-[11px] font-bold text-brand-brown/60"
+                    >
+                      {{ point }}
+                    </span>
+                  </div>
                   <p class="line-clamp-[8] leading-7 text-brand-brown/62">
                     {{ product.description }}
                   </p>

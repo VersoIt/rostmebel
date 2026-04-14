@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { LucideHeart, LucideMenu, LucidePhone, LucideX } from 'lucide-vue-next';
+import {
+  LucideCalculator,
+  LucideHeart,
+  LucideMenu,
+  LucideMessageCircle,
+  LucidePhone,
+  LucideX,
+} from 'lucide-vue-next';
 import { useFavorites } from '@/composables/useFavorites';
 import BrandMark from '@/components/common/BrandMark.vue';
 
@@ -19,6 +26,12 @@ const mobileLinks = [
   { name: 'Главная', to: '/' },
   ...navLinks,
   { name: 'Избранное', to: '/favorites' },
+];
+
+const quickActions = [
+  { name: 'Позвонить', href: 'tel:+79787631603', icon: LucidePhone },
+  { name: 'WhatsApp', href: 'https://wa.me/79787631603', icon: LucideMessageCircle },
+  { name: 'MAX', href: 'https://max.ru', icon: LucideMessageCircle },
 ];
 
 const isHomePage = computed(() => route.name === 'home');
@@ -172,7 +185,31 @@ onUnmounted(() => {
       <router-view />
     </main>
 
-    <footer class="border-t border-brand-brown/10 bg-brand-cream px-4 py-12 sm:px-6 lg:py-16">
+    <nav
+      class="fixed inset-x-3 bottom-3 z-[180] grid grid-cols-4 gap-1 rounded-lg border border-brand-brown/10 bg-white/95 p-1.5 shadow-2xl shadow-black/20 backdrop-blur-xl md:hidden"
+      aria-label="Быстрые действия"
+    >
+      <a
+        v-for="action in quickActions"
+        :key="action.name"
+        :href="action.href"
+        class="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-black text-brand-brown/70 transition-colors hover:bg-brand-gray hover:text-brand-gold"
+        :target="action.href.startsWith('http') ? '_blank' : undefined"
+        :rel="action.href.startsWith('http') ? 'noopener noreferrer' : undefined"
+      >
+        <component :is="action.icon" :size="18" />
+        {{ action.name }}
+      </a>
+      <router-link
+        :to="{ path: '/contact', hash: '#quote-quiz' }"
+        class="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg bg-brand-brown text-[11px] font-black text-white transition-colors hover:bg-brand-gold"
+      >
+        <LucideCalculator :size="18" />
+        Расчет
+      </router-link>
+    </nav>
+
+    <footer class="border-t border-brand-brown/10 bg-brand-cream px-4 pb-28 pt-12 sm:px-6 md:pb-12 lg:py-16">
       <div class="mx-auto grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-4">
         <div class="md:col-span-2">
           <div class="mb-6 flex items-center gap-2">

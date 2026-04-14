@@ -128,3 +128,21 @@ func TestDecodeAndValidateAcceptsProjectUpsertPayload(t *testing.T) {
 		t.Fatalf("unexpected decoded payload: %#v", payload)
 	}
 }
+
+func TestDecodeAndValidateAcceptsMaxContactMethod(t *testing.T) {
+	body := `{
+		"client_name": "Иван",
+		"client_phone": "+7 (978) 763-16-03",
+		"contact_method": "max"
+	}`
+	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	var payload dto.CreateOrderRequest
+	if err := decodeAndValidate(req, &payload); err != nil {
+		t.Fatalf("expected max contact method to decode: %v", err)
+	}
+	if payload.ContactMethod != "max" {
+		t.Fatalf("expected max contact method, got %q", payload.ContactMethod)
+	}
+}
