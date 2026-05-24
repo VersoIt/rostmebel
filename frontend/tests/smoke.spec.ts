@@ -10,9 +10,11 @@ test.describe('public site smoke', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /Кухни и мебель по размеру/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Кухни и корпусная мебель по размеру/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Посмотреть проекты/i })).toBeVisible();
     await expect(page.getByText(/Расчет за минуту/i).first()).toBeVisible();
+    await expect(page.locator('link[rel="icon"][sizes="48x48"]')).toHaveAttribute('href', '/favicon-48x48.png');
+    await expect(page.locator('#schema-business')).toHaveAttribute('type', 'application/ld+json');
 
     const quickActions = page.getByRole('navigation', { name: /Быстрые действия/i });
     if (testInfo.project.name === 'mobile') {

@@ -11,7 +11,7 @@ import {
   LucideShieldCheck,
 } from 'lucide-vue-next';
 import type { Product } from '@/types';
-import { buildBusinessSchema, removeJsonLd, setJsonLd } from '@/utils/seo';
+import { buildBusinessSchema, buildWebsiteSchema, removeJsonLd, setJsonLd } from '@/utils/seo';
 
 const productStore = useProductStore();
 const hits = ref<Product[]>([]);
@@ -48,6 +48,7 @@ const applianceItems = [
 ];
 
 onMounted(async () => {
+  setJsonLd('schema-website', buildWebsiteSchema());
   setJsonLd('schema-business', buildBusinessSchema());
 
   await productStore.fetchProducts({
@@ -65,6 +66,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (heroInterval) window.clearInterval(heroInterval);
+  removeJsonLd('schema-website');
   removeJsonLd('schema-business');
 });
 </script>

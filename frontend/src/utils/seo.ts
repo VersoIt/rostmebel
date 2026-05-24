@@ -3,6 +3,7 @@ const DEFAULT_TITLE = 'РОСТ Мебель — кухни и корпусна�
 const DEFAULT_DESCRIPTION =
   'Проектируем, производим и устанавливаем кухни, шкафы и системы хранения по Крыму. Смета, договор, доставка и монтаж под ключ.';
 const DEFAULT_IMAGE = '/assets/images/hero-1.jpg';
+const DEFAULT_LOGO = '/assets/logo-512.png';
 
 const publicSiteURL = (import.meta.env.VITE_PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, '');
 
@@ -98,13 +99,31 @@ export const removeJsonLd = (id: string) => {
 export const buildBusinessSchema = () => ({
   '@context': 'https://schema.org',
   '@type': 'FurnitureStore',
+  '@id': absoluteUrl('/#organization'),
   name: 'РОСТ Мебель',
+  alternateName: 'rostmebel.shop',
   url: absoluteUrl('/'),
-  logo: absoluteUrl('/assets/logo.svg'),
+  description: DEFAULT_DESCRIPTION,
+  logo: {
+    '@type': 'ImageObject',
+    url: absoluteUrl(DEFAULT_LOGO),
+    contentUrl: absoluteUrl(DEFAULT_LOGO),
+    width: 512,
+    height: 512,
+  },
   image: absoluteUrl(DEFAULT_IMAGE),
   telephone: '+7 978 763-16-03',
   email: 'rost.salon2003@mail.ru',
   priceRange: '₽₽',
+  contactPoint: [
+    {
+      '@type': 'ContactPoint',
+      telephone: '+7 978 763-16-03',
+      contactType: 'customer support',
+      areaServed: 'RU',
+      availableLanguage: ['ru'],
+    },
+  ],
   address: {
     '@type': 'PostalAddress',
     addressLocality: 'Симферополь',
@@ -112,4 +131,14 @@ export const buildBusinessSchema = () => ({
     addressCountry: 'RU',
   },
   areaServed: ['Симферополь', 'Крым'],
+});
+
+export const buildWebsiteSchema = () => ({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': absoluteUrl('/#website'),
+  url: absoluteUrl('/'),
+  name: 'РОСТ Мебель',
+  alternateName: 'rostmebel.shop',
+  inLanguage: 'ru-RU',
 });

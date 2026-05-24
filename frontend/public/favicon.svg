@@ -11,6 +11,12 @@
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
      id="defs1" />
+  <circle
+     cx="409.60001"
+     cy="409.60001"
+     r="409.60001"
+     style="fill:#17211d;fill-opacity:1"
+     id="background" />
   <g
      id="g1"
      style="fill:#ffffff;fill-opacity:1"
