@@ -122,3 +122,35 @@ func TestRobotsReferencesConfiguredSitemap(t *testing.T) {
 		t.Fatalf("expected configured sitemap URL, got %s", body)
 	}
 }
+
+func TestRobotsUpgradesConfiguredURLToHTTPSForMatchingHost(t *testing.T) {
+	handler := NewProductHandler(appProduct.NewUseCase(&sitemapProductRepo{}), nil, "http://rostmebel.com")
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/robots.txt", nil)
+	req.Host = "rostmebel.com"
+	req.Header.Set("X-Forwarded-Host", "rostmebel.com")
+	req.Header.Set("X-Forwarded-Proto", "https")
+
+	handler.Robots(rec, req)
+
+	body := rec.Body.String()
+	if !strings.Contains(body, "Sitemap: https://rostmebel.com/sitemap.xml") {
+		t.Fatalf("expected https sitemap URL, got %s", body)
+	}
+}
+
+func TestRobotsKeepsConfiguredURLForDifferentHost(t *testing.T) {
+	handler := NewProductHandler(appProduct.NewUseCase(&sitemapProductRepo{}), nil, "http://rostmebel.com")
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/robots.txt", nil)
+	req.Host = "preview.rostmebel.com"
+	req.Header.Set("X-Forwarded-Host", "preview.rostmebel.com")
+	req.Header.Set("X-Forwarded-Proto", "https")
+
+	handler.Robots(rec, req)
+
+	body := rec.Body.String()
+	if !strings.Contains(body, "Sitemap: http://rostmebel.com/sitemap.xml") {
+		t.Fatalf("expected configured sitemap URL for mismatched host, got %s", body)
+	}
+}

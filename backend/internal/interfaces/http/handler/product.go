@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -102,10 +103,6 @@ func (h *ProductHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) siteURL(r *http.Request) string {
-	if h.publicSiteURL != "" {
-		return h.publicSiteURL
-	}
-
 	scheme := r.Header.Get("X-Forwarded-Proto")
 	if scheme == "" {
 		scheme = "https"
@@ -116,7 +113,34 @@ func (h *ProductHandler) siteURL(r *http.Request) string {
 		host = forwardedHost
 	}
 
-	return strings.TrimRight(scheme+"://"+host, "/")
+	requestURL := strings.TrimRight(scheme+"://"+host, "/")
+	if h.publicSiteURL == "" {
+		return requestURL
+	}
+
+	configuredURL, err := url.Parse(h.publicSiteURL)
+	if err != nil || configuredURL.Host == "" {
+		return h.publicSiteURL
+	}
+
+	if strings.EqualFold(configuredURL.Scheme, "http") && strings.EqualFold(scheme, "https") && sameHostname(configuredURL.Host, host) {
+		configuredURL.Scheme = "https"
+		return strings.TrimRight(configuredURL.String(), "/")
+	}
+
+	return h.publicSiteURL
+}
+
+func sameHostname(left, right string) bool {
+	leftURL, leftErr := url.Parse("//" + strings.TrimSpace(left))
+	rightURL, rightErr := url.Parse("//" + strings.TrimSpace(right))
+	if leftErr != nil || rightErr != nil {
+		return false
+	}
+
+	leftHost := strings.TrimPrefix(strings.ToLower(leftURL.Hostname()), "www.")
+	rightHost := strings.TrimPrefix(strings.ToLower(rightURL.Hostname()), "www.")
+	return leftHost != "" && leftHost == rightHost
 }
 
 func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {

@@ -93,6 +93,18 @@ ADMIN_USERNAME=replace-with-admin-login
 ADMIN_PASSWORD=replace-with-strong-password
 ```
 
+Для production HTTPS дополнительно задайте:
+
+```env
+DOMAIN=rostmebel.shop
+PUBLIC_SITE_URL=https://rostmebel.shop
+ENABLE_TLS=auto
+HOST_SSL_CERTS_DIR=/etc/ssl/certs
+HOST_SSL_PRIVATE_DIR=/etc/ssl/private
+TLS_CERT_PATH=/host-ssl/certs/fullchain.crt
+TLS_KEY_PATH=/host-ssl/private/private.key
+```
+
 Запустите весь стек:
 
 ```bash
@@ -114,6 +126,8 @@ docker compose ps
 | Backend напрямую | http://localhost:8081 |
 | Liveness | http://localhost/healthz |
 | Readiness | http://localhost/readyz |
+
+Если TLS разрешен (`ENABLE_TLS=auto` или `ENABLE_TLS=true`) и файлы `TLS_CERT_PATH` и `TLS_KEY_PATH` доступны внутри контейнера, frontend также начинает слушать HTTPS на `FRONTEND_HTTPS_PORT`. Если `DOMAIN` не задан, frontend берёт домен из `PUBLIC_SITE_URL`.
 
 Логи backend:
 
@@ -152,6 +166,14 @@ docker compose down -v
 | `ORDER_LIMIT_ENABLED` | Нет | `true` | Включает серверные лимиты на отправку заявок. |
 | `POSTGRES_HOST_PORT` | Нет | `55432` | Host-порт PostgreSQL для локального доступа с машины разработчика. Внутри Docker backend использует `postgres:5432`. |
 | `PUBLIC_SITE_URL` | Нет | `https://rostmebel.shop` | Канонический публичный домен сайта для sitemap, robots.txt, canonical URL, Open Graph и JSON-LD. В production должен совпадать с реальным HTTPS-доменом. |
+| `DOMAIN` | Нет | пусто | Канонический host для Nginx и TLS-конфигурации. Если пусто, frontend выводит домен из `PUBLIC_SITE_URL`. |
+| `ENABLE_TLS` | Нет | `auto` | `auto` и `true` включают попытку старта в HTTPS-режиме. Если файлы сертификата недоступны, контейнер временно стартует в HTTP-режиме. `false` принудительно оставляет HTTP. |
+| `HOST_SSL_CERTS_DIR` | Нет | пусто | Host-директория с сертификатами, если вы монтируете уже готовые файлы с сервера, например `/etc/ssl/certs`. |
+| `HOST_SSL_PRIVATE_DIR` | Нет | пусто | Host-директория с приватными ключами, например `/etc/ssl/private`. |
+| `TLS_CERT_PATH` | Нет | пусто | Путь внутри контейнера к файлу сертификата. Для host-монта обычно это `/host-ssl/certs/fullchain.crt`. |
+| `TLS_KEY_PATH` | Нет | пусто | Путь внутри контейнера к приватному ключу. Для host-монта обычно это `/host-ssl/private/private.key`. |
+| `FRONTEND_HTTP_PORT` | Нет | `80` | Host-порт для HTTP frontend. |
+| `FRONTEND_HTTPS_PORT` | Нет | `443` | Host-порт для HTTPS frontend. |
 | `OUTBOUND_PROXY_SCHEME` | Нет | `http` | Схема outbound-прокси: `http`, `https`, `socks5`, `socks5h`. |
 | `OUTBOUND_PROXY_HOST` | Нет | пусто | Host прокси. Если host или port пустые, прокси выключен. |
 | `OUTBOUND_PROXY_PORT` | Нет | пусто | Port прокси. |
@@ -458,6 +480,13 @@ Docker Compose создает volume:
 | `uploads_data` | Загруженные изображения. |
 
 Frontend контейнер читает `uploads_data` как read-only и отдает файлы по `/uploads/`.
+
+Для production TLS также используется bind-mount директорий с хоста:
+
+| Путь | Назначение |
+| --- | --- |
+| `deploy/host-ssl/certs` | Локальная заглушка для bind-mount сертификатов с хоста. |
+| `deploy/host-ssl/private` | Локальная заглушка для bind-mount приватных ключей с хоста. |
 
 Перед production-обновлениями делайте backup PostgreSQL и важных загруженных файлов.
 

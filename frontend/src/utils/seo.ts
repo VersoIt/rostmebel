@@ -5,7 +5,44 @@ const DEFAULT_DESCRIPTION =
 const DEFAULT_IMAGE = '/assets/images/hero-1.jpg';
 const DEFAULT_LOGO = '/assets/logo-512.png';
 
-const publicSiteURL = (import.meta.env.VITE_PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, '');
+const configuredPublicSiteURL = (__PUBLIC_SITE_URL__ || DEFAULT_SITE_URL).replace(/\/+$/, '');
+
+const normalizeHost = (value: string) => value.replace(/^www\./i, '').toLowerCase();
+
+const resolveRuntimePublicSiteURL = () => {
+  if (typeof window === 'undefined') return '';
+
+  const { hostname, origin, protocol } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') {
+    return '';
+  }
+
+  try {
+    const configuredURL = new URL(configuredPublicSiteURL);
+    const runtimeURL = new URL(origin);
+    if (
+      configuredURL.protocol === 'http:' &&
+      protocol === 'https:' &&
+      normalizeHost(configuredURL.host) === normalizeHost(runtimeURL.host)
+    ) {
+      return origin.replace(/\/+$/, '');
+    }
+  } catch {
+    return '';
+  }
+
+  return '';
+};
+
+const publicSiteURL = resolveRuntimePublicSiteURL() || configuredPublicSiteURL;
+
+const publicSiteHost = (() => {
+  try {
+    return new URL(publicSiteURL).host.replace(/^www\./i, '');
+  } catch {
+    return '';
+  }
+})();
 
 type PageSeo = {
   title?: string;
@@ -101,7 +138,7 @@ export const buildBusinessSchema = () => ({
   '@type': 'FurnitureStore',
   '@id': absoluteUrl('/#organization'),
   name: 'РОСТ Мебель',
-  alternateName: 'rostmebel.shop',
+  alternateName: publicSiteHost || undefined,
   url: absoluteUrl('/'),
   description: DEFAULT_DESCRIPTION,
   logo: {
@@ -139,6 +176,6 @@ export const buildWebsiteSchema = () => ({
   '@id': absoluteUrl('/#website'),
   url: absoluteUrl('/'),
   name: 'РОСТ Мебель',
-  alternateName: 'rostmebel.shop',
+  alternateName: publicSiteHost || undefined,
   inLanguage: 'ru-RU',
 });

@@ -31,3 +31,7 @@ go.work.sum
 .idea/
 .vscode/
 node_modules/
+deploy/host-ssl/certs/*
+!deploy/host-ssl/certs/.gitkeep
+deploy/host-ssl/private/*
+!deploy/host-ssl/private/.gitkeep
