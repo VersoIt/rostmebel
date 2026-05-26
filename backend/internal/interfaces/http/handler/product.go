@@ -35,16 +35,23 @@ func NewProductHandler(useCase *product.UseCase, aiUseCase *product.AIUseCase, p
 }
 
 type sitemapURLSet struct {
-	XMLName xml.Name     `xml:"urlset"`
-	Xmlns   string       `xml:"xmlns,attr"`
-	URLs    []sitemapURL `xml:"url"`
+	XMLName    xml.Name     `xml:"urlset"`
+	Xmlns      string       `xml:"xmlns,attr"`
+	ImageXmlns string       `xml:"xmlns:image,attr,omitempty"`
+	URLs       []sitemapURL `xml:"url"`
 }
 
 type sitemapURL struct {
-	Loc        string `xml:"loc"`
-	LastMod    string `xml:"lastmod,omitempty"`
-	ChangeFreq string `xml:"changefreq,omitempty"`
-	Priority   string `xml:"priority,omitempty"`
+	Loc        string         `xml:"loc"`
+	LastMod    string         `xml:"lastmod,omitempty"`
+	ChangeFreq string         `xml:"changefreq,omitempty"`
+	Priority   string         `xml:"priority,omitempty"`
+	Images     []sitemapImage `xml:"image:image,omitempty"`
+}
+
+type sitemapImage struct {
+	Loc   string `xml:"image:loc"`
+	Title string `xml:"image:title,omitempty"`
 }
 
 func (h *ProductHandler) Robots(w http.ResponseWriter, r *http.Request) {
@@ -90,6 +97,7 @@ func (h *ProductHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 			LastMod:    lastMod,
 			ChangeFreq: "monthly",
 			Priority:   "0.7",
+			Images:     sitemapImagesForProject(project, baseURL),
 		})
 	}
 
@@ -97,9 +105,51 @@ func (h *ProductHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(xml.Header))
 	_ = xml.NewEncoder(w).Encode(sitemapURLSet{
-		Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
-		URLs:  urls,
+		Xmlns:      "http://www.sitemaps.org/schemas/sitemap/0.9",
+		ImageXmlns: "http://www.google.com/schemas/sitemap-image/1.1",
+		URLs:       urls,
 	})
+}
+
+func sitemapImagesForProject(project *domProduct.Project, baseURL string) []sitemapImage {
+	if project == nil || len(project.Images) == 0 {
+		return nil
+	}
+
+	images := make([]sitemapImage, 0, len(project.Images))
+	for _, image := range project.Images {
+		loc := absoluteSitemapURL(baseURL, image.URL)
+		if loc == "" {
+			continue
+		}
+
+		images = append(images, sitemapImage{
+			Loc:   loc,
+			Title: project.Name,
+		})
+		if len(images) >= 10 {
+			break
+		}
+	}
+
+	return images
+}
+
+func absoluteSitemapURL(baseURL string, resource string) string {
+	resource = strings.TrimSpace(resource)
+	if resource == "" {
+		return ""
+	}
+
+	if parsed, err := url.Parse(resource); err == nil && parsed.IsAbs() {
+		return resource
+	}
+
+	if !strings.HasPrefix(resource, "/") {
+		resource = "/" + resource
+	}
+
+	return strings.TrimRight(baseURL, "/") + resource
 }
 
 func (h *ProductHandler) siteURL(r *http.Request) string {

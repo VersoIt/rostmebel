@@ -116,6 +116,7 @@ export const setPageSeo = ({
   upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, title);
   upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, safeDescription);
   upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, imageURL);
+  upsertMeta('meta[name="twitter:image:alt"]', { name: 'twitter:image:alt' }, imageAlt);
 };
 
 export const setJsonLd = (id: string, payload: unknown) => {
@@ -178,4 +179,9 @@ export const buildWebsiteSchema = () => ({
   name: 'РОСТ Мебель',
   alternateName: publicSiteHost || undefined,
   inLanguage: 'ru-RU',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${absoluteUrl('/catalog')}?search={search_term_string}`,
+    'query-input': 'required name=search_term_string',
+  },
 });

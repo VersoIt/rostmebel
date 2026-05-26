@@ -1,24 +1,94 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useProductStore } from '@/stores/products';
-import ProductCard from '@/components/catalog/ProductCard.vue';
 import { LucideArrowRight, LucideFilterX, LucideLoader2, LucideSearch } from 'lucide-vue-next';
-import { absoluteUrl, removeJsonLd, setJsonLd } from '@/utils/seo';
+import ProductCard from '@/components/catalog/ProductCard.vue';
+import { useProductStore } from '@/stores/products';
+import { absoluteUrl, compactDescription, removeJsonLd, setJsonLd, setPageSeo } from '@/utils/seo';
 
 const productStore = useProductStore();
 const route = useRoute();
 const router = useRouter();
 
-const selectedCategory = ref(route.query.category?.toString() || '');
+const selectedCategory = ref('');
 const searchQuery = ref('');
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+const selectedCategoryEntity = computed(() =>
+  productStore.categories.find((item) => item.slug === selectedCategory.value) || null,
+);
+
+const trimmedSearchQuery = computed(() => searchQuery.value.trim());
+
+const catalogPath = computed(() => {
+  if (trimmedSearchQuery.value) {
+    return '/catalog';
+  }
+
+  if (selectedCategory.value) {
+    const params = new URLSearchParams({ category: selectedCategory.value });
+    return `/catalog?${params.toString()}`;
+  }
+
+  return '/catalog';
+});
+
+const catalogTitle = computed(() => {
+  if (trimmedSearchQuery.value) {
+    return `Поиск проектов по запросу «${trimmedSearchQuery.value}» — РОСТ Мебель`;
+  }
+
+  if (selectedCategoryEntity.value) {
+    return `${selectedCategoryEntity.value.name} на заказ — проекты РОСТ Мебель`;
+  }
+
+  return 'Проекты кухонь и корпусной мебели — РОСТ Мебель';
+});
+
+const catalogDescription = computed(() => {
+  if (trimmedSearchQuery.value) {
+    return compactDescription(
+      `Результаты поиска по запросу «${trimmedSearchQuery.value}» в портфолио РОСТ Мебель. Подберите подходящие проекты мебели по материалам, стилю и бюджету.`,
+      155,
+    );
+  }
+
+  if (selectedCategoryEntity.value) {
+    return compactDescription(
+      `Подборка категории «${selectedCategoryEntity.value.name}» от РОСТ Мебель: реальные проекты, фото, бюджеты, материалы и детали исполнения.`,
+      155,
+    );
+  }
+
+  return compactDescription(
+    'Портфолио реализованных кухонь, шкафов и систем хранения: фотографии, бюджеты, материалы и детали проектов РОСТ Мебель.',
+    155,
+  );
+});
+
+const catalogRobots = computed(() => (trimmedSearchQuery.value ? 'noindex,follow' : 'index,follow'));
+
+const syncFiltersFromRoute = () => {
+  selectedCategory.value = route.query.category?.toString() || '';
+  searchQuery.value = route.query.search?.toString() || '';
+};
+
+const updateCatalogSeo = () => {
+  setPageSeo({
+    title: catalogTitle.value,
+    description: catalogDescription.value,
+    path: catalogPath.value,
+    robots: catalogRobots.value,
+  });
+};
 
 const updateCatalogSchema = () => {
   setJsonLd('schema-catalog', {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'Проекты кухонь и корпусной мебели',
-    url: absoluteUrl('/catalog'),
+    name: catalogTitle.value,
+    description: catalogDescription.value,
+    url: absoluteUrl(catalogPath.value),
     mainEntity: {
       '@type': 'ItemList',
       itemListElement: productStore.products.map((product, index) => ({
@@ -31,43 +101,76 @@ const updateCatalogSchema = () => {
   });
 };
 
-const fetch = async () => {
+const fetchCatalog = async () => {
   const params: Record<string, string | number> = { status: 'published' };
 
-  if (selectedCategory.value) {
-    const category = productStore.categories.find((item) => item.slug === selectedCategory.value);
-    if (category) params.project_category_id = category.id;
+  if (selectedCategoryEntity.value) {
+    params.project_category_id = selectedCategoryEntity.value.id;
   }
 
-  if (searchQuery.value.trim()) {
-    params.search = searchQuery.value.trim();
+  if (trimmedSearchQuery.value) {
+    params.search = trimmedSearchQuery.value;
   }
 
   await productStore.fetchProducts(params);
+  updateCatalogSeo();
   updateCatalogSchema();
 };
 
-onMounted(async () => {
-  await productStore.fetchCategories();
-  await fetch();
-});
+const applyRouteFilters = async (replace = true) => {
+  const query: Record<string, string> = {};
+  if (selectedCategory.value) {
+    query.category = selectedCategory.value;
+  }
+  if (trimmedSearchQuery.value) {
+    query.search = trimmedSearchQuery.value;
+  }
 
-onUnmounted(() => {
-  removeJsonLd('schema-catalog');
-});
+  await router[replace ? 'replace' : 'push']({ query });
+};
+
+const queueSearch = () => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+
+  searchTimer = setTimeout(() => {
+    void applyRouteFilters(true);
+  }, 250);
+};
 
 const selectCategory = async (slug: string) => {
   selectedCategory.value = slug;
-  await router.push({ query: { ...route.query, category: slug || undefined } });
-  fetch();
+  await applyRouteFilters(true);
 };
 
 const resetFilters = async () => {
   selectedCategory.value = '';
   searchQuery.value = '';
   await router.push({ query: {} });
-  fetch();
 };
+
+watch(
+  () => [route.query.category, route.query.search],
+  async () => {
+    syncFiltersFromRoute();
+    if (!productStore.categories.length) return;
+    await fetchCatalog();
+  },
+);
+
+onMounted(async () => {
+  syncFiltersFromRoute();
+  await productStore.fetchCategories();
+  await fetchCatalog();
+});
+
+onUnmounted(() => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+  removeJsonLd('schema-catalog');
+});
 </script>
 
 <template>
@@ -77,7 +180,7 @@ const resetFilters = async () => {
         <p class="ui-eyebrow mb-3">Портфолио</p>
         <h1 class="ui-title-xl">Проекты</h1>
         <p class="ui-copy-lg mt-4 max-w-2xl">
-          Реальные кухни, шкафы и системы хранения. Фильтруйте по категории или найдите проект по названию.
+          Реальные кухни, шкафы и системы хранения. Фильтруйте по категории или найдите проект по названию, материалу и стилю.
         </p>
       </header>
 
@@ -110,7 +213,7 @@ const resetFilters = async () => {
               type="text"
               class="ui-input pl-11"
               placeholder="Название, материал, стиль"
-              @input="fetch"
+              @input="queueSearch"
             >
             <LucideSearch class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-brown/35" :size="19" />
           </div>

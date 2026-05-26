@@ -330,6 +330,13 @@ func TestExtractBudgetRange(t *testing.T) {
 	}
 }
 
+func TestBuildFTSQueryRemovesBudgetNoise(t *testing.T) {
+	got := buildFTSQuery("кухни до 250 000 рублей")
+	if got != "кухни" {
+		t.Fatalf("expected cleaned fts query, got %q", got)
+	}
+}
+
 func TestFilterByRequestedCategoryKeepsKitchenQueriesFocused(t *testing.T) {
 	kitchenCategoryID := int64(1)
 	wardrobeCategoryID := int64(2)

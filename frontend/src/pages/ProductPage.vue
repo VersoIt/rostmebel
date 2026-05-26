@@ -69,6 +69,13 @@ const updateSchema = (item: Product) => {
   const productPath = `/product/${item.slug || item.id}`;
   const categoryName = productStore.categories.find((category) => category.id === item.project_category_id)?.name || 'Мебель по размеру';
   const image = item.images[0]?.url || PLACEHOLDER_IMAGE;
+  const additionalProperty = Object.entries(item.specs || {})
+    .filter(([, value]) => value)
+    .map(([name, value]) => ({
+      '@type': 'PropertyValue',
+      name,
+      value,
+    }));
 
   setPageSeo({
     title: `${item.name} — РОСТ Мебель`,
@@ -82,15 +89,25 @@ const updateSchema = (item: Product) => {
   const schema = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
+    '@id': absoluteUrl(`${productPath}#product`),
     name: item.name,
+    sku: String(item.id),
+    url: absoluteUrl(productPath),
+    mainEntityOfPage: absoluteUrl(productPath),
+    brand: {
+      '@type': 'Brand',
+      name: 'РОСТ Мебель',
+    },
     image: (item.images.length ? item.images : [{ url: PLACEHOLDER_IMAGE }]).map((imageItem) => absoluteUrl(imageItem.url)),
     description: item.description,
     category: categoryName,
+    additionalProperty: additionalProperty.length ? additionalProperty : undefined,
     offers: {
       '@type': 'Offer',
       url: absoluteUrl(productPath),
       priceCurrency: 'RUB',
       price: item.price,
+      itemCondition: 'https://schema.org/NewCondition',
       availability: 'https://schema.org/InStock',
       seller: { '@type': 'Organization', name: 'РОСТ Мебель' },
     },

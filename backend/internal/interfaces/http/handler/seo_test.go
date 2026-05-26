@@ -79,7 +79,17 @@ func TestSitemapIncludesPublishedProjectSlugs(t *testing.T) {
 	updatedAt := time.Date(2026, 4, 12, 10, 0, 0, 0, time.UTC)
 	repo := &sitemapProductRepo{
 		projects: []*domProduct.Project{
-			{ID: 1, Slug: "published-kitchen", Status: domProduct.StatusPublished, UpdatedAt: updatedAt},
+			{
+				ID:        1,
+				Slug:      "published-kitchen",
+				Status:    domProduct.StatusPublished,
+				UpdatedAt: updatedAt,
+				Name:      "Published Kitchen",
+				Images: []domProduct.Image{
+					{URL: "/uploads/kitchen-main.jpg", IsMain: true},
+					{URL: "https://cdn.example.com/kitchen-side.jpg"},
+				},
+			},
 			{ID: 2, Slug: "draft-project", Status: domProduct.StatusDraft, UpdatedAt: updatedAt},
 		},
 	}
@@ -95,6 +105,15 @@ func TestSitemapIncludesPublishedProjectSlugs(t *testing.T) {
 	body := rec.Body.String()
 	if !strings.Contains(body, "<loc>https://example.com/product/published-kitchen</loc>") {
 		t.Fatalf("expected published project slug in sitemap, got %s", body)
+	}
+	if !strings.Contains(body, "<image:image>") {
+		t.Fatalf("expected image sitemap entries, got %s", body)
+	}
+	if !strings.Contains(body, "<image:loc>https://example.com/uploads/kitchen-main.jpg</image:loc>") {
+		t.Fatalf("expected relative image URL to be absolutized, got %s", body)
+	}
+	if !strings.Contains(body, "<image:loc>https://cdn.example.com/kitchen-side.jpg</image:loc>") {
+		t.Fatalf("expected absolute image URL in sitemap, got %s", body)
 	}
 	if strings.Contains(body, "draft-project") {
 		t.Fatalf("did not expect draft project in sitemap, got %s", body)

@@ -19,6 +19,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rostmebel/backend/internal/domain/product"
 	"github.com/rostmebel/backend/internal/infrastructure/gemini"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -37,6 +38,11 @@ var (
 	budgetMaxPattern   = regexp.MustCompile(`(?i)(?:до|не\s+дороже|не\s+больше)\s+([0-9][0-9\s.,]*\s*(?:к|k|тыс\.?|тысяч(?:и)?|млн|м)?)`)
 	budgetMinPattern   = regexp.MustCompile(`(?i)(?:от|минимум|не\s+меньше)\s+([0-9][0-9\s.,]*\s*(?:к|k|тыс\.?|тысяч(?:и)?|млн|м)?)`)
 )
+
+var budgetNoiseTokens = map[string]struct{}{
+	"до": {}, "от": {}, "к": {}, "k": {}, "м": {}, "тыс": {}, "тыс.": {}, "тысяч": {}, "тысячи": {},
+	"млн": {}, "р": {}, "руб": {}, "рублей": {}, "рубля": {},
+}
 
 type aiSearcher interface {
 	SearchProducts(ctx context.Context, userQuery string, projectsJSON string) ([]int64, error)
@@ -136,7 +142,8 @@ func (u *AIUseCase) Search(ctx context.Context, rawQuery string) ([]*product.Pro
 		u.logger.Warn("AI Search cache entry became stale, rebuilding", "query", query)
 	}
 
-	candidates := u.collectCandidates(ctx, query)
+	ftsQuery := buildFTSQuery(query)
+	candidates := u.collectCandidates(ctx, ftsQuery)
 	candidatePool := filterProjects(candidates, constraints)
 	fallbackResults := limitProjects(candidatePool, aiFallbackLimit)
 
@@ -220,57 +227,60 @@ func (u *AIUseCase) writeCachedIDs(ctx context.Context, cacheKey string, ids []i
 }
 
 func (u *AIUseCase) collectCandidates(ctx context.Context, query string) []*product.Project {
-	const sourceCount = 3
-	sourceResults := make([][]*product.Project, sourceCount)
-
-	var wg sync.WaitGroup
-	wg.Add(sourceCount)
-
-	go func() {
-		defer wg.Done()
-		if projects, err := u.repo.Search(ctx, query, aiFTSCandidateLimit); err != nil {
-			u.logger.Warn("Initial FTS search failed", "error", err)
-		} else {
-			sourceResults[0] = projects
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if projects, err := u.listPublished(ctx, "views_count"); err != nil {
-			u.logger.Warn("Supplemental project list failed", "sort_by", "views_count", "error", err)
-		} else {
-			sourceResults[1] = projects
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if projects, err := u.listPublished(ctx, "updated_at"); err != nil {
-			u.logger.Warn("Supplemental project list failed", "sort_by", "updated_at", "error", err)
-		} else {
-			sourceResults[2] = projects
-		}
-	}()
-
-	wg.Wait()
-
 	unique := make([]*product.Project, 0, aiFTSCandidateLimit+(2*aiSupplementalListLimit))
 	seen := make(map[int64]struct{}, cap(unique))
+	var mu sync.Mutex
 
-	for _, projects := range sourceResults {
+	addProjects := func(projects []*product.Project) {
 		for _, project := range projects {
 			if project == nil || project.Status != product.StatusPublished {
 				continue
 			}
+
+			mu.Lock()
 			if _, ok := seen[project.ID]; ok {
+				mu.Unlock()
 				continue
 			}
 			seen[project.ID] = struct{}{}
 			unique = append(unique, project)
+			mu.Unlock()
 		}
 	}
 
+	group, groupCtx := errgroup.WithContext(ctx)
+
+	group.Go(func() error {
+		projects, err := u.repo.Search(groupCtx, query, aiFTSCandidateLimit)
+		if err != nil {
+			u.logger.Warn("Initial FTS search failed", "query", query, "error", err)
+			return nil
+		}
+		addProjects(projects)
+		return nil
+	})
+
+	group.Go(func() error {
+		projects, err := u.listPublished(groupCtx, "views_count")
+		if err != nil {
+			u.logger.Warn("Supplemental project list failed", "sort_by", "views_count", "error", err)
+			return nil
+		}
+		addProjects(projects)
+		return nil
+	})
+
+	group.Go(func() error {
+		projects, err := u.listPublished(groupCtx, "updated_at")
+		if err != nil {
+			u.logger.Warn("Supplemental project list failed", "sort_by", "updated_at", "error", err)
+			return nil
+		}
+		addProjects(projects)
+		return nil
+	})
+
+	_ = group.Wait()
 	return unique
 }
 
@@ -428,6 +438,43 @@ func buildSearchConstraints(query string, categoryNames map[int64]string) search
 		MaxBudget:  maxBudget,
 		Categories: requestedCategoryIDs(query, buildCategoryLookupFromNames(categoryNames)),
 	}
+}
+
+func buildFTSQuery(query string) string {
+	query = normalizeSearchQuery(query)
+	if query == "" {
+		return ""
+	}
+
+	cleaned := budgetRangePattern.ReplaceAllString(query, " ")
+	cleaned = budgetMaxPattern.ReplaceAllString(cleaned, " ")
+	cleaned = budgetMinPattern.ReplaceAllString(cleaned, " ")
+	cleaned = normalizeSearchQuery(cleaned)
+	if cleaned == "" {
+		return query
+	}
+
+	tokens := splitQueryTokens(cleaned)
+	if len(tokens) == 0 {
+		return query
+	}
+
+	filtered := make([]string, 0, len(tokens))
+	for _, token := range tokens {
+		if _, ok := budgetNoiseTokens[token]; ok {
+			continue
+		}
+		if _, err := strconv.ParseFloat(strings.ReplaceAll(token, ",", "."), 64); err == nil {
+			continue
+		}
+		filtered = append(filtered, token)
+	}
+
+	if len(filtered) == 0 {
+		return query
+	}
+
+	return strings.Join(filtered, " ")
 }
 
 func extractBudgetRange(query string) (*float64, *float64) {
