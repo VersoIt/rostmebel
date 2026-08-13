@@ -11,8 +11,13 @@ import {
   LucideSend,
 } from 'lucide-vue-next';
 import QuoteQuiz from '@/components/order/QuoteQuiz.vue';
-
-const maxMessengerUrl = 'https://max.ru';
+import {
+  EMAIL_DISPLAY,
+  EMAIL_HREF,
+  MESSENGER_LINKS,
+  PHONE_DISPLAY,
+  PHONE_HREF,
+} from '@/constants/contacts';
 
 const faqs = ref([
   {
@@ -55,15 +60,15 @@ const toggleFaq = (idx: number) => {
         </div>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <a href="tel:+79787631603" class="ui-card ui-card-hover p-5">
+          <a :href="PHONE_HREF" class="ui-card ui-card-hover p-5">
             <LucidePhone class="mb-4 text-brand-gold" :size="24" />
             <div class="text-sm text-brand-brown/55">Телефон</div>
-            <div class="mt-1 text-xl font-semibold">+7 (978) 763-16-03</div>
+            <div class="mt-1 text-xl font-semibold">{{ PHONE_DISPLAY }}</div>
           </a>
-          <a href="mailto:rost.salon2003@mail.ru" class="ui-card ui-card-hover p-5">
+          <a :href="EMAIL_HREF" class="ui-card ui-card-hover p-5">
             <LucideMail class="mb-4 text-brand-gold" :size="24" />
             <div class="text-sm text-brand-brown/55">Почта</div>
-            <div class="mt-1 break-all text-xl font-semibold">rost.salon2003@mail.ru</div>
+            <div class="mt-1 break-all text-xl font-semibold">{{ EMAIL_DISPLAY }}</div>
           </a>
         </div>
       </header>
@@ -85,21 +90,21 @@ const toggleFaq = (idx: number) => {
           </div>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <a href="https://wa.me/79787631603" class="ui-card ui-card-hover flex items-center justify-between p-5">
+            <a :href="MESSENGER_LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="ui-card ui-card-hover flex items-center justify-between p-5">
               <span>
                 <span class="block text-sm text-brand-brown/55">WhatsApp</span>
                 <span class="mt-1 block font-semibold">Написать</span>
               </span>
               <LucideMessageCircle class="text-brand-gold" :size="24" />
             </a>
-            <a href="https://t.me/rostmebel" class="ui-card ui-card-hover flex items-center justify-between p-5">
+            <a :href="MESSENGER_LINKS.telegram" target="_blank" rel="noopener noreferrer" class="ui-card ui-card-hover flex items-center justify-between p-5">
               <span>
                 <span class="block text-sm text-brand-brown/55">Telegram</span>
                 <span class="mt-1 block font-semibold">Открыть чат</span>
               </span>
               <LucideSend class="text-brand-gold" :size="24" />
             </a>
-            <a :href="maxMessengerUrl" target="_blank" rel="noopener noreferrer" class="ui-card ui-card-hover flex items-center justify-between p-5">
+            <a :href="MESSENGER_LINKS.max" target="_blank" rel="noopener noreferrer" class="ui-card ui-card-hover flex items-center justify-between p-5">
               <span>
                 <span class="block text-sm text-brand-brown/55">MAX</span>
                 <span class="mt-1 block font-semibold">Открыть</span>

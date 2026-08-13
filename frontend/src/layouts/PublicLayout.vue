@@ -11,6 +11,13 @@ import {
 } from 'lucide-vue-next';
 import { useFavorites } from '@/composables/useFavorites';
 import BrandMark from '@/components/common/BrandMark.vue';
+import {
+  EMAIL_DISPLAY,
+  EMAIL_HREF,
+  MESSENGER_LINKS,
+  PHONE_DISPLAY,
+  PHONE_HREF,
+} from '@/constants/contacts';
 
 const { favorites } = useFavorites();
 const route = useRoute();
@@ -29,9 +36,9 @@ const mobileLinks = [
 ];
 
 const quickActions = [
-  { name: 'Позвонить', href: 'tel:+79787631603', icon: LucidePhone },
-  { name: 'WhatsApp', href: 'https://wa.me/79787631603', icon: LucideMessageCircle },
-  { name: 'MAX', href: 'https://max.ru', icon: LucideMessageCircle },
+  { name: 'Позвонить', href: PHONE_HREF, icon: LucidePhone },
+  { name: 'WhatsApp', href: MESSENGER_LINKS.whatsapp, icon: LucideMessageCircle },
+  { name: 'MAX', href: MESSENGER_LINKS.max, icon: LucideMessageCircle },
 ];
 
 const isHomePage = computed(() => route.name === 'home');
@@ -102,7 +109,7 @@ onUnmounted(() => {
 
         <div class="flex items-center gap-2 sm:gap-3">
           <a
-            href="tel:+79787631603"
+            :href="PHONE_HREF"
             :class="[
               'hidden h-11 items-center gap-2 rounded-lg border px-4 text-xs font-black uppercase tracking-widest transition-colors lg:flex',
               isHeaderActive
@@ -111,7 +118,7 @@ onUnmounted(() => {
             ]"
           >
             <LucidePhone :size="15" />
-            +7 (978) 763-16-03
+            {{ PHONE_DISPLAY }}
           </a>
 
           <router-link
@@ -175,7 +182,7 @@ onUnmounted(() => {
 
           <div class="mt-auto border-t border-white/10 pt-6">
             <p class="mb-3 text-xs font-black uppercase tracking-widest text-white/45">Связаться</p>
-            <a href="tel:+79787631603" class="font-serif text-3xl font-bold text-white">+7 (978) 763-16-03</a>
+            <a :href="PHONE_HREF" class="font-serif text-3xl font-bold text-white">{{ PHONE_DISPLAY }}</a>
           </div>
         </div>
       </transition>
@@ -233,8 +240,8 @@ onUnmounted(() => {
         <div>
           <h4 class="mb-5 text-xs font-black uppercase tracking-widest text-brand-gold">Контакты</h4>
           <ul class="space-y-3 text-sm font-bold text-brand-brown/70">
-            <li><a href="tel:+79787631603" class="transition-colors hover:text-brand-gold">+7 (978) 763-16-03</a></li>
-            <li><a href="mailto:rost.salon2003@mail.ru" class="break-all transition-colors hover:text-brand-gold">rost.salon2003@mail.ru</a></li>
+            <li><a :href="PHONE_HREF" class="transition-colors hover:text-brand-gold">{{ PHONE_DISPLAY }}</a></li>
+            <li><a :href="EMAIL_HREF" class="break-all transition-colors hover:text-brand-gold">{{ EMAIL_DISPLAY }}</a></li>
             <li>Симферополь, выезд по Крыму</li>
           </ul>
         </div>
