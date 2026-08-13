@@ -365,6 +365,23 @@ func TestFilterByRequestedCategoryFallsBackWhenCategoryIsUnknown(t *testing.T) {
 	}
 }
 
+func TestFilterByRequestedCategoryRecognizesTables(t *testing.T) {
+	tableCategoryID := int64(5)
+	kitchenCategoryID := int64(1)
+	projects := []*domProduct.Project{
+		{ID: 1, ProjectCategoryID: &kitchenCategoryID, Name: "Кухня", Status: domProduct.StatusPublished},
+		{ID: 2, ProjectCategoryID: &tableCategoryID, Name: "Обеденный стол", Status: domProduct.StatusPublished},
+	}
+
+	filtered := filterByRequestedCategory("стол из шпона", projects, map[int64]string{
+		kitchenCategoryID: "Кухни",
+		tableCategoryID:   "Столы",
+	})
+	if len(filtered) != 1 || filtered[0].ID != 2 {
+		t.Fatalf("expected only table project, got %#v", filtered)
+	}
+}
+
 func TestSearchProductsDisabledErrorIsStillSupported(t *testing.T) {
 	if !errors.Is(gemini.ErrDisabled, gemini.ErrDisabled) {
 		t.Fatal("expected disabled error to remain comparable")

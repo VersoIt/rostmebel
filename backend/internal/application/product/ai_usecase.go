@@ -645,12 +645,47 @@ func categoryKeys(value string) []string {
 		keys[token] = struct{}{}
 	}
 
+	for _, alias := range categoryAliases(normalized) {
+		if alias == "" {
+			continue
+		}
+		keys[alias] = struct{}{}
+	}
+
 	result := make([]string, 0, len(keys))
 	for key := range keys {
 		result = append(result, key)
 	}
 	sort.Strings(result)
 	return result
+}
+
+func categoryAliases(normalized string) []string {
+	aliases := make([]string, 0, 8)
+	appendAliases := func(values ...string) {
+		aliases = append(aliases, values...)
+	}
+
+	switch {
+	case strings.Contains(normalized, "кух"):
+		appendAliases("кухня", "кухни", "кухонь")
+	case strings.Contains(normalized, "шкаф") || strings.Contains(normalized, "wardrobe"):
+		appendAliases("шкаф", "шкафы", "шкаф купе", "шкафы купе")
+	case strings.Contains(normalized, "гардероб") || strings.Contains(normalized, "dressing"):
+		appendAliases("гардероб", "гардеробная", "гардеробные")
+	case strings.Contains(normalized, "прихож") || strings.Contains(normalized, "hallway"):
+		appendAliases("прихожая", "прихожие")
+	case strings.Contains(normalized, "стол") || strings.Contains(normalized, "table"):
+		appendAliases("стол", "столы", "рабочий стол", "письменный стол")
+	case strings.Contains(normalized, "детск") || strings.Contains(normalized, "children"):
+		appendAliases("детская", "детские")
+	case strings.Contains(normalized, "гостин") || strings.Contains(normalized, "тумб") || strings.Contains(normalized, "living"):
+		appendAliases("гостиная", "гостиные", "тв тумба", "тв-тумба", "тумба под тв")
+	case strings.Contains(normalized, "коммер") || strings.Contains(normalized, "office") || strings.Contains(normalized, "business"):
+		appendAliases("коммерческий объект", "коммерческая мебель", "офис", "офисная мебель")
+	}
+
+	return aliases
 }
 
 func querySegments(query string) []string {

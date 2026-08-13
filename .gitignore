@@ -31,6 +31,16 @@ go.work.sum
 .idea/
 .vscode/
 node_modules/
+frontend/playwright-report/
+frontend/test-results/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.npm-cache/
+frontend/.ms-playwright/
+
+# Local source folders with Russian names used for content prep
+/[А-Яа-яЁё]*/
+
 deploy/host-ssl/certs/*
 !deploy/host-ssl/certs/.gitkeep
 deploy/host-ssl/private/*

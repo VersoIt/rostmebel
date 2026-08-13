@@ -6,6 +6,7 @@ import {
   LucideArrowRight,
   LucideCheckCircle,
   LucideChevronLeft,
+  LucideChevronRight,
   LucideMessageSquare,
   LucideSearch,
   LucideShieldCheck,
@@ -30,9 +31,22 @@ const isOrderModalOpen = ref(false);
 const isReviewModalOpen = ref(false);
 const isLightboxOpen = ref(false);
 const reviewListRef = ref<any>(null);
+const lightboxTouchStartX = ref(0);
+const lightboxTouchStartY = ref(0);
+
+const productImages = computed(() => product.value?.images || []);
+const hasMultipleImages = computed(() => productImages.value.length > 1);
+const currentImageIndex = computed(() => {
+  if (!productImages.value.length) return -1;
+
+  const foundIndex = productImages.value.findIndex((image) => image.url === activeImage.value);
+  return foundIndex >= 0 ? foundIndex : 0;
+});
 
 const quoteProjectType = computed(() => {
   if (!product.value) return 'Пока не знаю';
+
+  const categorySlug = productStore.categories.find((category) => category.id === product.value?.project_category_id)?.slug || '';
 
   const haystack = [
     product.value.name,
@@ -41,15 +55,31 @@ const quoteProjectType = computed(() => {
     ...Object.values(product.value.specs || {}),
   ].join(' ').toLowerCase();
 
-  if (haystack.includes('кух')) {
+  if (categorySlug === 'kitchens' || haystack.includes('кух')) {
     return haystack.includes('техник') ? 'Кухня с техникой' : 'Кухня';
   }
 
-  if (haystack.includes('шкаф') || haystack.includes('гардероб')) {
+  if (categorySlug === 'wardrobes' || categorySlug === 'dressing-rooms' || haystack.includes('шкаф') || haystack.includes('гардероб')) {
     return 'Шкаф или гардеробная';
   }
 
-  if (haystack.includes('коммер') || haystack.includes('офис') || haystack.includes('салон')) {
+  if (categorySlug === 'hallways' || haystack.includes('прихож')) {
+    return 'Прихожая';
+  }
+
+  if (categorySlug === 'tables' || haystack.includes('стол') || haystack.includes('рабоч')) {
+    return 'Стол или рабочая зона';
+  }
+
+  if (categorySlug === 'living-rooms' || haystack.includes('гостин') || haystack.includes('тв-тумб') || haystack.includes('тумб')) {
+    return 'ТВ-тумба или гостиная';
+  }
+
+  if (categorySlug === 'children-rooms' || haystack.includes('детск')) {
+    return 'Детская';
+  }
+
+  if (categorySlug === 'commercial-furniture' || haystack.includes('коммер') || haystack.includes('офис') || haystack.includes('салон')) {
     return 'Коммерческий объект';
   }
 
@@ -60,9 +90,75 @@ const handleImageError = (event: Event) => {
   (event.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
 };
 
+const setActiveImageByIndex = (index: number) => {
+  if (!productImages.value.length) {
+    activeImage.value = PLACEHOLDER_IMAGE;
+    return;
+  }
+
+  const normalizedIndex = ((index % productImages.value.length) + productImages.value.length) % productImages.value.length;
+  activeImage.value = productImages.value[normalizedIndex]?.url || PLACEHOLDER_IMAGE;
+};
+
 const openLightbox = (url: string) => {
-  activeImage.value = url;
+  activeImage.value = url || productImages.value[0]?.url || PLACEHOLDER_IMAGE;
   isLightboxOpen.value = true;
+};
+
+const showPreviousImage = () => {
+  if (!hasMultipleImages.value) return;
+  setActiveImageByIndex(currentImageIndex.value - 1);
+};
+
+const showNextImage = () => {
+  if (!hasMultipleImages.value) return;
+  setActiveImageByIndex(currentImageIndex.value + 1);
+};
+
+const handleLightboxTouchStart = (event: TouchEvent) => {
+  if (!hasMultipleImages.value) return;
+
+  const touch = event.changedTouches[0];
+  lightboxTouchStartX.value = touch.clientX;
+  lightboxTouchStartY.value = touch.clientY;
+};
+
+const handleLightboxTouchEnd = (event: TouchEvent) => {
+  if (!hasMultipleImages.value) return;
+
+  const touch = event.changedTouches[0];
+  const deltaX = touch.clientX - lightboxTouchStartX.value;
+  const deltaY = touch.clientY - lightboxTouchStartY.value;
+
+  if (Math.abs(deltaX) < 44 || Math.abs(deltaX) < Math.abs(deltaY) * 1.15) {
+    return;
+  }
+
+  if (deltaX < 0) {
+    showNextImage();
+  } else {
+    showPreviousImage();
+  }
+};
+
+const handleLightboxKeydown = (event: KeyboardEvent) => {
+  if (!isLightboxOpen.value) return;
+
+  if (event.key === 'Escape') {
+    isLightboxOpen.value = false;
+    return;
+  }
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    showPreviousImage();
+    return;
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    showNextImage();
+  }
 };
 
 const updateSchema = (item: Product) => {
@@ -163,10 +259,17 @@ const loadProjectData = async () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-watch(() => route.params.id, loadProjectData);
-onMounted(loadProjectData);
+watch(() => route.params.id, () => {
+  void loadProjectData();
+});
+
+onMounted(() => {
+  void loadProjectData();
+  window.addEventListener('keydown', handleLightboxKeydown);
+});
 
 onUnmounted(() => {
+  window.removeEventListener('keydown', handleLightboxKeydown);
   removeJsonLd('schema-product');
   removeJsonLd('schema-product-breadcrumbs');
 });
@@ -339,10 +442,51 @@ const handleReviewSuccess = () => {
     <Teleport to="body">
       <transition name="fade">
         <div v-if="isLightboxOpen" class="ui-modal-backdrop" @click="isLightboxOpen = false">
-          <button type="button" class="absolute right-5 top-5 rounded-lg bg-white/10 p-3 text-white transition-colors hover:bg-white hover:text-brand-brown">
-            <LucideX :size="28" />
-          </button>
-          <img :src="activeImage" class="z-10 max-h-full max-w-full rounded-lg object-contain shadow-2xl" alt="">
+          <div
+            class="relative z-10 flex h-full w-full items-center justify-center px-4 py-8 sm:px-8"
+            @click.stop
+            @touchstart.passive="handleLightboxTouchStart"
+            @touchend.passive="handleLightboxTouchEnd"
+          >
+            <button
+              type="button"
+              class="absolute right-5 top-5 rounded-lg bg-white/10 p-3 text-white transition-colors hover:bg-white hover:text-brand-brown"
+              @click="isLightboxOpen = false"
+            >
+              <LucideX :size="28" />
+            </button>
+
+            <button
+              v-if="hasMultipleImages"
+              type="button"
+              class="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition-colors hover:bg-black/55 sm:left-5 sm:h-12 sm:w-12"
+              aria-label="Предыдущее изображение"
+              @click="showPreviousImage"
+            >
+              <LucideChevronLeft :size="28" />
+            </button>
+
+            <div class="relative flex max-h-full max-w-full items-center justify-center">
+              <img :src="activeImage" :alt="product?.name || ''" class="max-h-full max-w-full rounded-lg object-contain shadow-2xl" @error="handleImageError">
+
+              <div
+                v-if="productImages.length"
+                class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-sm font-semibold text-white backdrop-blur"
+              >
+                {{ currentImageIndex + 1 }} / {{ productImages.length }}
+              </div>
+            </div>
+
+            <button
+              v-if="hasMultipleImages"
+              type="button"
+              class="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition-colors hover:bg-black/55 sm:right-5 sm:h-12 sm:w-12"
+              aria-label="Следующее изображение"
+              @click="showNextImage"
+            >
+              <LucideChevronRight :size="28" />
+            </button>
+          </div>
         </div>
       </transition>
     </Teleport>
