@@ -27,12 +27,15 @@ const productStore = useProductStore();
 const product = ref<Product | null>(null);
 const relatedProjects = ref<Product[]>([]);
 const activeImage = ref('');
+const displayedImage = ref(PLACEHOLDER_IMAGE);
 const isOrderModalOpen = ref(false);
 const isReviewModalOpen = ref(false);
 const isLightboxOpen = ref(false);
+const isImageTransitioning = ref(false);
 const reviewListRef = ref<any>(null);
 const lightboxTouchStartX = ref(0);
 const lightboxTouchStartY = ref(0);
+let imageTransitionTimer: number | undefined;
 
 const productImages = computed(() => product.value?.images || []);
 const hasMultipleImages = computed(() => productImages.value.length > 1);
@@ -88,6 +91,34 @@ const quoteProjectType = computed(() => {
 
 const handleImageError = (event: Event) => {
   (event.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+};
+
+const clearImageTransitionTimer = () => {
+  if (imageTransitionTimer !== undefined) {
+    window.clearTimeout(imageTransitionTimer);
+    imageTransitionTimer = undefined;
+  }
+};
+
+const setDisplayedImage = (nextImage: string, immediate = false) => {
+  const normalizedImage = nextImage || PLACEHOLDER_IMAGE;
+
+  clearImageTransitionTimer();
+
+  if (immediate || displayedImage.value === normalizedImage) {
+    displayedImage.value = normalizedImage;
+    isImageTransitioning.value = false;
+    return;
+  }
+
+  isImageTransitioning.value = true;
+  imageTransitionTimer = window.setTimeout(() => {
+    displayedImage.value = normalizedImage;
+    requestAnimationFrame(() => {
+      isImageTransitioning.value = false;
+    });
+    imageTransitionTimer = undefined;
+  }, 140);
 };
 
 const setActiveImageByIndex = (index: number) => {
@@ -246,6 +277,7 @@ const loadProjectData = async () => {
   if (loadedProduct) {
     product.value = loadedProduct;
     activeImage.value = loadedProduct.images[0]?.url || PLACEHOLDER_IMAGE;
+    setDisplayedImage(activeImage.value, true);
     updateSchema(loadedProduct);
 
     await productStore.fetchProducts({
@@ -263,12 +295,17 @@ watch(() => route.params.id, () => {
   void loadProjectData();
 });
 
+watch(activeImage, (nextImage, previousImage) => {
+  setDisplayedImage(nextImage || PLACEHOLDER_IMAGE, !previousImage);
+});
+
 onMounted(() => {
   void loadProjectData();
   window.addEventListener('keydown', handleLightboxKeydown);
 });
 
 onUnmounted(() => {
+  clearImageTransitionTimer();
   window.removeEventListener('keydown', handleLightboxKeydown);
   removeJsonLd('schema-product');
   removeJsonLd('schema-product-breadcrumbs');
@@ -312,7 +349,15 @@ const handleReviewSuccess = () => {
           class="group relative aspect-square w-full overflow-hidden rounded-lg bg-brand-gray"
           @click="openLightbox(activeImage)"
         >
-          <img :src="activeImage" :alt="product.name" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035]" @error="handleImageError">
+          <img
+            :src="displayedImage"
+            :alt="product.name"
+            :class="[
+              'absolute inset-0 h-full w-full object-cover transition-all duration-300 ease-out group-hover:scale-[1.035]',
+              isImageTransitioning ? 'opacity-0' : 'opacity-100'
+            ]"
+            @error="handleImageError"
+          >
           <span class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/12">
             <LucideSearch :size="40" class="text-white opacity-0 transition-opacity group-hover:opacity-100" />
           </span>
@@ -467,7 +512,15 @@ const handleReviewSuccess = () => {
             </button>
 
             <div class="relative flex max-h-full max-w-full items-center justify-center">
-              <img :src="activeImage" :alt="product?.name || ''" class="max-h-full max-w-full rounded-lg object-contain shadow-2xl" @error="handleImageError">
+              <img
+                :src="displayedImage"
+                :alt="product?.name || ''"
+                :class="[
+                  'max-h-full max-w-full rounded-lg object-contain shadow-2xl transition-opacity duration-300 ease-out',
+                  isImageTransitioning ? 'opacity-0' : 'opacity-100'
+                ]"
+                @error="handleImageError"
+              >
 
               <div
                 v-if="productImages.length"
