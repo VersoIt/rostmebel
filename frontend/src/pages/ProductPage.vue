@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/products';
 import {
@@ -8,6 +8,7 @@ import {
   LucideChevronLeft,
   LucideChevronRight,
   LucideMessageSquare,
+  LucidePhoneCall,
   LucideSearch,
   LucideShieldCheck,
   LucideTruck,
@@ -21,10 +22,12 @@ import type { Product } from '@/types';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
 import { buildImageVariantUrl, buildResponsiveImageSet, preloadResponsiveImage } from '@/utils/images';
 import { absoluteUrl, compactDescription, removeJsonLd, setJsonLd, setPageSeo } from '@/utils/seo';
+import { MESSENGER_LINKS, PHONE_HREF } from '@/constants/contacts';
 
 const route = useRoute();
 const router = useRouter();
 const productStore = useProductStore();
+
 const product = ref<Product | null>(null);
 const relatedProjects = ref<Product[]>([]);
 const activeImage = ref('');
@@ -38,12 +41,16 @@ const pendingLightboxIndex = ref<number | null>(null);
 const reviewListRef = ref<any>(null);
 const lightboxTouchStartX = ref(0);
 const lightboxTouchStartY = ref(0);
+
 let mainImageRequestId = 0;
 let lightboxNavigationRequestId = 0;
 let lightboxBackgroundPreloadTimer: number | undefined;
 
 const productImages = computed(() => product.value?.images || []);
 const hasMultipleImages = computed(() => productImages.value.length > 1);
+const projectCategoryName = computed(() =>
+  productStore.categories.find((category) => category.id === product.value?.project_category_id)?.name || 'Проект',
+);
 const mainImageSource = computed(() => getMainImageSource(displayedMainImage.value));
 const lightboxImageSource = computed(() => getLightboxImageSource(activeImage.value || PLACEHOLDER_IMAGE));
 const currentImageIndex = computed(() => {
@@ -54,11 +61,16 @@ const currentImageIndex = computed(() => {
 });
 const visibleLightboxIndex = computed(() => pendingLightboxIndex.value ?? currentImageIndex.value);
 
+const supportActions = [
+  { label: 'Позвонить', href: PHONE_HREF, icon: LucidePhoneCall },
+  { label: 'WhatsApp', href: MESSENGER_LINKS.whatsapp, icon: LucideMessageSquare },
+  { label: 'Telegram', href: MESSENGER_LINKS.telegram, icon: LucideMessageSquare },
+] as const;
+
 const quoteProjectType = computed(() => {
   if (!product.value) return 'Пока не знаю';
 
   const categorySlug = productStore.categories.find((category) => category.id === product.value?.project_category_id)?.slug || '';
-
   const haystack = [
     product.value.name,
     product.value.description,
@@ -225,11 +237,6 @@ const scheduleLightboxPreload = (centerIndex: number) => {
   }, 90);
 };
 
-const setActiveImageByIndex = (index: number) => {
-  const nextUrl = imageUrlByIndex(index);
-  activeImage.value = nextUrl || PLACEHOLDER_IMAGE;
-};
-
 const navigateLightboxToIndex = async (index: number) => {
   const normalizedIndex = normalizeImageIndex(index);
   const nextUrl = imageUrlByIndex(normalizedIndex);
@@ -320,7 +327,6 @@ const handleLightboxKeydown = (event: KeyboardEvent) => {
 
 const updateSchema = (item: Product) => {
   const productPath = `/product/${item.slug || item.id}`;
-  const categoryName = productStore.categories.find((category) => category.id === item.project_category_id)?.name || 'Мебель по размеру';
   const image = item.images[0]?.url || PLACEHOLDER_IMAGE;
   const additionalProperty = Object.entries(item.specs || {})
     .filter(([, value]) => value)
@@ -353,7 +359,7 @@ const updateSchema = (item: Product) => {
     },
     image: (item.images.length ? item.images : [{ url: PLACEHOLDER_IMAGE }]).map((imageItem) => absoluteUrl(imageItem.url)),
     description: item.description,
-    category: categoryName,
+    category: projectCategoryName.value,
     additionalProperty: additionalProperty.length ? additionalProperty : undefined,
     offers: {
       '@type': 'Offer',
@@ -466,27 +472,36 @@ const handleReviewSuccess = () => {
 </script>
 
 <template>
-  <div v-if="product" class="min-h-screen bg-white">
-    <section class="bg-brand-cream pt-28">
-      <div class="ui-container ui-section-tight">
+  <div v-if="product" class="min-h-screen bg-transparent">
+    <section class="relative overflow-hidden bg-brand-cream pt-28">
+      <div class="absolute -left-12 top-8 h-44 w-44 rounded-full bg-brand-gold/12 blur-3xl"></div>
+      <div class="absolute right-0 top-10 h-52 w-52 rounded-full bg-brand-brown/6 blur-3xl"></div>
+
+      <div class="ui-container ui-section-tight relative z-10">
         <button type="button" class="mb-6 inline-flex items-center gap-2 text-sm font-bold text-brand-brown/50 transition-colors hover:text-brand-gold" @click="router.push('/catalog')">
           <LucideChevronLeft :size="17" />
           Назад к проектам
         </button>
-        <h1 class="ui-title-xl">{{ product.name }}</h1>
-        <div class="mt-4 flex flex-wrap items-center gap-2">
-          <span class="ui-status bg-brand-gold/10 text-brand-gold ring-brand-gold/20">
-            {{ productStore.categories.find((category) => category.id === product?.project_category_id)?.name || 'Проект' }}
-          </span>
+
+        <div class="max-w-4xl">
+          <h1 class="ui-title-xl">{{ product.name }}</h1>
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <span class="ui-status bg-brand-gold/10 text-brand-gold ring-brand-gold/20">
+              {{ projectCategoryName }}
+            </span>
+            <span class="ui-status bg-white/80 text-brand-brown/65 ring-brand-brown/10">
+              {{ productImages.length }} фото
+            </span>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="ui-container ui-section grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
+    <section class="ui-container ui-section grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] lg:gap-12">
       <div class="space-y-5">
         <button
           type="button"
-          class="group relative aspect-square w-full overflow-hidden rounded-lg bg-brand-gray"
+          class="group relative aspect-square w-full overflow-hidden rounded-[2rem] bg-brand-gray shadow-[0_24px_70px_rgba(23,33,29,0.08)]"
           @click="openLightbox(activeImage)"
         >
           <img
@@ -495,22 +510,30 @@ const handleReviewSuccess = () => {
             :sizes="mainImageSource.sizes"
             :alt="product.name"
             :class="[
-              'absolute inset-0 h-full w-full object-cover transition-all duration-300 ease-out group-hover:scale-[1.035]',
+              'absolute inset-0 h-full w-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.03]',
               isMainImageLoading ? 'opacity-90' : 'opacity-100'
             ]"
             decoding="async"
             fetchpriority="high"
             @error="handleImageError"
           >
+
           <div
             v-if="isMainImageLoading"
             class="absolute inset-0 flex items-center justify-center bg-brand-brown/10 backdrop-blur-[1px]"
           >
             <div class="h-9 w-9 animate-spin rounded-full border-2 border-white/85 border-t-transparent"></div>
           </div>
-          <span class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/12">
-            <LucideSearch :size="40" class="text-white opacity-0 transition-opacity group-hover:opacity-100" />
-          </span>
+
+          <div class="absolute inset-x-0 bottom-0 p-4">
+            <div class="flex items-center justify-between rounded-2xl border border-white/12 bg-black/35 px-4 py-3 text-white backdrop-blur-md">
+              <div>
+                <div class="text-[10px] font-black uppercase tracking-[0.18em] text-white/62">Галерея проекта</div>
+                <div class="mt-1 text-sm font-semibold">Открыть фото в полном размере</div>
+              </div>
+              <LucideSearch :size="22" class="text-white/90" />
+            </div>
+          </div>
         </button>
 
         <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
@@ -519,8 +542,8 @@ const handleReviewSuccess = () => {
             :key="image.url"
             type="button"
             :class="[
-              'h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-colors',
-              activeImage === image.url ? 'border-brand-gold' : 'border-transparent opacity-70 hover:opacity-100'
+              'h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-2 bg-white shadow-[0_12px_28px_rgba(23,33,29,0.05)] transition-all',
+              activeImage === image.url ? 'border-brand-gold shadow-[0_14px_30px_rgba(62,140,118,0.16)]' : 'border-transparent opacity-75 hover:-translate-y-0.5 hover:opacity-100'
             ]"
             @click="activeImage = image.url"
           >
@@ -529,8 +552,8 @@ const handleReviewSuccess = () => {
         </div>
       </div>
 
-      <div class="flex flex-col">
-        <div class="mb-8">
+      <div class="self-start lg:sticky lg:top-28">
+        <div class="ui-card p-5 sm:p-6">
           <div class="mb-6 flex flex-wrap items-end gap-6">
             <div>
               <div class="ui-label-compact">Бюджет реализации</div>
@@ -541,36 +564,51 @@ const handleReviewSuccess = () => {
               <div class="text-xl text-brand-brown/25 line-through">{{ formatPrice(product.price_old) }}</div>
             </div>
           </div>
+
           <p class="ui-copy-lg">{{ product.description }}</p>
+
+          <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div
+              v-for="item in [
+                { icon: LucideShieldCheck, text: 'Гарантия 2 года' },
+                { icon: LucideTruck, text: 'Монтаж по Крыму' },
+                { icon: LucideCheckCircle, text: 'Контроль сборки' }
+              ]"
+              :key="item.text"
+              class="rounded-2xl border border-brand-brown/8 bg-brand-gray/55 px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-brand-brown/58"
+            >
+              <component :is="item.icon" class="mb-2 text-brand-gold" :size="18" />
+              {{ item.text }}
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <button type="button" class="ui-button ui-button-primary w-full min-h-14 text-base" @click="isOrderModalOpen = true">
+              Рассчитать похожий проект
+            </button>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <a
+              v-for="action in supportActions"
+              :key="action.label"
+              :href="action.href"
+              class="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-brand-brown/10 bg-white px-4 py-3 text-sm font-bold text-brand-brown transition-all hover:-translate-y-0.5 hover:border-brand-gold hover:text-brand-gold"
+              :target="action.href.startsWith('http') ? '_blank' : undefined"
+              :rel="action.href.startsWith('http') ? 'noopener noreferrer' : undefined"
+            >
+              <component :is="action.icon" :size="18" />
+              {{ action.label }}
+            </a>
+          </div>
         </div>
 
-        <div class="ui-card-muted mb-8 p-5 sm:p-6">
+        <div class="ui-card-muted mt-5 p-5 sm:p-6">
           <h2 class="ui-title-md mb-6">Детали проекта</h2>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div v-for="(value, key) in product.specs" :key="key" class="border-b border-brand-brown/10 pb-3">
               <div class="ui-label-compact">{{ key }}</div>
               <div class="font-bold text-brand-brown">{{ value }}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-auto space-y-6">
-          <button type="button" class="ui-button ui-button-primary w-full min-h-14 text-base" @click="isOrderModalOpen = true">
-            Рассчитать похожий проект
-          </button>
-
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div
-              v-for="item in [
-                { icon: LucideShieldCheck, text: 'Гарантия 2 года' },
-                { icon: LucideTruck, text: 'Монтаж в Крыму' },
-                { icon: LucideCheckCircle, text: 'Контроль сборки' }
-              ]"
-              :key="item.text"
-              class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-brand-brown/45"
-            >
-              <component :is="item.icon" class="text-brand-gold" :size="18" />
-              {{ item.text }}
             </div>
           </div>
         </div>
@@ -595,7 +633,10 @@ const handleReviewSuccess = () => {
 
     <section v-if="relatedProjects.length" class="ui-container ui-section border-t border-brand-brown/10">
       <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <h2 class="ui-title-lg">Похожие проекты</h2>
+        <div>
+          <p class="ui-eyebrow mb-3">Похожие решения</p>
+          <h2 class="ui-title-lg">Еще проекты в похожем направлении</h2>
+        </div>
         <router-link to="/catalog" class="ui-button ui-button-secondary">
           Смотреть все
           <LucideArrowRight :size="18" />
@@ -610,7 +651,7 @@ const handleReviewSuccess = () => {
       <transition name="fade">
         <div v-if="isOrderModalOpen" class="ui-modal-backdrop" @click.self="isOrderModalOpen = false">
           <section class="ui-modal-panel max-w-2xl p-5 sm:p-8">
-            <button type="button" class="absolute right-4 top-4 rounded-lg p-2 text-brand-brown/35 transition-colors hover:bg-brand-gray hover:text-brand-brown" @click="isOrderModalOpen = false">
+            <button type="button" class="absolute right-4 top-4 rounded-xl p-2 text-brand-brown/35 transition-colors hover:bg-brand-gray hover:text-brand-brown" @click="isOrderModalOpen = false">
               <LucideX :size="24" />
             </button>
             <h2 class="ui-title-md mb-2">Заявка на расчет</h2>
@@ -625,7 +666,7 @@ const handleReviewSuccess = () => {
       <transition name="fade">
         <div v-if="isReviewModalOpen" class="ui-modal-backdrop" @click.self="isReviewModalOpen = false">
           <section class="ui-modal-panel max-w-2xl">
-            <button type="button" class="absolute right-4 top-4 z-10 rounded-lg p-2 text-brand-brown/35 transition-colors hover:bg-brand-gray hover:text-brand-brown" @click="isReviewModalOpen = false">
+            <button type="button" class="absolute right-4 top-4 z-10 rounded-xl p-2 text-brand-brown/35 transition-colors hover:bg-brand-gray hover:text-brand-brown" @click="isReviewModalOpen = false">
               <LucideX :size="24" />
             </button>
             <ReviewForm :project-id="product.id" @success="handleReviewSuccess" />
@@ -645,7 +686,7 @@ const handleReviewSuccess = () => {
           >
             <button
               type="button"
-              class="absolute right-5 top-5 rounded-lg bg-white/10 p-3 text-white transition-colors hover:bg-white hover:text-brand-brown"
+              class="absolute right-5 top-5 rounded-xl bg-white/10 p-3 text-white transition-colors hover:bg-white hover:text-brand-brown"
               @click="isLightboxOpen = false"
             >
               <LucideX :size="28" />
@@ -668,7 +709,7 @@ const handleReviewSuccess = () => {
                 :sizes="lightboxImageSource.sizes"
                 :alt="product?.name || ''"
                 :class="[
-                  'max-h-full max-w-full rounded-lg object-contain shadow-2xl transition-opacity duration-300 ease-out',
+                  'max-h-full max-w-full rounded-2xl object-contain shadow-2xl transition-opacity duration-300 ease-out',
                   isLightboxImageLoading ? 'opacity-75' : 'opacity-100'
                 ]"
                 decoding="async"

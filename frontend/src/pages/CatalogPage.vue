@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { LucideArrowRight, LucideFilterX, LucideLoader2, LucideSearch } from 'lucide-vue-next';
+import {
+  LucideArrowRight,
+  LucideFilterX,
+  LucideLoader2,
+  LucideRotateCcw,
+  LucideSearch,
+  LucideSparkles,
+} from 'lucide-vue-next';
 import ProductCard from '@/components/catalog/ProductCard.vue';
 import { useProductStore } from '@/stores/products';
 import { absoluteUrl, compactDescription, removeJsonLd, setJsonLd, setPageSeo } from '@/utils/seo';
@@ -67,6 +74,20 @@ const catalogDescription = computed(() => {
 });
 
 const catalogRobots = computed(() => (trimmedSearchQuery.value ? 'noindex,follow' : 'index,follow'));
+
+const resultLabel = computed(() => {
+  if (trimmedSearchQuery.value) {
+    return `Найдено ${productStore.products.length} по запросу «${trimmedSearchQuery.value}»`;
+  }
+
+  if (selectedCategoryEntity.value) {
+    return `${productStore.products.length} проектов в категории «${selectedCategoryEntity.value.name}»`;
+  }
+
+  return `${productStore.products.length} проектов в каталоге`;
+});
+
+const hasActiveFilters = computed(() => Boolean(selectedCategory.value || trimmedSearchQuery.value));
 
 const syncFiltersFromRoute = () => {
   selectedCategory.value = route.query.category?.toString() || '';
@@ -174,48 +195,74 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-brand-cream pt-28">
+  <div class="min-h-screen bg-transparent pt-28">
     <div class="ui-container ui-section">
-      <header class="mb-10">
-        <p class="ui-eyebrow mb-3">Портфолио</p>
-        <h1 class="ui-title-xl">Проекты</h1>
-        <p class="ui-copy-lg mt-4 max-w-2xl">
-          Реальные кухни, шкафы, столы, прихожие и другая мебель по размеру. Фильтруйте по категории или найдите проект по названию, материалу и стилю.
-        </p>
+      <header class="relative mb-10 overflow-hidden rounded-[2rem] bg-brand-brown px-5 py-8 text-white shadow-[0_24px_70px_rgba(23,33,29,0.18)] sm:px-7 lg:px-8">
+        <div class="absolute -left-10 top-0 h-40 w-40 rounded-full bg-brand-gold/30 blur-3xl"></div>
+        <div class="absolute right-0 top-0 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
+
+        <div class="relative z-10 max-w-4xl">
+          <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-brand-gold">
+            <LucideSparkles :size="14" />
+            Портфолио
+          </div>
+          <h1 class="font-serif text-4xl font-bold leading-tight sm:text-5xl">Проекты</h1>
+          <p class="mt-4 max-w-2xl text-lg leading-8 text-white/76">
+            Реальные кухни, шкафы, гардеробные и другие проекты по индивидуальным размерам. Фильтруйте по категории
+            или ищите по названию, материалу и стилю.
+          </p>
+        </div>
       </header>
 
-      <section class="mb-8 space-y-4">
-        <div class="-mx-4 overflow-x-auto px-4 no-scrollbar sm:mx-0 sm:px-0">
-          <div class="flex min-w-max gap-2">
-            <button
-              type="button"
-              :class="['ui-chip', !selectedCategory ? 'ui-chip-active' : '']"
-              @click="selectCategory('')"
-            >
-              Все работы
-            </button>
-            <button
-              v-for="category in productStore.categories"
-              :key="category.id"
-              type="button"
-              :class="['ui-chip', selectedCategory === category.slug ? 'ui-chip-active' : '']"
-              @click="selectCategory(category.slug)"
-            >
-              {{ category.name }}
-            </button>
+      <section class="ui-surface mb-8 p-4 sm:p-5 lg:p-6">
+        <div class="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+          <div>
+            <div class="-mx-1 overflow-x-auto px-1 no-scrollbar">
+              <div class="flex min-w-max gap-2 pb-1">
+                <button
+                  type="button"
+                  :class="['ui-chip', !selectedCategory ? 'ui-chip-active' : '']"
+                  @click="selectCategory('')"
+                >
+                  Все работы
+                </button>
+                <button
+                  v-for="category in productStore.categories"
+                  :key="category.id"
+                  type="button"
+                  :class="['ui-chip', selectedCategory === category.slug ? 'ui-chip-active' : '']"
+                  @click="selectCategory(category.slug)"
+                >
+                  {{ category.name }}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="ui-card p-4">
-          <div class="relative max-w-xl">
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="ui-input pl-11"
-              placeholder="Название, материал, стиль"
-              @input="queueSearch"
-            >
-            <LucideSearch class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-brown/35" :size="19" />
+          <div class="space-y-3">
+            <div class="relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                class="ui-input pl-11 pr-11"
+                placeholder="Название, материал, стиль, город"
+                @input="queueSearch"
+              >
+              <LucideSearch class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-brown/35" :size="19" />
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-brown/8 bg-white/72 px-4 py-3">
+              <span class="text-sm font-semibold text-brand-brown/62">{{ resultLabel }}</span>
+              <button
+                v-if="hasActiveFilters"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-full bg-brand-gray px-3 py-1.5 text-xs font-bold text-brand-brown transition-colors hover:bg-brand-brown hover:text-white"
+                @click="resetFilters"
+              >
+                <LucideRotateCcw :size="14" />
+                Сбросить фильтры
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -231,8 +278,8 @@ onUnmounted(() => {
             <ProductCard v-for="product in productStore.products" :key="product.id" :product="product" />
           </div>
 
-          <div class="mt-10 flex items-center justify-between border-t border-brand-brown/10 pt-5">
-            <span class="text-sm font-medium text-brand-brown/45">Показано {{ productStore.products.length }} проектов</span>
+          <div class="mt-10 flex items-center justify-between gap-4 border-t border-brand-brown/10 pt-5">
+            <span class="text-sm font-medium text-brand-brown/45">{{ resultLabel }}</span>
             <router-link to="/contact" class="hidden items-center gap-2 text-sm font-bold text-brand-gold hover:text-brand-brown sm:inline-flex">
               Обсудить похожий проект
               <LucideArrowRight :size="17" />
@@ -244,7 +291,7 @@ onUnmounted(() => {
           <LucideFilterX :size="56" class="mx-auto mb-5 text-brand-brown/12" />
           <h2 class="ui-title-md mb-2">Проекты не найдены</h2>
           <p class="mx-auto mb-6 max-w-md text-brand-brown/55">
-            Попробуйте другой запрос или сбросьте фильтр категории.
+            Попробуйте другой запрос или сбросьте фильтры. Возможно, нужный вам стиль или тип мебели пока еще не добавлен в каталог.
           </p>
           <button type="button" class="ui-button ui-button-primary" @click="resetFilters">
             Сбросить фильтры
