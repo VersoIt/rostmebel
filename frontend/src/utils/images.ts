@@ -6,6 +6,7 @@ export interface ResponsiveImageSource {
 
 const DEFAULT_VARIANT_QUALITY = 80;
 const IMAGE_VARIANT_ENDPOINT = '/api/v1/images/variant';
+const responsiveImagePreloadCache = new Map<string, Promise<void>>();
 
 const normalizeUploadPath = (url: string): string | null => {
   const trimmedUrl = String(url || '').trim();
@@ -63,4 +64,41 @@ export const buildResponsiveImageSet = (
       .join(', '),
     sizes,
   };
+};
+
+const responsiveImageCacheKey = (source: ResponsiveImageSource) =>
+  [source.src, source.srcset || '', source.sizes || ''].join('|');
+
+export const preloadResponsiveImage = (source: ResponsiveImageSource): Promise<void> => {
+  if (typeof window === 'undefined' || !source.src) {
+    return Promise.resolve();
+  }
+
+  const cacheKey = responsiveImageCacheKey(source);
+  const cachedPromise = responsiveImagePreloadCache.get(cacheKey);
+  if (cachedPromise) {
+    return cachedPromise;
+  }
+
+  const preloadPromise = new Promise<void>((resolve) => {
+    const image = new Image();
+
+    image.onload = () => resolve();
+    image.onerror = () => {
+      responsiveImagePreloadCache.delete(cacheKey);
+      resolve();
+    };
+
+    if (source.sizes) {
+      image.sizes = source.sizes;
+    }
+    if (source.srcset) {
+      image.srcset = source.srcset;
+    }
+
+    image.src = source.src;
+  });
+
+  responsiveImagePreloadCache.set(cacheKey, preloadPromise);
+  return preloadPromise;
 };

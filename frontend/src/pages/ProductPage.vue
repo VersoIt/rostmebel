@@ -19,7 +19,7 @@ import ReviewForm from '@/components/catalog/ReviewForm.vue';
 import ReviewList from '@/components/catalog/ReviewList.vue';
 import type { Product } from '@/types';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
-import { buildImageVariantUrl, buildResponsiveImageSet } from '@/utils/images';
+import { buildImageVariantUrl, buildResponsiveImageSet, preloadResponsiveImage } from '@/utils/images';
 import { absoluteUrl, compactDescription, removeJsonLd, setJsonLd, setPageSeo } from '@/utils/seo';
 
 const route = useRoute();
@@ -28,40 +28,31 @@ const productStore = useProductStore();
 const product = ref<Product | null>(null);
 const relatedProjects = ref<Product[]>([]);
 const activeImage = ref('');
-const displayedImage = ref(PLACEHOLDER_IMAGE);
+const displayedMainImage = ref(PLACEHOLDER_IMAGE);
 const isOrderModalOpen = ref(false);
 const isReviewModalOpen = ref(false);
 const isLightboxOpen = ref(false);
-const isImageTransitioning = ref(false);
+const isMainImageLoading = ref(false);
+const isLightboxImageLoading = ref(false);
+const pendingLightboxIndex = ref<number | null>(null);
 const reviewListRef = ref<any>(null);
 const lightboxTouchStartX = ref(0);
 const lightboxTouchStartY = ref(0);
-let imageTransitionTimer: number | undefined;
+let mainImageRequestId = 0;
+let lightboxNavigationRequestId = 0;
+let lightboxBackgroundPreloadTimer: number | undefined;
 
 const productImages = computed(() => product.value?.images || []);
 const hasMultipleImages = computed(() => productImages.value.length > 1);
-const mainImageSource = computed(() =>
-  buildResponsiveImageSet(
-    displayedImage.value,
-    [640, 960, 1280, 1600],
-    '(min-width: 1024px) 50vw, 100vw',
-    82,
-  ),
-);
-const lightboxImageSource = computed(() =>
-  buildResponsiveImageSet(
-    displayedImage.value,
-    [960, 1440, 1920, 2560],
-    '100vw',
-    86,
-  ),
-);
+const mainImageSource = computed(() => getMainImageSource(displayedMainImage.value));
+const lightboxImageSource = computed(() => getLightboxImageSource(activeImage.value || PLACEHOLDER_IMAGE));
 const currentImageIndex = computed(() => {
   if (!productImages.value.length) return -1;
 
   const foundIndex = productImages.value.findIndex((image) => image.url === activeImage.value);
   return foundIndex >= 0 ? foundIndex : 0;
 });
+const visibleLightboxIndex = computed(() => pendingLightboxIndex.value ?? currentImageIndex.value);
 
 const quoteProjectType = computed(() => {
   if (!product.value) return 'Пока не знаю';
@@ -112,57 +103,173 @@ const handleImageError = (event: Event) => {
 
 const thumbnailImageUrl = (url: string) => buildImageVariantUrl(url, 180, 72);
 
-const clearImageTransitionTimer = () => {
-  if (imageTransitionTimer !== undefined) {
-    window.clearTimeout(imageTransitionTimer);
-    imageTransitionTimer = undefined;
+const getMainImageSource = (url: string) =>
+  buildResponsiveImageSet(
+    url || PLACEHOLDER_IMAGE,
+    [640, 960, 1280, 1600],
+    '(min-width: 1024px) 50vw, 100vw',
+    82,
+  );
+
+const getLightboxImageSource = (url: string) =>
+  buildResponsiveImageSet(
+    url || PLACEHOLDER_IMAGE,
+    [960, 1440, 1920, 2560],
+    '100vw',
+    86,
+  );
+
+const normalizeImageIndex = (index: number) => {
+  if (!productImages.value.length) return -1;
+  return ((index % productImages.value.length) + productImages.value.length) % productImages.value.length;
+};
+
+const imageUrlByIndex = (index: number) => {
+  const normalizedIndex = normalizeImageIndex(index);
+  if (normalizedIndex < 0) {
+    return '';
+  }
+  return productImages.value[normalizedIndex]?.url || '';
+};
+
+const clearLightboxBackgroundPreloadTimer = () => {
+  if (lightboxBackgroundPreloadTimer !== undefined) {
+    window.clearTimeout(lightboxBackgroundPreloadTimer);
+    lightboxBackgroundPreloadTimer = undefined;
   }
 };
 
-const setDisplayedImage = (nextImage: string, immediate = false) => {
+const syncDisplayedMainImage = async (nextImage: string, immediate = false) => {
   const normalizedImage = nextImage || PLACEHOLDER_IMAGE;
+  const requestId = ++mainImageRequestId;
 
-  clearImageTransitionTimer();
-
-  if (immediate || displayedImage.value === normalizedImage) {
-    displayedImage.value = normalizedImage;
-    isImageTransitioning.value = false;
+  if (immediate || displayedMainImage.value === normalizedImage) {
+    displayedMainImage.value = normalizedImage;
+    isMainImageLoading.value = false;
+    void preloadResponsiveImage(getMainImageSource(normalizedImage));
     return;
   }
 
-  isImageTransitioning.value = true;
-  imageTransitionTimer = window.setTimeout(() => {
-    displayedImage.value = normalizedImage;
-    requestAnimationFrame(() => {
-      isImageTransitioning.value = false;
-    });
-    imageTransitionTimer = undefined;
-  }, 140);
+  isMainImageLoading.value = true;
+  await preloadResponsiveImage(getMainImageSource(normalizedImage));
+
+  if (requestId !== mainImageRequestId) {
+    return;
+  }
+
+  displayedMainImage.value = normalizedImage;
+  isMainImageLoading.value = false;
+};
+
+const preloadLightboxImage = (url: string) => preloadResponsiveImage(getLightboxImageSource(url || PLACEHOLDER_IMAGE));
+
+const buildLightboxPreloadOrder = (centerIndex: number) => {
+  if (!productImages.value.length) {
+    return [] as number[];
+  }
+
+  const visited = new Set<number>();
+  const ordered: number[] = [];
+
+  for (let offset = 0; ordered.length < productImages.value.length; offset += 1) {
+    const nextIndex = normalizeImageIndex(centerIndex + offset);
+    if (nextIndex >= 0 && !visited.has(nextIndex)) {
+      visited.add(nextIndex);
+      ordered.push(nextIndex);
+    }
+
+    if (offset === 0) {
+      continue;
+    }
+
+    const previousIndex = normalizeImageIndex(centerIndex - offset);
+    if (previousIndex >= 0 && !visited.has(previousIndex)) {
+      visited.add(previousIndex);
+      ordered.push(previousIndex);
+    }
+  }
+
+  return ordered;
+};
+
+const scheduleLightboxPreload = (centerIndex: number) => {
+  if (!productImages.value.length) {
+    return;
+  }
+
+  clearLightboxBackgroundPreloadTimer();
+
+  const preloadOrder = buildLightboxPreloadOrder(centerIndex);
+  preloadOrder.slice(0, 3).forEach((index) => {
+    const url = imageUrlByIndex(index);
+    if (url) {
+      void preloadLightboxImage(url);
+    }
+  });
+
+  const remainingIndexes = preloadOrder.slice(3);
+  if (!remainingIndexes.length) {
+    return;
+  }
+
+  lightboxBackgroundPreloadTimer = window.setTimeout(() => {
+    void (async () => {
+      for (const index of remainingIndexes) {
+        const url = imageUrlByIndex(index);
+        if (url) {
+          await preloadLightboxImage(url);
+        }
+      }
+    })();
+    lightboxBackgroundPreloadTimer = undefined;
+  }, 90);
 };
 
 const setActiveImageByIndex = (index: number) => {
-  if (!productImages.value.length) {
-    activeImage.value = PLACEHOLDER_IMAGE;
+  const nextUrl = imageUrlByIndex(index);
+  activeImage.value = nextUrl || PLACEHOLDER_IMAGE;
+};
+
+const navigateLightboxToIndex = async (index: number) => {
+  const normalizedIndex = normalizeImageIndex(index);
+  const nextUrl = imageUrlByIndex(normalizedIndex);
+
+  if (normalizedIndex < 0 || !nextUrl) {
     return;
   }
 
-  const normalizedIndex = ((index % productImages.value.length) + productImages.value.length) % productImages.value.length;
-  activeImage.value = productImages.value[normalizedIndex]?.url || PLACEHOLDER_IMAGE;
+  pendingLightboxIndex.value = normalizedIndex;
+  isLightboxImageLoading.value = true;
+  scheduleLightboxPreload(normalizedIndex);
+
+  const requestId = ++lightboxNavigationRequestId;
+  await preloadLightboxImage(nextUrl);
+
+  if (requestId !== lightboxNavigationRequestId) {
+    return;
+  }
+
+  activeImage.value = nextUrl;
+  pendingLightboxIndex.value = null;
+  isLightboxImageLoading.value = false;
 };
 
 const openLightbox = (url: string) => {
   activeImage.value = url || productImages.value[0]?.url || PLACEHOLDER_IMAGE;
+  pendingLightboxIndex.value = null;
+  isLightboxImageLoading.value = false;
   isLightboxOpen.value = true;
+  scheduleLightboxPreload(currentImageIndex.value);
 };
 
 const showPreviousImage = () => {
   if (!hasMultipleImages.value) return;
-  setActiveImageByIndex(currentImageIndex.value - 1);
+  void navigateLightboxToIndex(visibleLightboxIndex.value - 1);
 };
 
 const showNextImage = () => {
   if (!hasMultipleImages.value) return;
-  setActiveImageByIndex(currentImageIndex.value + 1);
+  void navigateLightboxToIndex(visibleLightboxIndex.value + 1);
 };
 
 const handleLightboxTouchStart = (event: TouchEvent) => {
@@ -296,7 +403,9 @@ const loadProjectData = async () => {
   if (loadedProduct) {
     product.value = loadedProduct;
     activeImage.value = loadedProduct.images[0]?.url || PLACEHOLDER_IMAGE;
-    setDisplayedImage(activeImage.value, true);
+    displayedMainImage.value = activeImage.value;
+    isMainImageLoading.value = false;
+    pendingLightboxIndex.value = null;
     updateSchema(loadedProduct);
 
     await productStore.fetchProducts({
@@ -315,7 +424,19 @@ watch(() => route.params.id, () => {
 });
 
 watch(activeImage, (nextImage, previousImage) => {
-  setDisplayedImage(nextImage || PLACEHOLDER_IMAGE, !previousImage);
+  void syncDisplayedMainImage(nextImage || PLACEHOLDER_IMAGE, !previousImage);
+});
+
+watch(isLightboxOpen, (isOpen) => {
+  if (isOpen && currentImageIndex.value >= 0) {
+    scheduleLightboxPreload(currentImageIndex.value);
+    return;
+  }
+
+  clearLightboxBackgroundPreloadTimer();
+  pendingLightboxIndex.value = null;
+  isLightboxImageLoading.value = false;
+  lightboxNavigationRequestId += 1;
 });
 
 onMounted(() => {
@@ -324,7 +445,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  clearImageTransitionTimer();
+  clearLightboxBackgroundPreloadTimer();
   window.removeEventListener('keydown', handleLightboxKeydown);
   removeJsonLd('schema-product');
   removeJsonLd('schema-product-breadcrumbs');
@@ -375,12 +496,18 @@ const handleReviewSuccess = () => {
             :alt="product.name"
             :class="[
               'absolute inset-0 h-full w-full object-cover transition-all duration-300 ease-out group-hover:scale-[1.035]',
-              isImageTransitioning ? 'opacity-0' : 'opacity-100'
+              isMainImageLoading ? 'opacity-90' : 'opacity-100'
             ]"
             decoding="async"
             fetchpriority="high"
             @error="handleImageError"
           >
+          <div
+            v-if="isMainImageLoading"
+            class="absolute inset-0 flex items-center justify-center bg-brand-brown/10 backdrop-blur-[1px]"
+          >
+            <div class="h-9 w-9 animate-spin rounded-full border-2 border-white/85 border-t-transparent"></div>
+          </div>
           <span class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/12">
             <LucideSearch :size="40" class="text-white opacity-0 transition-opacity group-hover:opacity-100" />
           </span>
@@ -542,17 +669,25 @@ const handleReviewSuccess = () => {
                 :alt="product?.name || ''"
                 :class="[
                   'max-h-full max-w-full rounded-lg object-contain shadow-2xl transition-opacity duration-300 ease-out',
-                  isImageTransitioning ? 'opacity-0' : 'opacity-100'
+                  isLightboxImageLoading ? 'opacity-75' : 'opacity-100'
                 ]"
                 decoding="async"
+                fetchpriority="high"
                 @error="handleImageError"
               >
+
+              <div
+                v-if="isLightboxImageLoading"
+                class="absolute inset-0 flex items-center justify-center"
+              >
+                <div class="h-11 w-11 animate-spin rounded-full border-2 border-white/90 border-t-transparent"></div>
+              </div>
 
               <div
                 v-if="productImages.length"
                 class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-sm font-semibold text-white backdrop-blur"
               >
-                {{ currentImageIndex + 1 }} / {{ productImages.length }}
+                {{ visibleLightboxIndex + 1 }} / {{ productImages.length }}
               </div>
             </div>
 
