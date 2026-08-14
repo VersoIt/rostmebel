@@ -5,7 +5,14 @@ import { trackYandexPageView } from '@/utils/yandexMetrica';
 
 const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior(to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
+    const isSamePageNavigation = to.path === from.path;
+    const onlyQueryChanged = isSamePageNavigation && to.hash === from.hash && to.fullPath !== from.fullPath;
+
+    if (onlyQueryChanged) {
+      return false;
+    }
+
     if (to.hash) {
       return {
         el: to.hash,

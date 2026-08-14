@@ -116,12 +116,12 @@ onUnmounted(() => {
             </div>
 
             <h1 class="max-w-3xl font-serif text-4xl font-bold leading-[1.02] sm:text-5xl lg:text-[4.35rem]">
-              Кухни и корпусная мебель, которые выглядят дорого и служат спокойно
+              Кухни и корпусная мебель на заказ
             </h1>
 
             <p class="mt-6 max-w-2xl text-lg leading-8 text-white/80">
-              Проектируем, производим и устанавливаем мебель под ваш размер. Сразу учитываем технику, розетки,
-              бюджет, сроки и монтаж, чтобы проект не развалился в процессе.
+              Проектируем, производим и устанавливаем мебель по вашим размерам. Сразу учитываем технику, розетки,
+              бюджет и монтаж.
             </p>
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -165,13 +165,13 @@ onUnmounted(() => {
               <div class="rounded-[1.6rem] bg-brand-brown p-5 text-white shadow-[0_24px_60px_rgba(0,0,0,0.24)]">
                 <div class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-gold">
                   <LucideSparkles :size="13" />
-                  Под ключ
+                  Полный цикл
                 </div>
                 <div class="font-serif text-3xl leading-tight">
-                  Один подрядчик вместо длинной цепочки исполнителей
+                  Замер, проект, производство и установка
                 </div>
                 <p class="mt-3 text-sm leading-6 text-white/72">
-                  Мебель, техника, замер и установка собраны в одном процессе. Это экономит нервы и сроки.
+                  Берем проект целиком и доводим его до готового результата.
                 </p>
               </div>
 
@@ -230,9 +230,9 @@ onUnmounted(() => {
           <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p class="ui-eyebrow mb-3">Портфолио</p>
-              <h2 class="ui-title-lg">Несколько проектов, чтобы за минуту понять уровень исполнения</h2>
+              <h2 class="ui-title-lg">Реальные проекты из нашего портфолио</h2>
               <p class="ui-copy mt-4 max-w-2xl">
-                Реальные кухни, шкафы и интерьерные решения с понятным бюджетом, живыми фотографиями и деталями исполнения.
+                Кухни, шкафы и другие проекты с фотографиями, бюджетом и деталями исполнения.
               </p>
             </div>
             <router-link to="/catalog" class="ui-button ui-button-secondary">
@@ -288,7 +288,7 @@ onUnmounted(() => {
           <p class="ui-eyebrow mb-3">Быстрый подбор</p>
           <h2 class="ui-title-lg">Не хочется листать каталог вручную?</h2>
           <p class="ui-copy-lg mt-4">
-            Опишите задачу обычной фразой. Поиск поймет тип мебели, стиль, примерный бюджет и покажет наиболее подходящие проекты.
+            Опишите, что именно вам нужно, и мы сразу покажем похожие проекты из портфолио.
           </p>
         </div>
 
@@ -298,9 +298,9 @@ onUnmounted(() => {
               <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gold/10 text-brand-gold">
                 <LucideSparkles :size="20" />
               </div>
-              <h3 class="font-serif text-2xl font-bold text-brand-brown">Работает по-человечески</h3>
+              <h3 class="font-serif text-2xl font-bold text-brand-brown">Простой поиск</h3>
               <p class="mt-3 leading-7 text-brand-brown/62">
-                Можно писать не техническими словами, а как вы бы объяснили задачу в сообщении или звонке.
+                Не нужно подбирать специальные формулировки. Достаточно описать мебель так, как вы бы объяснили это в сообщении или по телефону.
               </p>
             </div>
 
@@ -308,9 +308,9 @@ onUnmounted(() => {
               <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gray text-brand-brown">
                 <LucideShieldCheck :size="20" />
               </div>
-              <h3 class="font-serif text-2xl font-bold text-brand-brown">Подходит для живого каталога</h3>
+              <h3 class="font-serif text-2xl font-bold text-brand-brown">Быстрее найти нужный проект</h3>
               <p class="mt-3 leading-7 text-brand-brown/62">
-                Когда вы добавите новые кухни и шкафы, поиск начнет подбирать и их, без ручной выдачи на фронте.
+                Удобно, когда хочется не смотреть все подряд, а сразу перейти к проектам, которые ближе по стилю, задаче и бюджету.
               </p>
             </div>
           </div>

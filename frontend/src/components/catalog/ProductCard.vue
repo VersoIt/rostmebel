@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   LucideArrowRight,
@@ -13,7 +13,7 @@ import {
 import type { Product } from '@/types';
 import { useFavorites } from '@/composables/useFavorites';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
-import { buildResponsiveImageSet } from '@/utils/images';
+import { buildResponsiveImageSet, preloadResponsiveImage } from '@/utils/images';
 import { useProductStore } from '@/stores/products';
 
 const props = defineProps<{
@@ -26,9 +26,13 @@ const { toggleFavorite, isFavorite } = useFavorites();
 
 const isQuickViewOpen = ref(false);
 const activeSlideIdx = ref(0);
+const pendingQuickViewIndex = ref<number | null>(null);
+const isQuickViewImageLoading = ref(false);
 const slideDirection = ref<'next' | 'prev'>('next');
 const touchStartX = ref(0);
 const touchStartY = ref(0);
+let quickViewNavigationRequestId = 0;
+let quickViewBackgroundPreloadTimer: number | undefined;
 
 const productTags = computed(() => {
   return (props.product.ai_tags || '')
@@ -80,17 +84,118 @@ const quickViewImageSource = computed(() =>
   ),
 );
 
+const visibleQuickViewIndex = computed(() => pendingQuickViewIndex.value ?? activeSlideIdx.value);
+
+const normalizeQuickViewIndex = (index: number) => {
+  if (!imageCount()) return -1;
+  return ((index % imageCount()) + imageCount()) % imageCount();
+};
+
+const clearQuickViewBackgroundPreloadTimer = () => {
+  if (quickViewBackgroundPreloadTimer !== undefined) {
+    window.clearTimeout(quickViewBackgroundPreloadTimer);
+    quickViewBackgroundPreloadTimer = undefined;
+  }
+};
+
+const quickViewImageSourceByIndex = (index: number) =>
+  buildResponsiveImageSet(
+    props.product.images[normalizeQuickViewIndex(index)]?.url || PLACEHOLDER_IMAGE,
+    [640, 960, 1280],
+    '(min-width: 1024px) 60vw, 100vw',
+    82,
+  );
+
+const preloadQuickViewImage = (index: number) => preloadResponsiveImage(quickViewImageSourceByIndex(index));
+
+const buildQuickViewPreloadOrder = (centerIndex: number) => {
+  if (!imageCount()) {
+    return [] as number[];
+  }
+
+  const visited = new Set<number>();
+  const ordered: number[] = [];
+
+  for (let offset = 0; ordered.length < imageCount(); offset += 1) {
+    const nextIndex = normalizeQuickViewIndex(centerIndex + offset);
+    if (nextIndex >= 0 && !visited.has(nextIndex)) {
+      visited.add(nextIndex);
+      ordered.push(nextIndex);
+    }
+
+    if (offset === 0) {
+      continue;
+    }
+
+    const previousIndex = normalizeQuickViewIndex(centerIndex - offset);
+    if (previousIndex >= 0 && !visited.has(previousIndex)) {
+      visited.add(previousIndex);
+      ordered.push(previousIndex);
+    }
+  }
+
+  return ordered;
+};
+
+const scheduleQuickViewPreload = (centerIndex: number) => {
+  if (!imageCount()) {
+    return;
+  }
+
+  clearQuickViewBackgroundPreloadTimer();
+
+  const preloadOrder = buildQuickViewPreloadOrder(centerIndex);
+  preloadOrder.slice(0, 3).forEach((index) => {
+    void preloadQuickViewImage(index);
+  });
+
+  const remainingIndexes = preloadOrder.slice(3);
+  if (!remainingIndexes.length) {
+    return;
+  }
+
+  quickViewBackgroundPreloadTimer = window.setTimeout(() => {
+    void (async () => {
+      for (const index of remainingIndexes) {
+        await preloadQuickViewImage(index);
+      }
+    })();
+    quickViewBackgroundPreloadTimer = undefined;
+  }, 90);
+};
+
+const navigateQuickViewToIndex = async (index: number, direction: 'next' | 'prev') => {
+  const normalizedIndex = normalizeQuickViewIndex(index);
+  if (normalizedIndex < 0 || normalizedIndex === activeSlideIdx.value) {
+    return;
+  }
+
+  pendingQuickViewIndex.value = normalizedIndex;
+  isQuickViewImageLoading.value = true;
+  scheduleQuickViewPreload(normalizedIndex);
+
+  const requestId = ++quickViewNavigationRequestId;
+  await preloadQuickViewImage(normalizedIndex);
+
+  if (requestId !== quickViewNavigationRequestId) {
+    return;
+  }
+
+  slideDirection.value = direction;
+  activeSlideIdx.value = normalizedIndex;
+  pendingQuickViewIndex.value = null;
+  isQuickViewImageLoading.value = false;
+};
+
 const nextSlide = () => {
   if (imageCount() > 1) {
-    slideDirection.value = 'next';
-    activeSlideIdx.value = (activeSlideIdx.value + 1) % imageCount();
+    void navigateQuickViewToIndex(visibleQuickViewIndex.value + 1, 'next');
   }
 };
 
 const prevSlide = () => {
   if (imageCount() > 1) {
-    slideDirection.value = 'prev';
-    activeSlideIdx.value = (activeSlideIdx.value - 1 + imageCount()) % imageCount();
+    void navigateQuickViewToIndex(visibleQuickViewIndex.value - 1, 'prev');
   }
 };
 
@@ -129,6 +234,17 @@ const goToProduct = () => {
 const openQuickView = () => {
   isQuickViewOpen.value = true;
   activeSlideIdx.value = 0;
+  pendingQuickViewIndex.value = null;
+  isQuickViewImageLoading.value = false;
+  scheduleQuickViewPreload(0);
+};
+
+const closeQuickView = () => {
+  isQuickViewOpen.value = false;
+  pendingQuickViewIndex.value = null;
+  isQuickViewImageLoading.value = false;
+  quickViewNavigationRequestId += 1;
+  clearQuickViewBackgroundPreloadTimer();
 };
 
 const formatPrice = (price: number) => {
@@ -138,6 +254,10 @@ const formatPrice = (price: number) => {
     maximumFractionDigits: 0,
   }).format(price);
 };
+
+onUnmounted(() => {
+  clearQuickViewBackgroundPreloadTimer();
+});
 </script>
 
 <template>
@@ -239,7 +359,7 @@ const formatPrice = (price: number) => {
     <Teleport to="body">
       <transition name="modal-fade">
         <div v-if="isQuickViewOpen" class="ui-modal-backdrop" @click.stop>
-          <div class="absolute inset-0" @click="isQuickViewOpen = false"></div>
+          <div class="absolute inset-0" @click="closeQuickView"></div>
 
           <section class="ui-modal-panel z-10 max-w-6xl overflow-hidden bg-white">
             <div class="grid grid-cols-1 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -257,9 +377,17 @@ const formatPrice = (price: number) => {
                     class="absolute inset-0 h-full w-full object-cover"
                     alt=""
                     decoding="async"
+                    fetchpriority="high"
                     @error="handleImageError"
                   >
                 </transition>
+
+                <div
+                  v-if="isQuickViewImageLoading"
+                  class="absolute inset-0 flex items-center justify-center bg-black/12 backdrop-blur-[1px]"
+                >
+                  <div class="h-10 w-10 animate-spin rounded-full border-2 border-white/90 border-t-transparent"></div>
+                </div>
 
                 <div v-if="product.images.length > 1" class="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-between px-3 sm:px-5">
                   <button type="button" class="flex h-11 w-11 items-center justify-center rounded-xl bg-black/35 text-white backdrop-blur transition-colors hover:bg-black/55" @click.stop="prevSlide">
@@ -272,7 +400,7 @@ const formatPrice = (price: number) => {
 
                 <div v-if="product.images.length > 1" class="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/45 px-3 py-1.5 text-xs font-bold text-white backdrop-blur">
                   <LucideImages :size="14" />
-                  {{ activeSlideIdx + 1 }} / {{ product.images.length }}
+                  {{ visibleQuickViewIndex + 1 }} / {{ product.images.length }}
                 </div>
               </div>
 
@@ -307,7 +435,7 @@ const formatPrice = (price: number) => {
               type="button"
               class="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-xl bg-black/35 text-white backdrop-blur transition-colors hover:bg-red-600"
               aria-label="Закрыть быстрый просмотр"
-              @click.stop="isQuickViewOpen = false"
+              @click.stop="closeQuickView"
             >
               <LucideX :size="23" />
             </button>

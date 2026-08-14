@@ -62,9 +62,9 @@ const applyExampleQuery = (value: string) => {
       <div class="mb-4 flex flex-wrap items-center gap-2">
         <span class="inline-flex items-center gap-2 rounded-full bg-brand-gold/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-gold">
           <LucideSparkles :size="14" />
-          AI-поиск
+          Умный подбор
         </span>
-        <span class="text-sm text-brand-brown/45">Можно искать обычной фразой, как в сообщении.</span>
+        <span class="text-sm text-brand-brown/45">Опишите, какая мебель вам нужна, и мы покажем похожие проекты.</span>
       </div>
 
       <div class="relative flex flex-col gap-3 sm:block">
