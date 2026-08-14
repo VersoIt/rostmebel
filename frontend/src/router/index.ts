@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { setPageSeo } from '@/utils/seo';
+import { trackYandexPageView } from '@/utils/yandexMetrica';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -116,6 +117,12 @@ router.afterEach((to) => {
     description: to.meta.description as string | undefined,
     path: (to.meta.canonicalPath as string | undefined) || to.path,
     robots: (to.meta.robots as string | undefined) || 'index,follow',
+  });
+
+  if (to.path.startsWith('/admin')) return;
+
+  queueMicrotask(() => {
+    trackYandexPageView(to.fullPath.replace(/#.*$/, ''), document.title);
   });
 });
 

@@ -6,6 +6,7 @@ import { LucideLoader2, LucideSearch } from 'lucide-vue-next';
 import type { Product } from '@/types';
 import { getApiErrorMessage } from '@/api/errors';
 import { useNotificationStore } from '@/stores/notifications';
+import { trackAISearch } from '@/utils/yandexMetrica';
 
 const productStore = useProductStore();
 const notificationStore = useNotificationStore();
@@ -24,11 +25,13 @@ const handleSearch = async () => {
 
   try {
     results.value = await productStore.aiSearch(query.value);
+    trackAISearch(query.value, results.value.length, true);
     if (results.value.length === 0) {
       notificationStore.show('Подходящих проектов пока нет. Попробуйте описать задачу иначе.', 'info');
     }
   } catch (err) {
     searchFailed.value = true;
+    trackAISearch(query.value, 0, false);
     notificationStore.show(getApiErrorMessage(err), 'error');
   } finally {
     isSearching.value = false;

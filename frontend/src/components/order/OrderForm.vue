@@ -4,6 +4,7 @@ import api from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
 import { budgetOptions, contactOptions, projectTypeOptions } from '@/utils/orderOptions';
 import { formatRussianPhone } from '@/utils/phone';
+import { trackLeadSubmitted } from '@/utils/yandexMetrica';
 import { LucideCheck, LucideSend } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -42,6 +43,12 @@ const handleSubmit = async () => {
       ...form.value,
       project_id: props.projectId,
       fingerprint: btoa(navigator.userAgent),
+    });
+    trackLeadSubmitted('order_form', {
+      budgetRange: form.value.budget_range,
+      contactMethod: form.value.contact_method,
+      projectId: props.projectId,
+      projectType: form.value.project_type,
     });
     isSuccess.value = true;
     window.setTimeout(() => emit('success'), 1800);

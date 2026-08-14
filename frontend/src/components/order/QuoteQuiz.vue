@@ -4,6 +4,7 @@ import api from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
 import { budgetOptions, contactOptions, projectTypeOptions } from '@/utils/orderOptions';
 import { formatRussianPhone } from '@/utils/phone';
+import { trackLeadSubmitted } from '@/utils/yandexMetrica';
 import {
   LucideArrowLeft,
   LucideArrowRight,
@@ -89,6 +90,12 @@ const handleSubmit = async () => {
       ...form.value,
       project_id: props.projectId,
       fingerprint: window.btoa(navigator.userAgent),
+    });
+    trackLeadSubmitted('quote_quiz', {
+      budgetRange: form.value.budget_range,
+      contactMethod: form.value.contact_method,
+      projectId: props.projectId,
+      projectType: form.value.project_type,
     });
     isSuccess.value = true;
     window.setTimeout(() => emit('success'), 1200);

@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 declare const __PUBLIC_SITE_URL__: string;
+declare const __YANDEX_METRIKA_ID__: string;
 
 declare module "*.vue" {
   import type { DefineComponent } from "vue";

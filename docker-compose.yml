@@ -74,6 +74,7 @@ services:
       context: ./frontend
       args:
         VITE_PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://rostmebel.shop}
+        VITE_YANDEX_METRIKA_ID: ${YANDEX_METRIKA_ID:-111111111}
     container_name: rostmebel_frontend
     restart: unless-stopped
     depends_on:
