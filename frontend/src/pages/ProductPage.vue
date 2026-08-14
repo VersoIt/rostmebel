@@ -19,6 +19,7 @@ import ReviewForm from '@/components/catalog/ReviewForm.vue';
 import ReviewList from '@/components/catalog/ReviewList.vue';
 import type { Product } from '@/types';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
+import { buildImageVariantUrl, buildResponsiveImageSet } from '@/utils/images';
 import { absoluteUrl, compactDescription, removeJsonLd, setJsonLd, setPageSeo } from '@/utils/seo';
 
 const route = useRoute();
@@ -39,6 +40,22 @@ let imageTransitionTimer: number | undefined;
 
 const productImages = computed(() => product.value?.images || []);
 const hasMultipleImages = computed(() => productImages.value.length > 1);
+const mainImageSource = computed(() =>
+  buildResponsiveImageSet(
+    displayedImage.value,
+    [640, 960, 1280, 1600],
+    '(min-width: 1024px) 50vw, 100vw',
+    82,
+  ),
+);
+const lightboxImageSource = computed(() =>
+  buildResponsiveImageSet(
+    displayedImage.value,
+    [960, 1440, 1920, 2560],
+    '100vw',
+    86,
+  ),
+);
 const currentImageIndex = computed(() => {
   if (!productImages.value.length) return -1;
 
@@ -92,6 +109,8 @@ const quoteProjectType = computed(() => {
 const handleImageError = (event: Event) => {
   (event.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
 };
+
+const thumbnailImageUrl = (url: string) => buildImageVariantUrl(url, 180, 72);
 
 const clearImageTransitionTimer = () => {
   if (imageTransitionTimer !== undefined) {
@@ -350,12 +369,16 @@ const handleReviewSuccess = () => {
           @click="openLightbox(activeImage)"
         >
           <img
-            :src="displayedImage"
+            :src="mainImageSource.src"
+            :srcset="mainImageSource.srcset"
+            :sizes="mainImageSource.sizes"
             :alt="product.name"
             :class="[
               'absolute inset-0 h-full w-full object-cover transition-all duration-300 ease-out group-hover:scale-[1.035]',
               isImageTransitioning ? 'opacity-0' : 'opacity-100'
             ]"
+            decoding="async"
+            fetchpriority="high"
             @error="handleImageError"
           >
           <span class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/12">
@@ -374,7 +397,7 @@ const handleReviewSuccess = () => {
             ]"
             @click="activeImage = image.url"
           >
-            <img :src="image.url" class="h-full w-full object-cover" alt="" @error="handleImageError">
+            <img :src="thumbnailImageUrl(image.url)" class="h-full w-full object-cover" alt="" loading="lazy" decoding="async" @error="handleImageError">
           </button>
         </div>
       </div>
@@ -513,12 +536,15 @@ const handleReviewSuccess = () => {
 
             <div class="relative flex max-h-full max-w-full items-center justify-center">
               <img
-                :src="displayedImage"
+                :src="lightboxImageSource.src"
+                :srcset="lightboxImageSource.srcset"
+                :sizes="lightboxImageSource.sizes"
                 :alt="product?.name || ''"
                 :class="[
                   'max-h-full max-w-full rounded-lg object-contain shadow-2xl transition-opacity duration-300 ease-out',
                   isImageTransitioning ? 'opacity-0' : 'opacity-100'
                 ]"
+                decoding="async"
                 @error="handleImageError"
               >
 

@@ -48,6 +48,7 @@ func NewServer(cfg *config.Config, ph *handler.ProductHandler, oh *handler.Order
 		r.Get("/projects/{id}", ph.GetProduct)
 		r.Get("/projects/{id}/reviews", rh.GetProjectReviews)
 		r.Get("/categories", ph.GetCategories)
+		r.Get("/images/variant", ph.GetImageVariant)
 		r.Post("/orders", oh.CreateOrder)
 		r.Post("/reviews", rh.CreateReview)
 		r.Post("/ai/search", ph.AISearch)

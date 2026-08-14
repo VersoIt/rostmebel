@@ -5,6 +5,7 @@ import { LucideChevronLeft, LucideChevronRight, LucideEye, LucideHeart, LucideX 
 import type { Product } from '@/types';
 import { useFavorites } from '@/composables/useFavorites';
 import { PLACEHOLDER_IMAGE } from '@/utils/constants';
+import { buildResponsiveImageSet } from '@/utils/images';
 
 const props = defineProps<{
   product: Product;
@@ -52,6 +53,24 @@ const priceLabel = computed(() => {
 });
 
 const imageCount = () => props.product.images.length;
+
+const primaryImageSource = computed(() =>
+  buildResponsiveImageSet(
+    props.product.images[0]?.url || PLACEHOLDER_IMAGE,
+    [320, 480, 640],
+    '(min-width: 1280px) 400px, (min-width: 768px) 50vw, 100vw',
+    74,
+  ),
+);
+
+const quickViewImageSource = computed(() =>
+  buildResponsiveImageSet(
+    props.product.images[activeSlideIdx.value]?.url || PLACEHOLDER_IMAGE,
+    [640, 960, 1280],
+    '(min-width: 1024px) 60vw, 100vw',
+    82,
+  ),
+);
 
 const nextSlide = () => {
   if (imageCount() > 1) {
@@ -120,9 +139,13 @@ const formatPrice = (price: number) => {
   >
     <div class="relative aspect-square shrink-0 overflow-hidden bg-brand-gray">
       <img
-        :src="product.images[0]?.url || PLACEHOLDER_IMAGE"
+        :src="primaryImageSource.src"
+        :srcset="primaryImageSource.srcset"
+        :sizes="primaryImageSource.sizes"
         :alt="product.name"
         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"
+        loading="lazy"
+        decoding="async"
         @error="handleImageError"
       >
 
@@ -193,9 +216,12 @@ const formatPrice = (price: number) => {
                 <transition :name="slideDirection === 'next' ? 'slide-next' : 'slide-prev'">
                   <img
                     :key="activeSlideIdx"
-                    :src="product.images[activeSlideIdx]?.url || PLACEHOLDER_IMAGE"
+                    :src="quickViewImageSource.src"
+                    :srcset="quickViewImageSource.srcset"
+                    :sizes="quickViewImageSource.sizes"
                     class="absolute inset-0 h-full w-full object-cover"
                     alt=""
+                    decoding="async"
                     @error="handleImageError"
                   >
                 </transition>

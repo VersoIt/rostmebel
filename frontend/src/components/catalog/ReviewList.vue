@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { LucideCheckCircle, LucideMessageSquare, LucideSearch, LucideStar, LucideX } from 'lucide-vue-next';
 import api from '@/api/client';
 import type { ReviewResponse } from '@/types';
 import { useNotificationStore } from '@/stores/notifications';
 import { getApiErrorMessage } from '@/api/errors';
+import { buildImageVariantUrl, buildResponsiveImageSet } from '@/utils/images';
 
 const props = defineProps<{
   projectId?: number;
@@ -15,11 +16,16 @@ const loading = ref(true);
 const notificationStore = useNotificationStore();
 const isLightboxOpen = ref(false);
 const activeImage = ref('');
+const lightboxImageSource = computed(() =>
+  buildResponsiveImageSet(activeImage.value, [960, 1440, 1920], '100vw', 84),
+);
 
 const openLightbox = (url: string) => {
   activeImage.value = url;
   isLightboxOpen.value = true;
 };
+
+const reviewThumbnailUrl = (url: string) => buildImageVariantUrl(url, 180, 72);
 
 const fetchReviews = async () => {
   loading.value = true;
@@ -85,7 +91,7 @@ defineExpose({ refresh: fetchReviews });
             class="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-brand-brown/10"
             @click="openLightbox(image.url)"
           >
-            <img :src="image.url" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.035]" alt="">
+            <img :src="reviewThumbnailUrl(image.url)" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.035]" alt="" loading="lazy" decoding="async">
             <span class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
               <LucideSearch :size="18" class="text-white opacity-0 transition-opacity group-hover:opacity-100" />
             </span>
@@ -105,7 +111,7 @@ defineExpose({ refresh: fetchReviews });
           <button type="button" class="absolute right-5 top-5 rounded-lg bg-white/10 p-3 text-white transition-colors hover:bg-white hover:text-brand-brown">
             <LucideX :size="28" />
           </button>
-          <img :src="activeImage" class="z-10 max-h-full max-w-full rounded-lg object-contain shadow-2xl" alt="">
+          <img :src="lightboxImageSource.src" :srcset="lightboxImageSource.srcset" :sizes="lightboxImageSource.sizes" class="z-10 max-h-full max-w-full rounded-lg object-contain shadow-2xl" alt="" decoding="async">
         </div>
       </transition>
     </Teleport>
