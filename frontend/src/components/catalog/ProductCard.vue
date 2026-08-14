@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   LucideArrowRight,
@@ -199,6 +199,26 @@ const prevSlide = () => {
   }
 };
 
+const handleQuickViewKeydown = (event: KeyboardEvent) => {
+  if (!isQuickViewOpen.value) return;
+
+  if (event.key === 'Escape') {
+    closeQuickView();
+    return;
+  }
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    prevSlide();
+    return;
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    nextSlide();
+  }
+};
+
 const handleTouchStart = (event: TouchEvent) => {
   if (imageCount() < 2) return;
   const touch = event.changedTouches[0];
@@ -236,6 +256,7 @@ const openQuickView = () => {
   activeSlideIdx.value = 0;
   pendingQuickViewIndex.value = null;
   isQuickViewImageLoading.value = false;
+  void preloadQuickViewImage(0);
   scheduleQuickViewPreload(0);
 };
 
@@ -255,7 +276,12 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
+onMounted(() => {
+  window.addEventListener('keydown', handleQuickViewKeydown);
+});
+
 onUnmounted(() => {
+  window.removeEventListener('keydown', handleQuickViewKeydown);
   clearQuickViewBackgroundPreloadTimer();
 });
 </script>
@@ -361,7 +387,7 @@ onUnmounted(() => {
         <div v-if="isQuickViewOpen" class="ui-modal-backdrop" @click.stop>
           <div class="absolute inset-0" @click="closeQuickView"></div>
 
-          <section class="ui-modal-panel z-10 max-w-6xl overflow-hidden bg-white">
+          <section class="ui-modal-panel z-10 max-w-6xl overflow-hidden bg-white" @click.stop>
             <div class="grid grid-cols-1 lg:min-h-[560px] lg:grid-cols-[minmax(0,1fr)_360px]">
               <div
                 class="relative aspect-[4/3] min-h-[320px] touch-pan-y overflow-hidden bg-brand-gray sm:aspect-video lg:aspect-auto lg:min-h-[560px]"
@@ -389,7 +415,7 @@ onUnmounted(() => {
                   <div class="h-10 w-10 animate-spin rounded-full border-2 border-white/90 border-t-transparent"></div>
                 </div>
 
-                <div v-if="product.images.length > 1" class="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-between px-3 sm:px-5">
+                <div v-if="product.images.length > 1" class="absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 items-center justify-between px-3 sm:px-5">
                   <button type="button" class="flex h-11 w-11 items-center justify-center rounded-xl bg-black/35 text-white backdrop-blur transition-colors hover:bg-black/55" @click.stop="prevSlide">
                     <LucideChevronLeft :size="28" />
                   </button>
@@ -433,7 +459,7 @@ onUnmounted(() => {
 
             <button
               type="button"
-              class="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-xl bg-black/35 text-white backdrop-blur transition-colors hover:bg-red-600"
+              class="absolute right-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-xl bg-black/35 text-white backdrop-blur transition-colors hover:bg-red-600"
               aria-label="Закрыть быстрый просмотр"
               @click.stop="closeQuickView"
             >
