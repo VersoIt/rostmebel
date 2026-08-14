@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useProductStore } from '@/stores/products';
 import AISearchPanel from '@/components/ai/AISearchPanel.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
@@ -7,18 +7,15 @@ import QuoteQuiz from '@/components/order/QuoteQuiz.vue';
 import {
   LucideArrowRight,
   LucideCheckCircle2,
-  LucideClock3,
   LucideMapPin,
   LucideMessageSquare,
-  LucidePhoneCall,
   LucideRuler,
   LucideShieldCheck,
-  LucideSparkles,
   LucideWrench,
 } from 'lucide-vue-next';
 import type { Product } from '@/types';
 import { buildBusinessSchema, buildWebsiteSchema, removeJsonLd, setJsonLd } from '@/utils/seo';
-import { MESSENGER_LINKS, PHONE_DISPLAY, PHONE_HREF } from '@/constants/contacts';
+import { PHONE_DISPLAY, PHONE_HREF } from '@/constants/contacts';
 
 const productStore = useProductStore();
 const hits = ref<Product[]>([]);
@@ -40,18 +37,18 @@ const proof = [
 
 const stages = [
   {
-    title: 'Замер и сценарий кухни',
-    text: 'Сначала смотрим реальное помещение, розетки, выводы, технику и слабые места планировки.',
+    title: 'Замер и проект',
+    text: 'Сначала смотрим помещение, размеры, розетки, технику и важные детали.',
     icon: LucideRuler,
   },
   {
-    title: 'Смета без тумана',
-    text: 'Сразу раскладываем стоимость по понятным позициям, чтобы бюджет не расползался по пути.',
+    title: 'Понятная смета',
+    text: 'Сразу раскладываем стоимость по позициям, чтобы бюджет был понятен заранее.',
     icon: LucideMessageSquare,
   },
   {
     title: 'Производство и монтаж',
-    text: 'Доводим проект до установки, а не оставляем клиента наедине с цехом и подрядчиками.',
+    text: 'Изготавливаем мебель и доводим проект до готового результата.',
     icon: LucideWrench,
   },
 ];
@@ -108,99 +105,54 @@ onUnmounted(() => {
       </div>
 
       <div class="ui-container relative z-10">
-        <div class="grid items-end gap-10 lg:grid-cols-[minmax(0,1.05fr)_360px]">
-          <div class="max-w-4xl text-white motion-fade-up">
-            <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur">
-              <LucideMapPin :size="16" class="text-brand-gold" />
-              Работаем по Крыму: замер, доставка, монтаж
-            </div>
+        <div class="max-w-4xl text-white motion-fade-up">
+          <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur">
+            <LucideMapPin :size="16" class="text-brand-gold" />
+            Работаем по Крыму: замер, доставка, монтаж
+          </div>
 
-            <h1 class="max-w-3xl font-serif text-4xl font-bold leading-[1.02] sm:text-5xl lg:text-[4.35rem]">
-              Кухни и корпусная мебель на заказ
-            </h1>
+          <h1 class="max-w-3xl font-serif text-4xl font-bold leading-[1.02] sm:text-5xl lg:text-[4.35rem]">
+            Кухни и корпусная мебель на заказ
+          </h1>
 
-            <p class="mt-6 max-w-2xl text-lg leading-8 text-white/80">
-              Проектируем, производим и устанавливаем мебель по вашим размерам. Сразу учитываем технику, розетки,
-              бюджет и монтаж.
-            </p>
+          <p class="mt-6 max-w-2xl text-lg leading-8 text-white/80">
+            Проектируем, производим и устанавливаем мебель по вашим размерам. Сразу учитываем технику, розетки,
+            бюджет и монтаж.
+          </p>
 
-            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-              <router-link to="/catalog" class="ui-button ui-button-accent">
-                Посмотреть проекты
-                <LucideArrowRight :size="18" />
-              </router-link>
-              <a href="#quote-quiz" class="ui-button border border-white/20 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
-                Получить расчет
-              </a>
-            </div>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <router-link to="/catalog" class="ui-button ui-button-accent">
+              Посмотреть проекты
+              <LucideArrowRight :size="18" />
+            </router-link>
+            <a href="#quote-quiz" class="ui-button border border-white/20 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
+              Получить расчет
+            </a>
+          </div>
 
-            <div class="mt-10 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-3">
-              <div
-                v-for="item in proof"
-                :key="item.label"
-                class="rounded-2xl border border-white/12 bg-white/8 p-4 backdrop-blur-xl"
-              >
-                <div class="font-serif text-3xl leading-none text-white">{{ item.value }}</div>
-                <div class="mt-2 text-sm leading-5 text-white/68">{{ item.label }}</div>
-              </div>
-            </div>
-
-            <div class="mt-6 flex items-center gap-2">
-              <button
-                v-for="(img, idx) in heroImages"
-                :key="`hero-dot-${img}`"
-                type="button"
-                :class="[
-                  'h-2.5 rounded-full transition-all duration-300',
-                  currentHeroIndex === idx ? 'w-10 bg-brand-gold' : 'w-2.5 bg-white/35 hover:bg-white/70'
-                ]"
-                :aria-label="`Показать фото ${idx + 1}`"
-                @click="currentHeroIndex = idx"
-              />
+          <div class="mt-10 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-3">
+            <div
+              v-for="item in proof"
+              :key="item.label"
+              class="rounded-2xl border border-white/12 bg-white/8 p-4 backdrop-blur-xl"
+            >
+              <div class="font-serif text-3xl leading-none text-white">{{ item.value }}</div>
+              <div class="mt-2 text-sm leading-5 text-white/68">{{ item.label }}</div>
             </div>
           </div>
 
-          <div class="hidden lg:block motion-scale-in">
-            <div class="ui-surface space-y-5 p-5 text-brand-brown">
-              <div class="rounded-[1.6rem] bg-brand-brown p-5 text-white shadow-[0_24px_60px_rgba(0,0,0,0.24)]">
-                <div class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-gold">
-                  <LucideSparkles :size="13" />
-                  Полный цикл
-                </div>
-                <div class="font-serif text-3xl leading-tight">
-                  Замер, проект, производство и установка
-                </div>
-                <p class="mt-3 text-sm leading-6 text-white/72">
-                  Берем проект целиком и доводим его до готового результата.
-                </p>
-              </div>
-
-              <div class="grid gap-3 sm:grid-cols-2">
-                <a
-                  :href="PHONE_HREF"
-                  class="rounded-2xl border border-brand-brown/10 bg-white p-4 transition-all hover:-translate-y-1 hover:border-brand-gold/25"
-                >
-                  <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gold/10 text-brand-gold">
-                    <LucidePhoneCall :size="18" />
-                  </div>
-                  <div class="text-xs font-black uppercase tracking-[0.18em] text-brand-brown/35">Позвонить</div>
-                  <div class="mt-1 text-lg font-bold text-brand-brown">{{ PHONE_DISPLAY }}</div>
-                </a>
-
-                <a
-                  :href="MESSENGER_LINKS.whatsapp"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="rounded-2xl border border-brand-brown/10 bg-white p-4 transition-all hover:-translate-y-1 hover:border-brand-gold/25"
-                >
-                  <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gray text-brand-brown">
-                    <LucideClock3 :size="18" />
-                  </div>
-                  <div class="text-xs font-black uppercase tracking-[0.18em] text-brand-brown/35">Ответ</div>
-                  <div class="mt-1 text-lg font-bold text-brand-brown">Быстро в мессенджере</div>
-                </a>
-              </div>
-            </div>
+          <div class="mt-6 flex items-center gap-2">
+            <button
+              v-for="(img, idx) in heroImages"
+              :key="`hero-dot-${img}`"
+              type="button"
+              :class="[
+                'h-2.5 rounded-full transition-all duration-300',
+                currentHeroIndex === idx ? 'w-10 bg-brand-gold' : 'w-2.5 bg-white/35 hover:bg-white/70'
+              ]"
+              :aria-label="`Показать фото ${idx + 1}`"
+              @click="currentHeroIndex = idx"
+            />
           </div>
         </div>
       </div>
@@ -255,10 +207,10 @@ onUnmounted(() => {
       <div class="ui-container grid grid-cols-1 gap-8 lg:grid-cols-[0.96fr_1.04fr] lg:items-center">
         <div>
           <p class="ui-eyebrow mb-3">Техника для кухни</p>
-          <h2 class="ui-title-lg">Продумываем кухню вместе с техникой, а не после нее</h2>
+          <h2 class="ui-title-lg">Продумываем кухню вместе с техникой</h2>
           <p class="ui-copy-lg mt-4">
             Подбираем не только фасады и корпуса. Сразу увязываем мебель с техникой, розетками, вентиляцией,
-            колоннами и логикой хранения, чтобы монтаж прошел без сюрпризов.
+            колоннами и логикой хранения.
           </p>
           <a href="#quote-quiz" class="ui-button ui-button-primary mt-6">
             Посчитать кухню
@@ -292,31 +244,7 @@ onUnmounted(() => {
           </p>
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-[0.74fr_1.26fr] lg:items-start">
-          <div class="space-y-4">
-            <div class="ui-card p-5">
-              <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gold/10 text-brand-gold">
-                <LucideSparkles :size="20" />
-              </div>
-              <h3 class="font-serif text-2xl font-bold text-brand-brown">Простой поиск</h3>
-              <p class="mt-3 leading-7 text-brand-brown/62">
-                Не нужно подбирать специальные формулировки. Достаточно описать мебель так, как вы бы объяснили это в сообщении или по телефону.
-              </p>
-            </div>
-
-            <div class="ui-card p-5">
-              <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gray text-brand-brown">
-                <LucideShieldCheck :size="20" />
-              </div>
-              <h3 class="font-serif text-2xl font-bold text-brand-brown">Быстрее найти нужный проект</h3>
-              <p class="mt-3 leading-7 text-brand-brown/62">
-                Удобно, когда хочется не смотреть все подряд, а сразу перейти к проектам, которые ближе по стилю, задаче и бюджету.
-              </p>
-            </div>
-          </div>
-
-          <AISearchPanel />
-        </div>
+        <AISearchPanel />
       </div>
     </section>
 
@@ -333,8 +261,7 @@ onUnmounted(() => {
                 Ответьте на 4 вопроса и получите понятный следующий шаг по проекту
               </h2>
               <p class="mt-4 max-w-2xl leading-8 text-white/72">
-                Подскажем реалистичный бюджет, сроки и слабые места планировки до того, как вы вложитесь в материалы,
-                технику и ремонт.
+                Подскажем реалистичный бюджет, сроки и важные детали до старта проекта.
               </p>
 
               <div class="mt-6 grid gap-3 text-sm font-semibold text-white/74 sm:grid-cols-3">

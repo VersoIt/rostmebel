@@ -81,10 +81,10 @@ const resultLabel = computed(() => {
   }
 
   if (selectedCategoryEntity.value) {
-    return `${productStore.products.length} проектов в категории «${selectedCategoryEntity.value.name}»`;
+    return `${productStore.products.length} в категории «${selectedCategoryEntity.value.name}»`;
   }
 
-  return `${productStore.products.length} проектов в каталоге`;
+  return `${productStore.products.length} проектов`;
 });
 
 const hasActiveFilters = computed(() => Boolean(selectedCategory.value || trimmedSearchQuery.value));
@@ -196,47 +196,18 @@ onUnmounted(() => {
 
 <template>
   <div class="min-h-screen bg-transparent pt-28">
-    <div class="ui-container ui-section">
-      <header class="relative mb-10 overflow-hidden rounded-[2rem] bg-brand-brown px-5 py-8 text-white shadow-[0_24px_70px_rgba(23,33,29,0.18)] sm:px-7 lg:px-8">
-        <div class="absolute -left-10 top-0 h-40 w-40 rounded-full bg-brand-gold/30 blur-3xl"></div>
-        <div class="absolute right-0 top-0 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
-
-        <div class="relative z-10 max-w-4xl">
-          <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-brand-gold">
-            <LucideSparkles :size="14" />
-            Портфолио
-          </div>
-          <h1 class="font-serif text-4xl font-bold leading-tight sm:text-5xl">Проекты</h1>
-          <p class="mt-4 max-w-2xl text-lg leading-8 text-white/76">
-            Реальные кухни, шкафы, гардеробные и другие проекты по индивидуальным размерам. Фильтруйте по категории
-            или ищите по названию, материалу и стилю.
-          </p>
-        </div>
-      </header>
-
-      <section class="ui-surface mb-8 p-4 sm:p-5 lg:p-6">
-        <div class="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+    <div class="ui-container py-8 sm:py-10 lg:py-12">
+      <section class="ui-surface mb-6 p-4 sm:p-5 lg:p-6">
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <div>
-            <div class="-mx-1 overflow-x-auto px-1 no-scrollbar">
-              <div class="flex min-w-max gap-2 pb-1">
-                <button
-                  type="button"
-                  :class="['ui-chip', !selectedCategory ? 'ui-chip-active' : '']"
-                  @click="selectCategory('')"
-                >
-                  Все работы
-                </button>
-                <button
-                  v-for="category in productStore.categories"
-                  :key="category.id"
-                  type="button"
-                  :class="['ui-chip', selectedCategory === category.slug ? 'ui-chip-active' : '']"
-                  @click="selectCategory(category.slug)"
-                >
-                  {{ category.name }}
-                </button>
-              </div>
+            <div class="mb-3 inline-flex items-center gap-2 rounded-full bg-brand-gold/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-gold">
+              <LucideSparkles :size="14" />
+              Портфолио
             </div>
+            <h1 class="font-serif text-3xl font-bold leading-tight text-brand-brown sm:text-4xl">Проекты</h1>
+            <p class="mt-3 max-w-2xl text-sm leading-7 text-brand-brown/62 sm:text-base">
+              Реальные кухни, шкафы и другие проекты с фотографиями, бюджетом и деталями исполнения.
+            </p>
           </div>
 
           <div class="space-y-3">
@@ -260,7 +231,30 @@ onUnmounted(() => {
                 @click="resetFilters"
               >
                 <LucideRotateCcw :size="14" />
-                Сбросить фильтры
+                Сбросить
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 border-t border-brand-brown/8 pt-4">
+          <div class="-mx-1 overflow-x-auto px-1 no-scrollbar">
+            <div class="flex min-w-max gap-2 pb-1">
+              <button
+                type="button"
+                :class="['ui-chip', !selectedCategory ? 'ui-chip-active' : '']"
+                @click="selectCategory('')"
+              >
+                Все проекты
+              </button>
+              <button
+                v-for="category in productStore.categories"
+                :key="category.id"
+                type="button"
+                :class="['ui-chip', selectedCategory === category.slug ? 'ui-chip-active' : '']"
+                @click="selectCategory(category.slug)"
+              >
+                {{ category.name }}
               </button>
             </div>
           </div>
@@ -278,7 +272,7 @@ onUnmounted(() => {
             <ProductCard v-for="product in productStore.products" :key="product.id" :product="product" />
           </div>
 
-          <div class="mt-10 flex items-center justify-between gap-4 border-t border-brand-brown/10 pt-5">
+          <div class="mt-8 flex items-center justify-between gap-4 border-t border-brand-brown/10 pt-5">
             <span class="text-sm font-medium text-brand-brown/45">{{ resultLabel }}</span>
             <router-link to="/contact" class="hidden items-center gap-2 text-sm font-bold text-brand-gold hover:text-brand-brown sm:inline-flex">
               Обсудить похожий проект
@@ -291,7 +285,7 @@ onUnmounted(() => {
           <LucideFilterX :size="56" class="mx-auto mb-5 text-brand-brown/12" />
           <h2 class="ui-title-md mb-2">Проекты не найдены</h2>
           <p class="mx-auto mb-6 max-w-md text-brand-brown/55">
-            Попробуйте другой запрос или сбросьте фильтры. Возможно, нужный вам стиль или тип мебели пока еще не добавлен в каталог.
+            Попробуйте другой запрос или сбросьте фильтры.
           </p>
           <button type="button" class="ui-button ui-button-primary" @click="resetFilters">
             Сбросить фильтры
