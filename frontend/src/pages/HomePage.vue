@@ -37,26 +37,26 @@ const proof = [
 
 const stages = [
   {
-    title: '1. Покажите задачу',
+    title: '1. Заявка',
     text: 'Фото, размеры или просто идея: кухня, шкаф, прихожая, гардеробная.',
     icon: LucideRuler,
   },
   {
-    title: '2. Подберем решение',
-    text: 'Предложим материалы, компоновку, сроки и понятный следующий шаг.',
+    title: '2. Проект',
+    text: 'Подберем материалы, компоновку и согласуем детали.',
     icon: LucideMessageSquare,
   },
   {
-    title: '3. Сделаем под ключ',
-    text: 'Производство, доставка, монтаж и контроль готового результата.',
+    title: '3. Монтаж',
+    text: 'Изготовим, доставим и установим мебель на объекте.',
     icon: LucideWrench,
   },
 ];
 
 const heroBullets = [
-  'реальные проекты в портфолио',
-  'делаем кухни, шкафы и системы хранения',
-  'сами замеряем, производим и устанавливаем',
+  'кухни, шкафы, гардеробные',
+  'замер, производство, монтаж',
+  'гарантия 2 года по договору',
 ];
 
 onMounted(async () => {
@@ -110,11 +110,11 @@ onUnmounted(() => {
             </div>
 
             <h1 class="max-w-3xl font-serif text-4xl font-bold leading-[1.02] sm:text-5xl lg:text-[4.35rem]">
-              Мебель на заказ, которую хочется поставить у себя
+              Кухни и мебель на заказ в Крыму
             </h1>
 
             <p class="mt-6 max-w-2xl text-lg leading-8 text-white/80">
-              Кухни, шкафы, гардеробные и корпусная мебель по вашим размерам. Покажите задачу, а мы подскажем лучшее решение по материалам, срокам и монтажу.
+              Проектируем, производим и устанавливаем мебель по вашим размерам.
             </p>
 
             <div class="mt-7 grid max-w-2xl gap-2 sm:grid-cols-3">
@@ -185,10 +185,10 @@ onUnmounted(() => {
                 Быстрый старт
               </div>
               <h2 class="mt-2 font-serif text-2xl font-bold leading-tight text-brand-brown">
-                Получите первый ориентир по проекту
+                Заявка на расчет
               </h2>
               <p class="mt-2 text-sm leading-6 text-brand-brown/62">
-                Ответьте на 4 вопроса, и мы поймем задачу без длинной переписки.
+                Ответьте на 4 вопроса, чтобы мы поняли задачу.
               </p>
             </div>
             <QuoteQuiz initial-project-type="Кухня с техникой" />
@@ -203,9 +203,9 @@ onUnmounted(() => {
           <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p class="ui-eyebrow mb-3">Портфолио</p>
-              <h2 class="ui-title-lg">Сначала посмотрите результат</h2>
+              <h2 class="ui-title-lg">Проекты</h2>
               <p class="ui-copy mt-4 max-w-2xl">
-                Живые фото лучше любых обещаний: посмотрите кухни, шкафы и другие решения, которые уже стоят у клиентов.
+                Кухни, шкафы и другие решения, которые уже установлены у клиентов.
               </p>
             </div>
             <router-link to="/catalog" class="ui-button ui-button-secondary">
@@ -249,13 +249,13 @@ onUnmounted(() => {
             <div>
               <div class="mb-4 inline-flex items-center gap-3 rounded-full bg-white/8 px-4 py-2 text-brand-gold">
                 <LucideShieldCheck :size="20" />
-                <span class="font-semibold">Можно начать с пары сообщений</span>
+                <span class="font-semibold">Связаться</span>
               </div>
               <h2 class="font-serif text-3xl font-bold leading-tight sm:text-4xl">
-                Не знаете, с чего начать? Опишите задачу, дальше подскажем
+                Обсудим ваш проект
               </h2>
               <p class="mt-4 max-w-2xl leading-8 text-white/72">
-                Если удобно, напишите в мессенджер. Если хотите структурно, заполните короткую форму.
+                Напишите в мессенджер, позвоните или заполните короткую форму выше.
               </p>
 
               <div class="mt-6 grid gap-3 text-sm font-semibold text-white/74 sm:grid-cols-3">
@@ -278,9 +278,9 @@ onUnmounted(() => {
             </div>
 
             <div class="rounded-[1.8rem] border border-white/10 bg-white/8 p-5">
-              <div class="font-serif text-3xl font-bold leading-tight text-white">Покажите фото помещения</div>
+              <div class="font-serif text-3xl font-bold leading-tight text-white">Начать расчет</div>
               <p class="mt-3 leading-7 text-white/70">
-                Можно без точного ТЗ: достаточно пары фото, размеров и того, что хочется получить.
+                Достаточно описать мебель и указать удобный способ связи.
               </p>
               <a href="#quote-quiz" class="ui-button mt-5 bg-white text-brand-brown hover:bg-brand-gold hover:text-white">
                 Заполнить короткую форму
