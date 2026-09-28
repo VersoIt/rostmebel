@@ -32,7 +32,7 @@ let heroInterval: number | undefined;
 const proof = [
   { value: '15+', label: 'лет в мебели на заказ' },
   { value: '2 года', label: 'гарантия по договору' },
-  { value: 'Крым', label: 'замер, доставка и монтаж' },
+  { value: 'Крым', label: 'замер и монтаж' },
 ];
 
 const stages = [
@@ -137,29 +137,30 @@ onUnmounted(() => {
               </router-link>
             </div>
 
-            <div class="mt-5 flex flex-wrap gap-2">
-              <a :href="MESSENGER_LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-brand-brown transition hover:-translate-y-0.5 hover:bg-brand-gold hover:text-white">
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+              <span class="mr-1 text-xs font-semibold uppercase tracking-widest text-white/42">Написать напрямую</span>
+              <a :href="MESSENGER_LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/14 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/86 transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-brown">
                 <LucideMessageSquare :size="17" />
                 WhatsApp
               </a>
-              <a :href="MESSENGER_LINKS.telegram" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/18 bg-white/8 px-4 py-2 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-brown">
+              <a :href="MESSENGER_LINKS.telegram" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/14 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/86 transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-brown">
                 <LucideMessageSquare :size="17" />
                 Telegram
               </a>
-              <a :href="PHONE_HREF" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/18 bg-white/8 px-4 py-2 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-brown">
+              <a :href="PHONE_HREF" class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/14 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/86 transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-brown">
                 <LucidePhoneCall :size="17" />
                 {{ PHONE_DISPLAY }}
               </a>
             </div>
 
-            <div class="mt-9 grid max-w-3xl grid-cols-3 gap-3">
+            <div class="mt-7 flex max-w-3xl flex-wrap gap-x-7 gap-y-3 border-t border-white/14 pt-5">
               <div
                 v-for="item in proof"
                 :key="item.label"
-                class="rounded-2xl border border-white/12 bg-white/8 p-4 backdrop-blur-xl"
+                class="flex items-baseline gap-2"
               >
-                <div class="font-serif text-2xl leading-none text-white sm:text-3xl">{{ item.value }}</div>
-                <div class="mt-2 text-xs leading-5 text-white/68 sm:text-sm">{{ item.label }}</div>
+                <div class="font-serif text-2xl leading-none text-white">{{ item.value }}</div>
+                <div class="text-sm leading-5 text-white/58">{{ item.label }}</div>
               </div>
             </div>
 
