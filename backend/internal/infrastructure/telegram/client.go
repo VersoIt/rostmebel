@@ -66,7 +66,7 @@ func (c *Client) SendOrderNotification(ctx context.Context, order OrderNotificat
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("execute telegram request: %w", err)
+		return fmt.Errorf("execute telegram request: %s", redactToken(err.Error(), c.token))
 	}
 	defer resp.Body.Close()
 
@@ -109,6 +109,14 @@ func safeValue(v string) string {
 		return "—"
 	}
 	return v
+}
+
+func redactToken(message, token string) string {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return message
+	}
+	return strings.ReplaceAll(message, token, "***REDACTED***")
 }
 
 func contactMethodLabel(method string) string {

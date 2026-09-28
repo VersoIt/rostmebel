@@ -42,8 +42,8 @@ const stages = [
     icon: LucideRuler,
   },
   {
-    title: 'Понятная смета',
-    text: 'Сразу раскладываем стоимость по позициям, чтобы бюджет был понятен заранее.',
+    title: 'Понятный план',
+    text: 'Сразу фиксируем состав работ, материалы и важные детали до запуска.',
     icon: LucideMessageSquare,
   },
   {
@@ -117,7 +117,7 @@ onUnmounted(() => {
 
           <p class="mt-6 max-w-2xl text-lg leading-8 text-white/80">
             Проектируем, производим и устанавливаем мебель по вашим размерам. Сразу учитываем технику, розетки,
-            бюджет и монтаж.
+            материалы и монтаж.
           </p>
 
           <div class="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -184,7 +184,7 @@ onUnmounted(() => {
               <p class="ui-eyebrow mb-3">Портфолио</p>
               <h2 class="ui-title-lg">Реальные проекты из нашего портфолио</h2>
               <p class="ui-copy mt-4 max-w-2xl">
-                Кухни, шкафы и другие проекты с фотографиями, бюджетом и деталями исполнения.
+                Кухни, шкафы и другие проекты с фотографиями, материалами и деталями исполнения.
               </p>
             </div>
             <router-link to="/catalog" class="ui-button ui-button-secondary">
@@ -261,12 +261,12 @@ onUnmounted(() => {
                 Ответьте на 4 вопроса и получите понятный следующий шаг по проекту
               </h2>
               <p class="mt-4 max-w-2xl leading-8 text-white/72">
-                Подскажем реалистичный бюджет, сроки и важные детали до старта проекта.
+                Подскажем реалистичный порядок работ, сроки и важные детали до старта проекта.
               </p>
 
               <div class="mt-6 grid gap-3 text-sm font-semibold text-white/74 sm:grid-cols-3">
                 <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Размеры и техника</div>
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Бюджет и сроки</div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Материалы и сроки</div>
                 <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Замер по Крыму</div>
               </div>
 

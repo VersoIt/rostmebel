@@ -17,7 +17,7 @@ const hasSearched = ref(false);
 const searchFailed = ref(false);
 
 const exampleQueries = [
-  'светлая кухня с техникой до 250 000 ₽',
+  'светлая кухня с техникой',
   'шкаф-купе в прихожую с зеркалом',
   'гардеробная перегородка в современном стиле',
 ];
@@ -71,7 +71,7 @@ const applyExampleQuery = (value: string) => {
         <input
           v-model="query"
           type="text"
-          placeholder="Например: светлая кухня с техникой до 250 000 ₽"
+          placeholder="Например: светлая кухня с техникой"
           class="ui-input min-h-14 pl-12 pr-4 text-base shadow-[0_14px_28px_rgba(23,33,29,0.05)] sm:pr-32"
           @keyup.enter="handleSearch"
         >

@@ -152,7 +152,6 @@ export const buildBusinessSchema = () => ({
   image: absoluteUrl(DEFAULT_IMAGE),
   telephone: '+7 978 763-16-03',
   email: 'rost.salon2003@mail.ru',
-  priceRange: '₽₽',
   contactPoint: [
     {
       '@type': 'ContactPoint',

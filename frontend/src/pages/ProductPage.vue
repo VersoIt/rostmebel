@@ -338,7 +338,7 @@ const updateSchema = (item: Product) => {
 
   setPageSeo({
     title: `${item.name} — РОСТ Мебель`,
-    description: compactDescription(item.description || `Проект ${item.name}: фотографии, бюджет, материалы и заявка на расчет.`),
+    description: compactDescription(item.description || `Проект ${item.name}: фотографии, материалы и заявка на расчет.`),
     path: productPath,
     image,
     imageAlt: item.name,
@@ -361,15 +361,6 @@ const updateSchema = (item: Product) => {
     description: item.description,
     category: projectCategoryName.value,
     additionalProperty: additionalProperty.length ? additionalProperty : undefined,
-    offers: {
-      '@type': 'Offer',
-      url: absoluteUrl(productPath),
-      priceCurrency: 'RUB',
-      price: item.price,
-      itemCondition: 'https://schema.org/NewCondition',
-      availability: 'https://schema.org/InStock',
-      seller: { '@type': 'Organization', name: 'РОСТ Мебель' },
-    },
   };
 
   setJsonLd('schema-product', schema);
@@ -456,14 +447,6 @@ onUnmounted(() => {
   removeJsonLd('schema-product');
   removeJsonLd('schema-product-breadcrumbs');
 });
-
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    maximumFractionDigits: 0,
-  }).format(price);
-};
 
 const handleReviewSuccess = () => {
   isReviewModalOpen.value = false;
@@ -554,14 +537,10 @@ const handleReviewSuccess = () => {
 
       <div class="self-start lg:sticky lg:top-28">
         <div class="ui-card p-5 sm:p-6">
-          <div class="mb-6 flex flex-wrap items-end gap-6">
-            <div>
-              <div class="ui-label-compact">Бюджет реализации</div>
-              <div class="font-serif text-4xl font-bold text-brand-gold">{{ formatPrice(product.price) }}</div>
-            </div>
-            <div v-if="product.price_old">
-              <div class="ui-label-compact">Ориентир</div>
-              <div class="text-xl text-brand-brown/25 line-through">{{ formatPrice(product.price_old) }}</div>
+          <div class="mb-6">
+            <div class="ui-label-compact">Индивидуальный расчет</div>
+            <div class="mt-2 font-serif text-3xl font-bold leading-tight text-brand-brown">
+              Подберем решение под ваш размер и задачу
             </div>
           </div>
 
@@ -655,7 +634,7 @@ const handleReviewSuccess = () => {
               <LucideX :size="24" />
             </button>
             <h2 class="ui-title-md mb-2">Заявка на расчет</h2>
-            <p class="ui-copy mb-6">Обсудим похожий проект и подскажем реалистичный бюджет.</p>
+            <p class="ui-copy mb-6">Обсудим похожий проект, материалы, сроки и следующий шаг.</p>
             <QuoteQuiz :project-id="product.id" :initial-project-type="quoteProjectType" @success="isOrderModalOpen = false" />
           </section>
         </div>

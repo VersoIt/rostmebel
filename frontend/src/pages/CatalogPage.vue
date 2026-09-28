@@ -55,20 +55,20 @@ const catalogTitle = computed(() => {
 const catalogDescription = computed(() => {
   if (trimmedSearchQuery.value) {
     return compactDescription(
-      `Результаты поиска по запросу «${trimmedSearchQuery.value}» в портфолио РОСТ Мебель. Подберите подходящие проекты мебели по материалам, стилю и бюджету.`,
+      `Результаты поиска по запросу «${trimmedSearchQuery.value}» в портфолио РОСТ Мебель. Подберите подходящие проекты мебели по материалам, стилю и деталям исполнения.`,
       155,
     );
   }
 
   if (selectedCategoryEntity.value) {
     return compactDescription(
-      `Подборка категории «${selectedCategoryEntity.value.name}» от РОСТ Мебель: реальные проекты, фото, бюджеты, материалы и детали исполнения.`,
+      `Подборка категории «${selectedCategoryEntity.value.name}» от РОСТ Мебель: реальные проекты, фото, материалы и детали исполнения.`,
       155,
     );
   }
 
   return compactDescription(
-    'Портфолио реализованных кухонь, шкафов и систем хранения: фотографии, бюджеты, материалы и детали проектов РОСТ Мебель.',
+    'Портфолио реализованных кухонь, шкафов и систем хранения: фотографии, материалы и детали проектов РОСТ Мебель.',
     155,
   );
 });
@@ -206,7 +206,7 @@ onUnmounted(() => {
             </div>
             <h1 class="font-serif text-3xl font-bold leading-tight text-brand-brown sm:text-4xl">Проекты</h1>
             <p class="mt-3 max-w-2xl text-sm leading-7 text-brand-brown/62 sm:text-base">
-              Реальные кухни, шкафы и другие проекты с фотографиями, бюджетом и деталями исполнения.
+              Реальные кухни, шкафы и другие проекты с фотографиями, материалами и деталями исполнения.
             </p>
           </div>
 

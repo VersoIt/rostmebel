@@ -60,10 +60,6 @@ const sellingPoints = computed(() => {
   return Array.from(new Set(points)).slice(0, 3);
 });
 
-const priceLabel = computed(() => {
-  return props.product.price > 0 ? 'Ориентир бюджета' : 'После расчета';
-});
-
 const imageCount = () => props.product.images.length;
 
 const primaryImageSource = computed(() =>
@@ -268,14 +264,6 @@ const closeQuickView = () => {
   clearQuickViewBackgroundPreloadTimer();
 };
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    maximumFractionDigits: 0,
-  }).format(price);
-};
-
 onMounted(() => {
   window.addEventListener('keydown', handleQuickViewKeydown);
 });
@@ -335,8 +323,8 @@ onUnmounted(() => {
         <div class="rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(8,17,15,0.08),rgba(8,17,15,0.62))] p-3 text-white backdrop-blur-md">
           <div class="flex items-center justify-between gap-3">
             <div class="min-w-0">
-              <div class="text-[10px] font-black uppercase tracking-[0.18em] text-white/66">{{ priceLabel }}</div>
-              <div class="mt-1 truncate text-lg font-semibold text-white">{{ formatPrice(product.price) }}</div>
+              <div class="text-[10px] font-black uppercase tracking-[0.18em] text-white/66">Реальный проект</div>
+              <div class="mt-1 truncate text-lg font-semibold text-white">{{ categoryName }}</div>
             </div>
             <div class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-white/78">
               <LucideImages :size="14" />
@@ -373,7 +361,7 @@ onUnmounted(() => {
         <div class="flex items-center justify-between gap-3 border-t border-brand-brown/10 pt-4">
           <div class="min-w-0">
             <div class="text-[11px] font-black uppercase tracking-[0.18em] text-brand-brown/30">Смотреть проект</div>
-            <div class="mt-1 text-sm text-brand-brown/58">Фото, бюджет, детали и похожие решения</div>
+            <div class="mt-1 text-sm text-brand-brown/58">Фото, детали и похожие решения</div>
           </div>
           <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-brown text-white transition-colors group-hover:bg-brand-gold">
             <LucideArrowRight :size="20" />
@@ -436,8 +424,7 @@ onUnmounted(() => {
                     {{ categoryName }}
                   </div>
                   <h3 class="ui-title-md mb-4">{{ product.name }}</h3>
-                  <div class="mb-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-brown/35">{{ priceLabel }}</div>
-                  <div class="mb-4 text-2xl font-semibold text-brand-brown">{{ formatPrice(product.price) }}</div>
+                  <div class="mb-4 text-[11px] font-black uppercase tracking-[0.18em] text-brand-brown/35">Реальный проект</div>
                   <div v-if="sellingPoints.length" class="mb-5 flex flex-wrap gap-2">
                     <span
                       v-for="point in sellingPoints"
