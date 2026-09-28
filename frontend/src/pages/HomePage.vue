@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useProductStore } from '@/stores/products';
-import AISearchPanel from '@/components/ai/AISearchPanel.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
 import QuoteQuiz from '@/components/order/QuoteQuiz.vue';
 import {
   LucideArrowRight,
-  LucideCheckCircle2,
+  LucideClock,
   LucideMapPin,
   LucideMessageSquare,
+  LucidePhoneCall,
   LucideRuler,
   LucideShieldCheck,
   LucideWrench,
 } from 'lucide-vue-next';
 import type { Product } from '@/types';
 import { buildBusinessSchema, buildWebsiteSchema, removeJsonLd, setJsonLd } from '@/utils/seo';
-import { PHONE_DISPLAY, PHONE_HREF } from '@/constants/contacts';
+import { MESSENGER_LINKS, PHONE_DISPLAY, PHONE_HREF } from '@/constants/contacts';
 
 const productStore = useProductStore();
 const hits = ref<Product[]>([]);
@@ -32,34 +32,31 @@ let heroInterval: number | undefined;
 const proof = [
   { value: '15+', label: 'лет в мебели на заказ' },
   { value: '2 года', label: 'гарантия по договору' },
-  { value: '1 смета', label: 'мебель, техника и монтаж в одном проекте' },
+  { value: 'Крым', label: 'замер, доставка и монтаж' },
 ];
 
 const stages = [
   {
-    title: 'Замер и проект',
-    text: 'Сначала смотрим помещение, размеры, розетки, технику и важные детали.',
+    title: '1. Покажите задачу',
+    text: 'Фото, размеры или просто идея: кухня, шкаф, прихожая, гардеробная.',
     icon: LucideRuler,
   },
   {
-    title: 'Понятный план',
-    text: 'Сразу фиксируем состав работ, материалы и важные детали до запуска.',
+    title: '2. Подберем решение',
+    text: 'Предложим материалы, компоновку, сроки и понятный следующий шаг.',
     icon: LucideMessageSquare,
   },
   {
-    title: 'Производство и монтаж',
-    text: 'Изготавливаем мебель и доводим проект до готового результата.',
+    title: '3. Сделаем под ключ',
+    text: 'Производство, доставка, монтаж и контроль готового результата.',
     icon: LucideWrench,
   },
 ];
 
-const applianceItems = [
-  'варочные поверхности и духовые шкафы',
-  'вытяжки и вентиляция',
-  'посудомоечные машины',
-  'холодильники и встроенные колонны',
-  'мойки, смесители и подсветка',
-  'схемы розеток и выводов до монтажа',
+const heroBullets = [
+  'реальные проекты в портфолио',
+  'делаем кухни, шкафы и системы хранения',
+  'сами замеряем, производим и устанавливаем',
 ];
 
 onMounted(async () => {
@@ -67,7 +64,7 @@ onMounted(async () => {
   setJsonLd('schema-business', buildBusinessSchema());
 
   await productStore.fetchProducts({
-    limit: 3,
+    limit: 6,
     sort_by: 'views_count',
     sort_order: 'desc',
     status: 'published',
@@ -105,54 +102,123 @@ onUnmounted(() => {
       </div>
 
       <div class="ui-container relative z-10">
-        <div class="max-w-4xl text-white motion-fade-up">
-          <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur">
-            <LucideMapPin :size="16" class="text-brand-gold" />
-            Работаем по Крыму: замер, доставка, монтаж
-          </div>
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_410px] lg:items-center">
+          <div class="max-w-4xl text-white motion-fade-up">
+            <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur">
+              <LucideMapPin :size="16" class="text-brand-gold" />
+              Работаем по Крыму: замер, доставка, монтаж
+            </div>
 
-          <h1 class="max-w-3xl font-serif text-4xl font-bold leading-[1.02] sm:text-5xl lg:text-[4.35rem]">
-            Кухни и корпусная мебель на заказ
-          </h1>
+            <h1 class="max-w-3xl font-serif text-4xl font-bold leading-[1.02] sm:text-5xl lg:text-[4.35rem]">
+              Мебель на заказ, которую хочется поставить у себя
+            </h1>
 
-          <p class="mt-6 max-w-2xl text-lg leading-8 text-white/80">
-            Проектируем, производим и устанавливаем мебель по вашим размерам. Сразу учитываем технику, розетки,
-            материалы и монтаж.
-          </p>
+            <p class="mt-6 max-w-2xl text-lg leading-8 text-white/80">
+              Кухни, шкафы, гардеробные и корпусная мебель по вашим размерам. Покажите задачу, а мы подскажем лучшее решение по материалам, срокам и монтажу.
+            </p>
 
-          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-            <router-link to="/catalog" class="ui-button ui-button-accent">
-              Посмотреть проекты
-              <LucideArrowRight :size="18" />
-            </router-link>
-            <a href="#quote-quiz" class="ui-button border border-white/20 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
-              Получить расчет
-            </a>
-          </div>
+            <div class="mt-7 grid max-w-2xl gap-2 sm:grid-cols-3">
+              <div
+                v-for="item in heroBullets"
+                :key="item"
+                class="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold leading-5 text-white/78 backdrop-blur"
+              >
+                {{ item }}
+              </div>
+            </div>
 
-          <div class="mt-10 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-3">
-            <div
-              v-for="item in proof"
-              :key="item.label"
-              class="rounded-2xl border border-white/12 bg-white/8 p-4 backdrop-blur-xl"
-            >
-              <div class="font-serif text-3xl leading-none text-white">{{ item.value }}</div>
-              <div class="mt-2 text-sm leading-5 text-white/68">{{ item.label }}</div>
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+              <a href="#quote-quiz" class="ui-button ui-button-accent min-h-14 text-base">
+                Получить расчет
+                <LucideArrowRight :size="18" />
+              </a>
+              <router-link to="/catalog" class="ui-button border border-white/20 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
+                Посмотреть проекты
+              </router-link>
+            </div>
+
+            <div class="mt-5 flex flex-wrap gap-2">
+              <a :href="MESSENGER_LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-brand-brown transition hover:-translate-y-0.5 hover:bg-brand-gold hover:text-white">
+                <LucideMessageSquare :size="17" />
+                WhatsApp
+              </a>
+              <a :href="MESSENGER_LINKS.telegram" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/18 bg-white/8 px-4 py-2 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-brown">
+                <LucideMessageSquare :size="17" />
+                Telegram
+              </a>
+              <a :href="PHONE_HREF" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/18 bg-white/8 px-4 py-2 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white hover:text-brand-brown">
+                <LucidePhoneCall :size="17" />
+                {{ PHONE_DISPLAY }}
+              </a>
+            </div>
+
+            <div class="mt-9 grid max-w-3xl grid-cols-3 gap-3">
+              <div
+                v-for="item in proof"
+                :key="item.label"
+                class="rounded-2xl border border-white/12 bg-white/8 p-4 backdrop-blur-xl"
+              >
+                <div class="font-serif text-2xl leading-none text-white sm:text-3xl">{{ item.value }}</div>
+                <div class="mt-2 text-xs leading-5 text-white/68 sm:text-sm">{{ item.label }}</div>
+              </div>
+            </div>
+
+            <div class="mt-6 flex items-center gap-2">
+              <button
+                v-for="(img, idx) in heroImages"
+                :key="`hero-dot-${img}`"
+                type="button"
+                :class="[
+                  'h-2.5 rounded-full transition-all duration-300',
+                  currentHeroIndex === idx ? 'w-10 bg-brand-gold' : 'w-2.5 bg-white/35 hover:bg-white/70'
+                ]"
+                :aria-label="`Показать фото ${idx + 1}`"
+                @click="currentHeroIndex = idx"
+              />
             </div>
           </div>
 
-          <div class="mt-6 flex items-center gap-2">
-            <button
-              v-for="(img, idx) in heroImages"
-              :key="`hero-dot-${img}`"
-              type="button"
-              :class="[
-                'h-2.5 rounded-full transition-all duration-300',
-                currentHeroIndex === idx ? 'w-10 bg-brand-gold' : 'w-2.5 bg-white/35 hover:bg-white/70'
-              ]"
-              :aria-label="`Показать фото ${idx + 1}`"
-              @click="currentHeroIndex = idx"
-            />
+          <aside id="quote-quiz" class="motion-scale-in scroll-mt-28 rounded-[2rem] border border-white/14 bg-white p-4 text-brand-brown shadow-[0_28px_90px_rgba(0,0,0,0.28)] sm:p-5">
+            <div class="mb-4 rounded-2xl bg-brand-gray px-4 py-3">
+              <div class="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-brand-gold">
+                <LucideClock :size="16" />
+                Быстрый старт
+              </div>
+              <h2 class="mt-2 font-serif text-2xl font-bold leading-tight text-brand-brown">
+                Получите первый ориентир по проекту
+              </h2>
+              <p class="mt-2 text-sm leading-6 text-brand-brown/62">
+                Ответьте на 4 вопроса, и мы поймем задачу без длинной переписки.
+              </p>
+            </div>
+            <QuoteQuiz initial-project-type="Кухня с техникой" />
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects-grid" class="ui-section pt-8">
+      <div class="ui-container">
+        <div class="ui-surface overflow-hidden p-5 sm:p-7 lg:p-8">
+          <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p class="ui-eyebrow mb-3">Портфолио</p>
+              <h2 class="ui-title-lg">Сначала посмотрите результат</h2>
+              <p class="ui-copy mt-4 max-w-2xl">
+                Живые фото лучше любых обещаний: посмотрите кухни, шкафы и другие решения, которые уже стоят у клиентов.
+              </p>
+            </div>
+            <router-link to="/catalog" class="ui-button ui-button-secondary">
+              Все проекты
+              <LucideArrowRight :size="18" />
+            </router-link>
+          </div>
+
+          <div v-if="hits.length" class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <ProductCard v-for="product in hits" :key="product.id" :product="product" />
+          </div>
+          <div v-else class="ui-empty">
+            Проекты появятся после публикации в админке.
           </div>
         </div>
       </div>
@@ -176,107 +242,50 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <section id="projects-grid" class="ui-section pt-4">
-      <div class="ui-container">
-        <div class="ui-surface overflow-hidden p-5 sm:p-7 lg:p-8">
-          <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p class="ui-eyebrow mb-3">Портфолио</p>
-              <h2 class="ui-title-lg">Реальные проекты из нашего портфолио</h2>
-              <p class="ui-copy mt-4 max-w-2xl">
-                Кухни, шкафы и другие проекты с фотографиями, материалами и деталями исполнения.
-              </p>
-            </div>
-            <router-link to="/catalog" class="ui-button ui-button-secondary">
-              Все проекты
-              <LucideArrowRight :size="18" />
-            </router-link>
-          </div>
-
-          <div v-if="hits.length" class="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <ProductCard v-for="product in hits" :key="product.id" :product="product" />
-          </div>
-          <div v-else class="ui-empty">
-            Проекты появятся после публикации в админке.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="ui-section pb-0">
-      <div class="ui-container grid grid-cols-1 gap-8 lg:grid-cols-[0.96fr_1.04fr] lg:items-center">
-        <div>
-          <p class="ui-eyebrow mb-3">Техника для кухни</p>
-          <h2 class="ui-title-lg">Продумываем кухню вместе с техникой</h2>
-          <p class="ui-copy-lg mt-4">
-            Подбираем не только фасады и корпуса. Сразу увязываем мебель с техникой, розетками, вентиляцией,
-            колоннами и логикой хранения.
-          </p>
-          <a href="#quote-quiz" class="ui-button ui-button-primary mt-6">
-            Посчитать кухню
-            <LucideArrowRight :size="18" />
-          </a>
-        </div>
-
-        <div class="ui-surface grid gap-4 p-4 sm:grid-cols-[0.84fr_1fr] sm:p-5">
-          <img src="/assets/images/tech-drawing.jpg" class="h-full min-h-72 rounded-[1.6rem] object-cover" alt="Технический проект кухни">
-          <div class="grid content-center gap-2">
-            <div
-              v-for="item in applianceItems"
-              :key="item"
-              class="flex items-center gap-3 rounded-2xl border border-brand-brown/8 bg-white/85 px-4 py-3 text-sm font-semibold text-brand-brown/78"
-            >
-              <LucideCheckCircle2 :size="18" class="shrink-0 text-brand-gold" />
-              {{ item }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="ai-search" class="ui-section">
-      <div class="ui-container">
-        <div class="mb-8 max-w-2xl">
-          <p class="ui-eyebrow mb-3">Быстрый подбор</p>
-          <h2 class="ui-title-lg">Не хочется листать каталог вручную?</h2>
-          <p class="ui-copy-lg mt-4">
-            Опишите, что именно вам нужно, и мы сразу покажем похожие проекты из портфолио.
-          </p>
-        </div>
-
-        <AISearchPanel />
-      </div>
-    </section>
-
-    <section id="quote-quiz" class="scroll-mt-28 pb-12 sm:pb-16">
+    <section class="pb-12 sm:pb-16">
       <div class="ui-container">
         <div class="overflow-hidden rounded-[2rem] bg-brand-brown p-5 text-white shadow-[0_28px_80px_rgba(23,33,29,0.2)] lg:p-8">
-          <div class="grid grid-cols-1 gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div class="lg:pr-4">
+          <div class="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
+            <div>
               <div class="mb-4 inline-flex items-center gap-3 rounded-full bg-white/8 px-4 py-2 text-brand-gold">
                 <LucideShieldCheck :size="20" />
-                <span class="font-semibold">Посчитаем без долгих созвонов</span>
+                <span class="font-semibold">Можно начать с пары сообщений</span>
               </div>
               <h2 class="font-serif text-3xl font-bold leading-tight sm:text-4xl">
-                Ответьте на 4 вопроса и получите понятный следующий шаг по проекту
+                Не знаете, с чего начать? Опишите задачу, дальше подскажем
               </h2>
               <p class="mt-4 max-w-2xl leading-8 text-white/72">
-                Подскажем реалистичный порядок работ, сроки и важные детали до старта проекта.
+                Если удобно, напишите в мессенджер. Если хотите структурно, заполните короткую форму.
               </p>
 
               <div class="mt-6 grid gap-3 text-sm font-semibold text-white/74 sm:grid-cols-3">
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Размеры и техника</div>
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Материалы и сроки</div>
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Замер по Крыму</div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Фото помещения</div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Размеры или идея</div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">Удобный способ связи</div>
               </div>
 
-              <a :href="PHONE_HREF" class="ui-button mt-6 border border-white/18 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
-                Позвонить: {{ PHONE_DISPLAY }}
-              </a>
+              <div class="mt-6 flex flex-wrap gap-2">
+                <a :href="MESSENGER_LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="ui-button bg-white text-brand-brown hover:bg-brand-gold hover:text-white">
+                  WhatsApp
+                </a>
+                <a :href="MESSENGER_LINKS.telegram" target="_blank" rel="noopener noreferrer" class="ui-button border border-white/18 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
+                  Telegram
+                </a>
+                <a :href="PHONE_HREF" class="ui-button border border-white/18 bg-white/8 text-white hover:bg-white hover:text-brand-brown">
+                  Позвонить: {{ PHONE_DISPLAY }}
+                </a>
+              </div>
             </div>
 
-            <div class="rounded-[1.8rem] bg-white p-4 text-brand-brown shadow-2xl shadow-black/20 sm:p-5">
-              <QuoteQuiz initial-project-type="Кухня с техникой" />
+            <div class="rounded-[1.8rem] border border-white/10 bg-white/8 p-5">
+              <div class="font-serif text-3xl font-bold leading-tight text-white">Покажите фото помещения</div>
+              <p class="mt-3 leading-7 text-white/70">
+                Можно без точного ТЗ: достаточно пары фото, размеров и того, что хочется получить.
+              </p>
+              <a href="#quote-quiz" class="ui-button mt-5 bg-white text-brand-brown hover:bg-brand-gold hover:text-white">
+                Заполнить короткую форму
+                <LucideArrowRight :size="18" />
+              </a>
             </div>
           </div>
         </div>
