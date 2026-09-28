@@ -28,6 +28,7 @@ const form = ref({
 const isSubmitting = ref(false);
 const isSuccess = ref(false);
 const error = ref('');
+const hasPrivacyConsent = ref(false);
 
 const formatPhone = (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -35,6 +36,8 @@ const formatPhone = (event: Event) => {
 };
 
 const handleSubmit = async () => {
+  if (!hasPrivacyConsent.value) return;
+
   isSubmitting.value = true;
   error.value = '';
 
@@ -166,7 +169,22 @@ const handleSubmit = async () => {
         {{ error }}
       </div>
 
-      <button type="submit" :disabled="isSubmitting" class="ui-button ui-button-primary w-full">
+      <label class="flex items-start gap-3 rounded-lg border border-brand-brown/10 bg-brand-gray/50 p-3 text-sm leading-6 text-brand-brown/62">
+        <input
+          v-model="hasPrivacyConsent"
+          required
+          type="checkbox"
+          class="mt-1 h-4 w-4 rounded border-brand-brown/20 text-brand-gold focus:ring-brand-gold"
+        >
+        <span>
+          Я соглашаюсь на обработку персональных данных и принимаю
+          <router-link to="/privacy" target="_blank" class="font-bold text-brand-gold hover:text-brand-brown">
+            политику конфиденциальности
+          </router-link>.
+        </span>
+      </label>
+
+      <button type="submit" :disabled="isSubmitting || !hasPrivacyConsent" class="ui-button ui-button-primary w-full">
         <LucideSend v-if="!isSubmitting" :size="19" />
         {{ isSubmitting ? 'Отправляем...' : 'Отправить заявку' }}
       </button>

@@ -70,6 +70,16 @@ const router = createRouter({
           },
         },
         {
+          path: 'privacy',
+          name: 'privacy',
+          component: () => import('@/pages/PrivacyPage.vue'),
+          meta: {
+            title: 'Политика обработки персональных данных — РОСТ Мебель',
+            description: 'Политика обработки персональных данных пользователей сайта РОСТ Мебель: цели обработки, состав данных, cookie, аналитика и контакты оператора.',
+            canonicalPath: '/privacy',
+          },
+        },
+        {
           path: 'favorites',
           name: 'favorites',
           component: () => import('@/pages/FavoritesPage.vue'),

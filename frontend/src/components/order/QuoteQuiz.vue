@@ -33,6 +33,7 @@ const currentStep = ref(0);
 const isSubmitting = ref(false);
 const isSuccess = ref(false);
 const error = ref('');
+const hasPrivacyConsent = ref(false);
 
 const form = ref({
   client_name: '',
@@ -59,7 +60,8 @@ const canContinue = computed(() => {
 
   return form.value.client_name.trim().length >= 2
     && hasPhone
-    && (form.value.contact_method !== 'email' || hasEmail);
+    && (form.value.contact_method !== 'email' || hasEmail)
+    && hasPrivacyConsent.value;
 });
 
 const progress = computed(() => ((currentStep.value + 1) / steps.length) * 100);
@@ -268,6 +270,21 @@ const handleSubmit = async () => {
                 placeholder="Размеры, техника, сроки, что важно учесть"
               ></textarea>
             </div>
+
+            <label class="flex items-start gap-3 rounded-lg border border-brand-brown/10 bg-brand-gray/50 p-3 text-sm leading-6 text-brand-brown/62">
+              <input
+                v-model="hasPrivacyConsent"
+                required
+                type="checkbox"
+                class="mt-1 h-4 w-4 rounded border-brand-brown/20 text-brand-gold focus:ring-brand-gold"
+              >
+              <span>
+                Я соглашаюсь на обработку персональных данных и принимаю
+                <router-link to="/privacy" target="_blank" class="font-bold text-brand-gold hover:text-brand-brown">
+                  политику конфиденциальности
+                </router-link>.
+              </span>
+            </label>
           </div>
         </div>
       </transition>

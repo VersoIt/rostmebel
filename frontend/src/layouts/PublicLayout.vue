@@ -249,7 +249,7 @@ onUnmounted(() => {
 
       <div class="mx-auto mt-10 flex max-w-7xl flex-col gap-3 border-t border-brand-brown/10 pt-6 text-xs font-semibold text-brand-brown/35 sm:flex-row sm:items-center sm:justify-between">
         <p>© 2026 РОСТ Мебель. Все права защищены.</p>
-        <a href="#" class="transition-colors hover:text-brand-gold">Политика конфиденциальности</a>
+        <router-link to="/privacy" class="transition-colors hover:text-brand-gold">Политика конфиденциальности</router-link>
       </div>
     </footer>
   </div>
