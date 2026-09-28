@@ -323,7 +323,7 @@ onUnmounted(() => {
         <div class="rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(8,17,15,0.08),rgba(8,17,15,0.62))] p-3 text-white backdrop-blur-md">
           <div class="flex items-center justify-between gap-3">
             <div class="min-w-0">
-              <div class="text-[10px] font-black uppercase tracking-[0.18em] text-white/66">Реальный проект</div>
+              <div class="text-[10px] font-black uppercase tracking-[0.18em] text-white/66">Категория</div>
               <div class="mt-1 truncate text-lg font-semibold text-white">{{ categoryName }}</div>
             </div>
             <div class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-white/78">
@@ -424,7 +424,9 @@ onUnmounted(() => {
                     {{ categoryName }}
                   </div>
                   <h3 class="ui-title-md mb-4">{{ product.name }}</h3>
-                  <div class="mb-4 text-[11px] font-black uppercase tracking-[0.18em] text-brand-brown/35">Реальный проект</div>
+                  <div class="mb-4 text-[11px] font-black uppercase tracking-[0.18em] text-brand-brown/35">
+                    {{ product.images.length }} фото в проекте
+                  </div>
                   <div v-if="sellingPoints.length" class="mb-5 flex flex-wrap gap-2">
                     <span
                       v-for="point in sellingPoints"
