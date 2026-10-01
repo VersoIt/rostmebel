@@ -9,6 +9,7 @@ import {
   LucideMapPin,
   LucideMessageSquare,
   LucidePhoneCall,
+  LucidePlay,
   LucideRuler,
   LucideShieldCheck,
   LucideWrench,
@@ -28,6 +29,18 @@ const heroImages = [
 
 const currentHeroIndex = ref(0);
 let heroInterval: number | undefined;
+const promoVideo = ref<HTMLVideoElement | null>(null);
+const isPromoVideoPlaying = ref(false);
+
+const playPromoVideo = async () => {
+  if (!promoVideo.value) return;
+
+  try {
+    await promoVideo.value.play();
+  } catch {
+    // Native controls remain available if autoplay is blocked by the browser.
+  }
+};
 
 const proof = [
   { value: '15+', label: 'лет в мебели на заказ' },
@@ -220,6 +233,53 @@ onUnmounted(() => {
           </div>
           <div v-else class="ui-empty">
             Проекты появятся после публикации в админке.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ui-section pt-0">
+      <div class="ui-container">
+        <div class="ui-surface overflow-hidden p-4 sm:p-6 lg:p-8">
+          <div class="grid items-center gap-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:gap-10">
+            <div class="relative overflow-hidden rounded-[1.5rem] bg-brand-brown shadow-[0_20px_60px_rgba(23,33,29,0.16)]">
+              <video
+                ref="promoVideo"
+                class="aspect-video w-full object-cover"
+                controls
+                preload="metadata"
+                playsinline
+                poster="/assets/images/showroom.jpg"
+                aria-label="Видео о мебели РОСТ"
+                @play="isPromoVideoPlaying = true"
+                @pause="isPromoVideoPlaying = false"
+                @ended="isPromoVideoPlaying = false"
+              >
+                <source src="/assets/videos/rost-mebel-16x9.mp4" type="video/mp4">
+                Ваш браузер не поддерживает воспроизведение видео.
+              </video>
+              <button
+                v-if="!isPromoVideoPlaying"
+                type="button"
+                class="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-brand-gold text-white shadow-xl transition hover:scale-105 hover:bg-brand-gold/90 focus:outline-none focus:ring-4 focus:ring-white/60"
+                aria-label="Воспроизвести видео"
+                @click="playPromoVideo"
+              >
+                <LucidePlay :size="27" fill="currentColor" class="ml-1" />
+              </button>
+            </div>
+
+            <div class="lg:pr-3">
+              <p class="ui-eyebrow mb-3">РОСТ Мебель</p>
+              <h2 class="ui-title-lg">Мебель в интерьере</h2>
+              <p class="ui-copy mt-4">
+                Посмотрите, как выглядят готовые решения и детали нашей работы.
+              </p>
+              <router-link to="/catalog" class="ui-button ui-button-secondary mt-6">
+                Смотреть проекты
+                <LucideArrowRight :size="18" />
+              </router-link>
+            </div>
           </div>
         </div>
       </div>
